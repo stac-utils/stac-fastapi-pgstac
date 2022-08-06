@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 import requests
 
 workingdir = Path(__file__).parent.absolute()
-joplindata = workingdir.parent / "stac_fastapi" / "testdata" / "joplin"
+joplindata = workingdir.parent / "tests" / "data" / "joplin"
 
 app_host = sys.argv[1]
 
