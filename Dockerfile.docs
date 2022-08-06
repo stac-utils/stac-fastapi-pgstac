@@ -1,7 +1,7 @@
 FROM python:3.8-slim
 
 # build-essential is required to build a wheel for ciso8601
-RUN apt update && apt install -y build-essential
+RUN apt update && apt install -y build-essential git
 
 RUN python -m pip install --upgrade pip
 RUN python -m pip install mkdocs mkdocs-material pdocs
@@ -10,11 +10,7 @@ COPY . /opt/src
 
 WORKDIR /opt/src
 
-RUN python -m pip install \
-    stac_fastapi/api \
-    stac_fastapi/types \
-    stac_fastapi/extensions \
-    stac_fastapi/sqlalchemy
+RUN python -m pip install .
 
 CMD ["pdocs", \
      "as_markdown", \
