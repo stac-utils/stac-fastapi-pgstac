@@ -29,6 +29,8 @@ extra_reqs = {
         "pre-commit",
         "requests",
         "httpx",
+        "shapely",
+        "pystac[validation]==1.*"
     ],
     "docs": ["mkdocs", "mkdocs-material", "pdocs"],
     "server": ["uvicorn[standard]==0.17.0"],
