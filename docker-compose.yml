@@ -30,6 +30,7 @@ services:
     volumes:
       - ./stac_fastapi:/app/stac_fastapi
       - ./scripts:/app/scripts
+      - ./tests:/app/tests
     depends_on:
       - database
     command:
