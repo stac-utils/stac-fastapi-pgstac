@@ -1,37 +1,28 @@
 <p align="center">
   <img src="https://github.com/radiantearth/stac-site/raw/master/images/logo/stac-030-long.png" width=400>
-  <p align="center">FastAPI implemention of the STAC API spec.</p>
+  <p align="center">FastAPI implemention of the STAC API spec using <a href="https://github.com/stac-utils/pgstac">PgSTAC</a>.</p>
 </p>
 <p align="center">
-  <a href="https://github.com/stac-utils/stac-fastapi/actions?query=workflow%3Acicd" target="_blank">
-      <img src="https://github.com/stac-utils/stac-fastapi/workflows/stac-fastapi/badge.svg" alt="Test">
+  <a href="https://github.com/stac-utils/stac-fastapi-pgstac/actions?query=workflow%3Acicd" target="_blank">
+      <img src="https://github.com/stac-utils/stac-fastapi-pgstac/workflows/stac-fastapi-pgstac/badge.svg" alt="Test">
   </a>
-  <a href="https://pypi.org/project/stac-fastapi" target="_blank">
-      <img src="https://img.shields.io/pypi/v/stac-fastapi.api?color=%2334D058&label=pypi%20package" alt="Package version">
+  <a href="https://pypi.org/project/stac-fastapi-pgstac" target="_blank">
+      <img src="https://img.shields.io/pypi/v/stac-fastapi-pgstac?color=34D058&label=pypi%20package" alt="Package version">
   </a>
-  <a href="https://github.com/stac-utils/stac-fastapi/blob/master/LICENSE" target="_blank">
-      <img src="https://img.shields.io/github/license/stac-utils/stac-fastapi.svg" alt="License">
+  <a href="https://github.com/stac-utils/stac-fastapi-pgstac/blob/master/LICENSE" target="_blank">
+      <img src="https://img.shields.io/pypi/l/stac-fastapi-pgstac" alt="License">
   </a>
 </p>
 
 ---
 
-**Documentation**: [https://stac-utils.github.io/stac-fastapi/](https://stac-utils.github.io/stac-fastapi/)
+**Documentation**: [https://stac-utils.github.io/stac-fastapi-pgstac/](https://stac-utils.github.io/stac-fastapi-pgstac/)
 
-**Source Code**: [https://github.com/stac-utils/stac-fastapi](https://github.com/stac-utils/stac-fastapi)
+**Source Code**: [https://github.com/stac-utils/stac-fastapi](https://github.com/stac-utils/stac-fastapi-pgstac)
 
 ---
 
-Python library for building a STAC compliant FastAPI application.  The project is split up into several namespace
-packages:
-
-- **stac_fastapi.api**: An API layer which enforces the [stac-api-spec](https://github.com/radiantearth/stac-api-spec).
-- **stac_fastapi.extensions**: Abstract base classes for [STAC API extensions](https://github.com/radiantearth/stac-api-spec/blob/master/extensions.md) and third-party extensions.
-- **stac_fastapi.types**: Shared types and abstract base classes used by the library.
-
-#### Backends
-- **stac_fastapi.sqlalchemy**: Postgres backend implementation with sqlalchemy.
-- **stac_fastapi.pgstac**: Postgres backend implementation with [PGStac](https://github.com/stac-utils/pgstac).
+PostgreSQL/PostGIS backend implementation for the [stac-fastapi](https://github.com/stac-utils/stac-fastapi) library.
 
 `stac-fastapi` was initially developed by [arturo-ai](https://github.com/arturo-ai).
 
@@ -39,26 +30,13 @@ packages:
 
 ```bash
 # Install from pypi.org
-pip install stac-fastapi.api stac-fastapi.types stac-fastapi.extensions
-
-# Install a backend of your choice
-pip install stac-fastapi.sqlalchemy
-# or
 pip install stac-fastapi.pgstac
 
 #/////////////////////
-# Install from sources
+# Install from source
 
-git clone https://github.com/stac-utils/stac-fastapi.git && cd stac-fastapi
-pip install \
-  -e stac_fastapi/api \
-  -e stac_fastapi/types \
-  -e stac_fastapi/extensions
-
-# Install a backend of your choice
-pip install -e stac_fastapi/sqlalchemy
-# or
-pip install -e stac_fastapi/pgstac
+git clone https://github.com/stac-utils/stac-fastapi-pgstac.git && cd stac-fastapi-pgstac
+pip install -e .
 ```
 
 ## Local Development
@@ -69,14 +47,12 @@ make image
 make docker-run-all
 ```
 
-- The SQLAlchemy backend app will be available on <http://localhost:8081>.
-- The PGStac backend app will be available on <http://localhost:8082>.
+- The app will be available on <http://localhost:8082>.
 
-You can also launch only one of the applications with either of these commands:
+You can also launch the application without ingesting the `joplin` example data:
 
 ```shell
-make docker-run-pgstac
-make docker-run-sqlalchemy
+make docker-run-app
 ```
 
 The application will be started on <http://localhost:8080>.
@@ -99,34 +75,16 @@ Before running the tests, ensure the database and apps run with docker-compose a
 docker-compose down
 ```
 
-The database container provided by the docker-compose stack must be running. This can be started with:
-
-```shell
-make run-database
-```
-
-To run tests for both the pgstac and sqlalchemy backends, execute:
+To run tests:
 
 ```shell
 make test
 ```
 
-To only run pgstac backend tests:
-
-```shell
-make test-pgstac
-```
-
-To only run sqlalchemy backend tests:
-
-```shell
-make test-sqlalchemy
-```
-
 Run individual tests by running pytest within a docker container:
 
 ```shell
-make docker-shell-pgstac # or docker-shell-sqlalchemy
-$ pip install -e stac_fastapi/pgstac[dev]
-$ pytest -v stac_fastapi/pgstac/tests/api/test_api.py 
+make docker-shell
+$ pip install -e .[dev]
+$ pytest -v tests/api/test_api.py 
 ```

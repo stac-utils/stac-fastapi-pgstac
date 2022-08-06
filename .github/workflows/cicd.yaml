@@ -1,4 +1,4 @@
-name: stac-fastapi
+name: stac-fastapi-pgstac
 on:
   push:
     branches: [ master ]
