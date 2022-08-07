@@ -6,13 +6,10 @@ if [[ -n "${CI}" ]]; then
     set -x
 fi
 
-# Import shared variables
-PACKAGE_DIR="stac_fastapi/pgstac"
-
 function usage() {
     echo -n \
         "Usage: $(basename "$0")
-Publish all stac-fastapi packages.
+Publish stac-fastapi.pgstac package.
 
 Options:
 --test    Publish to test pypi. Requires a 'testpypi' repository
@@ -53,7 +50,6 @@ if [ -z "${TEST_PYPI}" ] && [ -z "${CI}" ]; then
 fi
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
-    echo ${PACKAGE_DIR}
     rm -rf dist
     python setup.py sdist bdist_wheel
     twine upload ${TEST_PYPI} dist/*
