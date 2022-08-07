@@ -74,4 +74,4 @@ services:
 
 networks:
   default:
-    name: stac-fastapi-network
+    name: stac-fastapi-pgstac-network
