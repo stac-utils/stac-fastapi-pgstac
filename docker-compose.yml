@@ -2,7 +2,7 @@ version: '3'
 services:
   app:
     container_name: stac-fastapi-pgstac
-    image: stac-utils/stac-fastapi
+    image: stac-utils/stac-fastapi-pgstac
     build:
       context: .
       dockerfile: Dockerfile
@@ -34,7 +34,9 @@ services:
     depends_on:
       - database
     command:
-      bash -c "./scripts/wait-for-it.sh database:5432 && python -m stac_fastapi.pgstac.app"
+      - bash
+      - -c
+      - "./scripts/wait-for-it.sh database:5432 && python -m stac_fastapi.pgstac.app"
 
   database:
     container_name: stac-db
@@ -72,6 +74,6 @@ services:
       - database
       - app
 
-networks:
-  default:
-    name: stac-fastapi-pgstac-network
+# networks:
+#   default:
+#     name: stac-fastapi-pgstac-network
