@@ -2,7 +2,6 @@
 import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
-from urllib.parse import urljoin
 
 import attr
 import orjson
@@ -13,8 +12,6 @@ from pydantic import ValidationError
 from pygeofilter.backends.cql2_json import to_cql2
 from pygeofilter.parsers.cql2_text import parse as parse_cql2_text
 from pypgstac.hydration import hydrate
-from stac_pydantic.links import Relations
-from stac_pydantic.shared import MimeTypes
 from starlette.requests import Request
 
 from stac_fastapi.pgstac.config import Settings
@@ -23,7 +20,6 @@ from stac_fastapi.pgstac.types.search import PgstacSearch
 from stac_fastapi.pgstac.utils import filter_fields
 from stac_fastapi.types.core import AsyncBaseCoreClient
 from stac_fastapi.types.errors import InvalidQueryParameter, NotFoundError
-from stac_fastapi.types.requests import get_base_url
 from stac_fastapi.types.stac import Collection, Collections, Item, ItemCollection
 
 NumType = Union[float, int]
@@ -33,49 +29,20 @@ NumType = Union[float, int]
 class CoreCrudClient(AsyncBaseCoreClient):
     """Client for core endpoints defined by stac."""
 
-    async def all_collections(self, **kwargs) -> Collections:
+    async def fetch_all_collections(self, request: Request) -> Collections:
         """Read all collections from the database."""
-        request: Request = kwargs["request"]
-        base_url = get_base_url(request)
         pool = request.app.state.readpool
 
         async with pool.acquire() as conn:
-            collections = await conn.fetchval(
+            return await conn.fetchval(
                 """
                 SELECT * FROM all_collections();
                 """
             )
-        linked_collections: List[Collection] = []
-        if collections is not None and len(collections) > 0:
-            for c in collections:
-                coll = Collection(**c)
-                coll["links"] = await CollectionLinks(
-                    collection_id=coll["id"], request=request
-                ).get_links(extra_links=coll.get("links"))
 
-                linked_collections.append(coll)
-
-        links = [
-            {
-                "rel": Relations.root.value,
-                "type": MimeTypes.json,
-                "href": base_url,
-            },
-            {
-                "rel": Relations.parent.value,
-                "type": MimeTypes.json,
-                "href": base_url,
-            },
-            {
-                "rel": Relations.self.value,
-                "type": MimeTypes.json,
-                "href": urljoin(base_url, "collections"),
-            },
-        ]
-        collection_list = Collections(collections=linked_collections or [], links=links)
-        return collection_list
-
-    async def get_collection(self, collection_id: str, **kwargs) -> Collection:
+    async def fetch_collection(
+        self, collection_id: str, request: Request
+    ) -> Collection:
         """Get collection by id.
 
         Called with `GET /collections/{collection_id}`.
@@ -86,9 +53,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
         Returns:
             Collection.
         """
-        collection: Optional[Dict[str, Any]]
-
-        request: Request = kwargs["request"]
         pool = request.app.state.readpool
         async with pool.acquire() as conn:
             q, p = render(
@@ -97,15 +61,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 """,
                 id=collection_id,
             )
-            collection = await conn.fetchval(q, *p)
-        if collection is None:
-            raise NotFoundError(f"Collection {collection_id} does not exist.")
-
-        collection["links"] = await CollectionLinks(
-            collection_id=collection_id, request=request
-        ).get_links(extra_links=collection.get("links"))
-
-        return Collection(**collection)
+            return await conn.fetchval(q, *p)
 
     async def _get_base_item(
         self, collection_id: str, request: Request
@@ -245,7 +201,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         ).get_links()
         return collection
 
-    async def item_collection(
+    async def handle_collection_items(
         self,
         collection_id: str,
         limit: Optional[int] = None,
@@ -265,7 +221,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             An ItemCollection.
         """
         # If collection does not exist, NotFoundError wil be raised
-        await self.get_collection(collection_id, **kwargs)
+        await self.handle_get_collection(collection_id, **kwargs)
 
         req = self.post_request_model(
             collections=[collection_id], limit=limit, token=token
@@ -277,7 +233,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         item_collection["links"] = links
         return item_collection
 
-    async def get_item(self, item_id: str, collection_id: str, **kwargs) -> Item:
+    async def handle_get_item(self, item_id: str, collection_id: str, **kwargs) -> Item:
         """Get item by id.
 
         Called with `GET /collections/{collection_id}/items/{item_id}`.
@@ -290,7 +246,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             Item.
         """
         # If collection does not exist, NotFoundError wil be raised
-        await self.get_collection(collection_id, **kwargs)
+        await self.handle_get_collection(collection_id, **kwargs)
 
         req = self.post_request_model(
             ids=[item_id], collections=[collection_id], limit=1
@@ -303,7 +259,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         return Item(**item_collection["features"][0])
 
-    async def post_search(
+    async def handle_post_search(
         self, search_request: PgstacSearch, **kwargs
     ) -> ItemCollection:
         """Cross catalog search (POST).
@@ -319,7 +275,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         item_collection = await self._search_base(search_request, **kwargs)
         return ItemCollection(**item_collection)
 
-    async def get_search(
+    async def handle_get_search(
         self,
         collections: Optional[List[str]] = None,
         ids: Optional[List[str]] = None,
@@ -408,4 +364,4 @@ class CoreCrudClient(AsyncBaseCoreClient):
             raise HTTPException(
                 status_code=400, detail=f"Invalid parameters provided {e}"
             )
-        return await self.post_search(search_request, request=kwargs["request"])
+        return await self.handle_post_search(search_request, request=kwargs["request"])

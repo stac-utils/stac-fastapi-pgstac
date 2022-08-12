@@ -24,7 +24,7 @@ logger.setLevel(logging.INFO)
 class TransactionsClient(AsyncBaseTransactionsClient):
     """Transactions extension specific CRUD operations."""
 
-    async def create_item(
+    async def handle_create_item(
         self, collection_id: str, item: stac_types.Item, **kwargs
     ) -> Optional[Union[stac_types.Item, Response]]:
         """Create item."""
@@ -45,7 +45,7 @@ class TransactionsClient(AsyncBaseTransactionsClient):
         ).get_links(extra_links=item.get("links"))
         return stac_types.Item(**item)
 
-    async def update_item(
+    async def handle_update_item(
         self, collection_id: str, item_id: str, item: stac_types.Item, **kwargs
     ) -> Optional[Union[stac_types.Item, Response]]:
         """Update item."""
@@ -72,7 +72,7 @@ class TransactionsClient(AsyncBaseTransactionsClient):
         ).get_links(extra_links=item.get("links"))
         return stac_types.Item(**item)
 
-    async def create_collection(
+    async def handle_create_collection(
         self, collection: stac_types.Collection, **kwargs
     ) -> Optional[Union[stac_types.Collection, Response]]:
         """Create collection."""
@@ -85,7 +85,7 @@ class TransactionsClient(AsyncBaseTransactionsClient):
 
         return stac_types.Collection(**collection)
 
-    async def update_collection(
+    async def handle_update_collection(
         self, collection: stac_types.Collection, **kwargs
     ) -> Optional[Union[stac_types.Collection, Response]]:
         """Update collection."""
@@ -97,7 +97,7 @@ class TransactionsClient(AsyncBaseTransactionsClient):
         ).get_links(extra_links=collection.get("links"))
         return stac_types.Collection(**collection)
 
-    async def delete_item(
+    async def handle_delete_item(
         self, item_id: str, **kwargs
     ) -> Optional[Union[stac_types.Item, Response]]:
         """Delete item."""
@@ -106,7 +106,7 @@ class TransactionsClient(AsyncBaseTransactionsClient):
         await dbfunc(pool, "delete_item", item_id)
         return JSONResponse({"deleted item": item_id})
 
-    async def delete_collection(
+    async def handle_delete_collection(
         self, collection_id: str, **kwargs
     ) -> Optional[Union[stac_types.Collection, Response]]:
         """Delete collection."""
@@ -120,7 +120,7 @@ class TransactionsClient(AsyncBaseTransactionsClient):
 class BulkTransactionsClient(AsyncBaseBulkTransactionsClient):
     """Postgres bulk transactions."""
 
-    async def bulk_item_insert(self, items: Items, **kwargs) -> str:
+    async def handle_bulk_item_insert(self, items: Items, **kwargs) -> str:
         """Bulk item insertion using pgstac."""
         request = kwargs["request"]
         pool = request.app.state.writepool

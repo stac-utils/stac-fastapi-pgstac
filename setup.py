@@ -10,7 +10,7 @@ install_requires = [
     "orjson",
     "pydantic[dotenv]",
     "stac_pydantic==2.0.*",
-    "stac-fastapi @ git+https://github.com/stac-utils/stac-fastapi.git@2d72c588151fc16eec1564553a653a039bce6c58",
+    "stac-fastapi @ git+https://github.com/stac-utils/stac-fastapi.git@c4b738ea3bf8f50473db35b7b505edf1a46d2b06",
     "asyncpg",
     "buildpg",
     "brotli_asgi",
