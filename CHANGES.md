@@ -4,6 +4,27 @@
 
 ### Added
 
+### Changed
+
+### Removed
+
+### Fixed
+
+## [2.4.1]
+
+### Added
+
+### Changed
+
+### Removed
+
+### Fixed
+* `ciso8601` fails to build in some environments, instead use `pyiso8601` to parse datetimes.
+
+## [2.4.0]
+
+### Added
+
 * Add hook to allow adding dependencies to routes. ([#295](https://github.com/stac-utils/stac-fastapi/pull/295))
 * Ability to POST an ItemCollection to the collections/{collectionId}/items route. ([#367](https://github.com/stac-utils/stac-fastapi/pull/367))
 * Add STAC API - Collections conformance class. ([383](https://github.com/stac-utils/stac-fastapi/pull/383))
@@ -43,6 +64,7 @@
   from the request body, if present, and falls back to using the path parameter if no `"collection"` property is found in the body
   ([#425](https://github.com/stac-utils/stac-fastapi/pull/425))
 * PGStac Backend Transactions endpoints return added Item/Collection instead of Item/Collection from request ([#424](https://github.com/stac-utils/stac-fastapi/pull/424))
+* Application no longer breaks on startup when pagination extension is not included ([#444](https://github.com/stac-utils/stac-fastapi/pull/444))
 
 ## [2.3.0]
 

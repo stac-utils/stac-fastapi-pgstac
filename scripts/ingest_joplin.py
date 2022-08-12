@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 import requests
 
 workingdir = Path(__file__).parent.absolute()
-joplindata = workingdir.parent / "stac_fastapi" / "testdata" / "joplin"
+joplindata = workingdir.parent / "tests" / "data" / "joplin"
 
 app_host = sys.argv[1]
 
@@ -41,7 +41,6 @@ def ingest_joplin_data(app_host: str = app_host, data_dir: Path = joplindata):
         index = json.load(f)
 
     for feat in index["features"]:
-        del feat["stac_extensions"]
         post_or_put(urljoin(app_host, f"collections/{collection['id']}/items"), feat)
 
 
