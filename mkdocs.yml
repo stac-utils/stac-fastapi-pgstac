@@ -1,10 +1,10 @@
-site_name: stac-fastapi
-site_description: STAC FastAPI.
+site_name: stac-fastapi-pgstac
+site_description: STAC FastAPI (PgSTAC Backend).
 
 # Repository
-repo_name: 'stac-utils/stac-fastapi'
-repo_url: 'https://github.com/stac-utils/stac-fastapi'
-edit_uri: 'blob/master/docs/src/'
+repo_name: 'stac-utils/stac-fastapi-pgstac'
+repo_url: 'https://github.com/stac-utils/stac-fastapi-pgstac'
+edit_uri: 'blob/main/docs/src/'
 
 
 # Social links
