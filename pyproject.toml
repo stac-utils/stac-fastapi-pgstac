@@ -6,6 +6,6 @@ max-line-length = 90
 
 [tool.isort]
 profile = "black"
-known_first_party = "stac_fastapi"
-known_third_party = ["rasterio", "stac-pydantic", "sqlalchemy", "geoalchemy2", "fastapi"]
+known_first_party = "stac_fastapi.pgstac"
+known_third_party = ["rasterio", "stac-pydantic", "sqlalchemy", "geoalchemy2", "fastapi", "stac_fastapi"]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]

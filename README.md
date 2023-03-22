@@ -57,7 +57,7 @@ For Stac FastAPI development, a docker image (which is pulled as part of the doc
 bitner/pgstac:[version] that has the full database already set up for PGStac.
 
 There is also a python utility as part of PGStac (pypgstac) that includes a migration utility. The pgstac
-version required by stac-fastapi/pgstac is pinned by using the pinned version of pypgstac in the [setup](setup.py) file.
+version required by stac-fastapi/pgstac is pinned by using the pinned version of pypgstac in the [setup](http://github.com/stac-utils/stac-fastapi-pgstac/blob/main/setup.py) file.
 
 In order to migrate database versions you can use the migration utility:
 
