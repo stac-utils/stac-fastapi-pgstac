@@ -28,20 +28,16 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e \
-            stac_fastapi/api \
-            stac_fastapi/types \
-            stac_fastapi/extensions \
-            stac_fastapi/sqlalchemy
+          python -m pip install -e .
           python -m pip install mkdocs mkdocs-material pdocs
 
-      - name: update API docs
+      - name: Update API docs
         run: |
           pdocs as_markdown \
             --output_dir docs/api/ \
             --exclude_source \
             --overwrite \
-            stac_fastapi
+            stac_fastapi.pgstac
         env:
           POSTGRES_USER: username
           POSTGRES_PASS: password

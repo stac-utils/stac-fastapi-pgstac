@@ -22,13 +22,17 @@ install_requires = [
 
 extra_reqs = {
     "dev": [
+        "pystac[validation]",
         "pypgstac[psycopg]==0.7.*",
         "pytest",
         "pytest-cov",
         "pytest-asyncio>=0.17",
         "pre-commit",
         "requests",
+        "shapely",
         "httpx",
+        "twine",
+        "wheel",
     ],
     "docs": ["mkdocs", "mkdocs-material", "pdocs"],
     "server": ["uvicorn[standard]==0.19.0"],
@@ -54,7 +58,7 @@ setup(
     author_email="david@developmentseed.org",
     url="https://github.com/stac-utils/stac-fastapi",
     license="MIT",
-    packages=find_namespace_packages(exclude=["alembic", "tests", "scripts"]),
+    packages=find_namespace_packages(exclude=["tests", "scripts"]),
     zip_safe=False,
     install_requires=install_requires,
     tests_require=extra_reqs["dev"],
