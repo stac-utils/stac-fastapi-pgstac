@@ -12,8 +12,6 @@ from fastapi.responses import ORJSONResponse
 from httpx import AsyncClient
 from pypgstac.db import PgstacDB
 from pypgstac.migrate import Migrate
-from stac_pydantic import Collection, Item
-
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.models import create_get_request_model, create_post_request_model
 from stac_fastapi.extensions.core import (
@@ -25,6 +23,8 @@ from stac_fastapi.extensions.core import (
     TransactionExtension,
 )
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
+from stac_pydantic import Collection, Item
+
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.core import CoreCrudClient
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db

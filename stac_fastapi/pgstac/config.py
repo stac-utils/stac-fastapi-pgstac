@@ -3,11 +3,12 @@
 from typing import Type
 from urllib.parse import quote
 
+from stac_fastapi.types.config import ApiSettings
+
 from stac_fastapi.pgstac.types.base_item_cache import (
     BaseItemCache,
     DefaultBaseItemCache,
 )
-from stac_fastapi.types.config import ApiSettings
 
 
 class Settings(ApiSettings):
