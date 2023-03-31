@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+As a part of this release, this repository was extracted from the main
+[stac-fastapi](https://github.com/stac-utils/stac-fastapi) repository.
+
 ### Changed
 
 * Default branch to **main** ([#544](https://github.com/stac-utils/stac-fastapi/pull/544))
