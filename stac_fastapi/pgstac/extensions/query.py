@@ -6,9 +6,8 @@ from types import DynamicClassAttribute
 from typing import Any, Callable, Dict, Optional
 
 from pydantic import BaseModel
-from stac_pydantic.utils import AutoValueEnum
-
 from stac_fastapi.extensions.core.query import QueryExtension as QueryExtensionBase
+from stac_pydantic.utils import AutoValueEnum
 
 
 class Operator(str, AutoValueEnum):

@@ -3,7 +3,6 @@
 from typing import Dict, Optional
 
 from pydantic import validator
-
 from stac_fastapi.types.search import BaseSearchPostRequest
 
 

@@ -4,11 +4,10 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import ParseResult, parse_qs, unquote, urlencode, urljoin, urlparse
 
 import attr
+from stac_fastapi.types.requests import get_base_url
 from stac_pydantic.links import Relations
 from stac_pydantic.shared import MimeTypes
 from starlette.requests import Request
-
-from stac_fastapi.types.requests import get_base_url
 
 # These can be inferred from the item/collection so they aren't included in the database
 # Instead they are dynamically generated when querying the database using the classes defined below

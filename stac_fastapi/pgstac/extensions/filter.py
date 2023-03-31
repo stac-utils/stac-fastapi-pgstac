@@ -4,7 +4,6 @@ from typing import Any, Optional
 from buildpg import render
 from fastapi import Request
 from fastapi.responses import JSONResponse
-
 from stac_fastapi.types.core import AsyncBaseFiltersClient
 from stac_fastapi.types.errors import NotFoundError
 

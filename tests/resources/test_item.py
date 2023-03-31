@@ -12,11 +12,11 @@ import pytest
 from httpx import AsyncClient
 from pystac.utils import datetime_to_str
 from shapely.geometry import Polygon
+from stac_fastapi.types.rfc3339 import rfc3339_str_to_datetime
 from stac_pydantic import Collection, Item
 from starlette.requests import Request
 
 from stac_fastapi.pgstac.models.links import CollectionLinks
-from stac_fastapi.types.rfc3339 import rfc3339_str_to_datetime
 
 
 async def test_create_collection(app_client, load_test_data: Callable):

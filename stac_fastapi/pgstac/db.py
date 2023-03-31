@@ -9,7 +9,6 @@ import orjson
 from asyncpg import exceptions, pool
 from buildpg import asyncpg, render
 from fastapi import FastAPI
-
 from stac_fastapi.types.errors import (
     ConflictError,
     DatabaseError,
