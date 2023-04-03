@@ -2,7 +2,7 @@
 
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/stac-utils/stac-fastapi-pgstac/cicd.yaml?style=for-the-badge)](https://github.com/stac-utils/stac-fastapi-pgstac/actions/workflows/cicd.yaml)
 [![PyPI](https://img.shields.io/pypi/v/stac-fastapi.pgstac?style=for-the-badge)](https://pypi.org/project/stac-fastapi.pgstac)
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/stac-utils/stac-fastapi-pgstac/deploy_mkdocs.yml?label=Docs&style=for-the-badge)](https://stac-utils.github.io/stac-fastapi-pgstac/)
+[![Documentation](https://img.shields.io/github/actions/workflow/status/stac-utils/stac-fastapi-pgstac/pages.yml?label=Docs&style=for-the-badge)](https://stac-utils.github.io/stac-fastapi-pgstac/)
 [![License](https://img.shields.io/github/license/stac-utils/stac-fastapi-pgstac?style=for-the-badge)](https://github.com/stac-utils/stac-fastapi-pgstac/blob/main/LICENSE)
 
 <p align="center">
