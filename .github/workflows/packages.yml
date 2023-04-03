@@ -5,6 +5,7 @@ on:
       - main
     tags:
       - "*"
+  workflow_dispatch:
 
 jobs:
   docker-build-push:
@@ -12,10 +13,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    strategy:
-      fail-fast: true
-      matrix:
-        backend: ["sqlalchemy", "pgstac"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -29,17 +26,12 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4.3.0
         with:
-          images: ghcr.io/stac-utils/stac-fastapi
-          tags: |
-            type=schedule,suffix=-${{ matrix.backend }}
-            type=ref,event=branch,suffix=-${{ matrix.backend }}
-            type=ref,event=tag,suffix=-${{ matrix.backend }}
-            type=ref,event=pr,suffix=-${{ matrix.backend }}
+          images: ghcr.io/stac-utils/stac-fastapi-pgstac
       - name: Build and push Docker image
         uses: docker/build-push-action@v4.0.0
         with:
           context: .
-          file: docker/Dockerfile.${{ matrix.backend }}
+          file: docker/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
