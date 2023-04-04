@@ -46,6 +46,8 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: setup.py
 
       - name: Lint code
         if: ${{ matrix.python-version == 3.8 }}
@@ -96,7 +98,7 @@ jobs:
         with:
           python-version: "3.10"
           cache: pip
-          cache-dependency-path: setup.cfg
+          cache-dependency-path: setup.py
       - name: Install stac-fastapi and stac-api-validator
         run: pip install .[server] stac-api-validator==0.4.1
       - name: Load data and validate
@@ -118,5 +120,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Test generating docs
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: setup.py
+      - name: Install with documentation dependencies
+        run: pip install .[docs,dev,server]
+      - name: Generate API docs
         run: make docs
+      - name: Build documentation
+        run: mkdocs build --strict

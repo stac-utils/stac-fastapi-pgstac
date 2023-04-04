@@ -1,15 +1,19 @@
-name: Publish docs via GitHub Pages
+name: Deploy static content to Pages
 
 on:
   push:
     branches:
       - main
-    paths:
-      # Rebuild website when docs have changed or code has changed
-      - "README.md"
-      - "docs/**"
-      - "mkdocs.yml"
-      - "**.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -19,18 +23,18 @@ jobs:
     steps:
       - name: Checkout main
         uses: actions/checkout@v3
-
-      - name: Set up Python 3.8
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+      - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: 3.8
-
+          python-version: 3.10
+          cache: pip
+          cache-dependency-path: setup.py
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e .
-          python -m pip install mkdocs mkdocs-material pdocs
-
+          python -m pip install -e .[docs]
       - name: Update API docs
         run: |
           pdocs as_markdown \
@@ -46,6 +50,12 @@ jobs:
           POSTGRES_PORT: 5432
           POSTGRES_HOST_READER: localhost
           POSTGRES_HOST_WRITER: localhost
-
-      - name: Deploy docs
-        run: mkdocs gh-deploy --force
+      - name: Build docs
+        run: mkdocs build --site-dir site
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
