@@ -21,6 +21,10 @@ PgSTAC stores all collection and item records as jsonb fields exactly as they co
 
 ## Usage
 
+PgSTAC is an external project and may be used by multiple front ends.
+For Stac FastAPI development, a Docker image (which is pulled as part of the docker-compose) is available via the [Github container registry](https://github.com/stac-utils/pgstac/pkgs/container/pgstac/81689794?tag=latest).
+The PgSTAC version required by **stac-fastapi-pgstac** is found in the [setup](http://github.com/stac-utils/stac-fastapi-pgstac/blob/main/setup.py) file.
+
 ### Sorting
 
 While the STAC [Sort Extension](https://github.com/stac-api-extensions/sort) is fully supported, [PgSTAC](https://github.com/stac-utils/pgstac) is particularly enhanced to be able to sort by datetime (either ascending or descending).
@@ -29,17 +33,12 @@ For more than millions of records it is recommended to either set a low connecti
 
 ### Hydration
 
-To configure **stac-fastapi-pgstac** to [hydrate search result items in the API](https://github.com/stac-utils/pgstac#runtime-configurations), set the `USE_API_HYDRATE` environment variable to `true` or explicitly set the option in the PGStac Settings object.
+To configure **stac-fastapi-pgstac** to [hydrate search result items in the API](https://stac-utils.github.io/pgstac/pgstac/#runtime-configurations), set the `USE_API_HYDRATE` environment variable to `true` or explicitly set the option in the PGStac Settings object.
 
 ### Migrations
 
-PgSTAC is an external project and the may be used by multiple front ends.
-For Stac FastAPI development, a Docker image (which is pulled as part of the docker-compose) is available via the [Github container registry](https://github.com/stac-utils/pgstac/pkgs/container/pgstac/81689794?tag=latest).
-
-There is also a Python utility as part of PgSTAC ([pypgstac](https://stac-utils.github.io/pgstac/pypgstac/)) that includes a migration utility.
-The PgSTAC version required by stac-fastapi-pgstac is found in the [setup](http://github.com/stac-utils/stac-fastapi-pgstac/blob/main/setup.py) file.
-
-In order to migrate database versions you can use the migration utility:
+There is a Python utility as part of PgSTAC ([pypgstac](https://stac-utils.github.io/pgstac/pypgstac/)) that includes a migration utility.
+To use:
 
 ```shell
 pypgstac migrate
