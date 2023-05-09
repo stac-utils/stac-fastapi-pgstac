@@ -5,9 +5,14 @@
 As a part of this release, this repository was extracted from the main
 [stac-fastapi](https://github.com/stac-utils/stac-fastapi) repository.
 
+### Added
+
+* Ability to customize the database connection ([#22](https://github.com/stac-utils/stac-fastapi-pgstac/pull/22))
+
 ### Changed
 
 * Default branch to **main** ([#544](https://github.com/stac-utils/stac-fastapi/pull/544))
+* Quieter tests ([#22](https://github.com/stac-utils/stac-fastapi-pgstac/pull/22))
 
 ## [2.4.4] - 2023-03-09
 
