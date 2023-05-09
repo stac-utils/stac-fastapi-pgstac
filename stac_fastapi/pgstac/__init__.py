@@ -1,1 +1,1 @@
-"""stac_fastapi.pgstac.models module."""
+"""stac_fastapi.pgstac module."""
