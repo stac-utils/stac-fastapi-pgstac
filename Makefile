@@ -2,6 +2,7 @@
 APP_HOST ?= 0.0.0.0
 APP_PORT ?= 8080
 EXTERNAL_APP_PORT ?= ${APP_PORT}
+LOG_LEVEL ?= warning
 
 run = docker-compose run --rm \
 				-p ${EXTERNAL_APP_PORT}:${APP_PORT} \
@@ -27,7 +28,7 @@ docker-shell:
 
 .PHONY: test
 test:
-	$(run) /bin/bash -c 'export && ./scripts/wait-for-it.sh database:5432 && cd /app/tests/ && pytest -vvv'
+	$(run) /bin/bash -c 'export && ./scripts/wait-for-it.sh database:5432 && cd /app/tests/ && pytest -vvv --log-cli-level $(LOG_LEVEL)'
 
 .PHONY: run-database
 run-database:
