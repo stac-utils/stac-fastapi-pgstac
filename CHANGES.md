@@ -8,6 +8,7 @@ As a part of this release, this repository was extracted from the main
 ### Added
 
 * Ability to customize the database connection ([#22](https://github.com/stac-utils/stac-fastapi-pgstac/pull/22))
+* Ability to add ItemCollections through the Transaction API, with more validation ([#35](https://github.com/stac-utils/stac-fastapi-pgstac/pull/35))
 
 ### Changed
 
