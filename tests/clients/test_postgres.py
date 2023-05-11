@@ -127,6 +127,35 @@ async def test_get_collection_items(app_client, load_test_collection, load_test_
     assert len(fc["features"]) == 5
 
 
+async def test_create_item_collection(
+    app_client, load_test_data: Callable, load_test_collection
+):
+    coll = load_test_collection
+    base_item = load_test_data("test_item.json")
+
+    items = []
+    for _ in range(5):
+        item = deepcopy(base_item)
+        item["id"] = str(uuid.uuid4())
+        items.append(item)
+
+    item_collection = {"type": "FeatureCollection", "features": items, "links": []}
+
+    resp = await app_client.post(
+        f"/collections/{coll.id}/items",
+        json=item_collection,
+    )
+
+    assert resp.status_code == 201
+
+    resp = await app_client.get(
+        f"/collections/{coll.id}/items",
+    )
+    for item in items:
+        resp = await app_client.get(f"/collections/{coll.id}/items/{item['id']}")
+        assert resp.status_code == 200
+
+
 async def test_create_bulk_items(
     app_client, load_test_data: Callable, load_test_collection
 ):

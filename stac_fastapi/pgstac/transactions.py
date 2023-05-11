@@ -26,9 +26,19 @@ class TransactionsClient(AsyncBaseTransactionsClient):
     """Transactions extension specific CRUD operations."""
 
     async def create_item(
-        self, collection_id: str, item: stac_types.Item, request: Request, **kwargs
+        self,
+        collection_id: str,
+        item: Union[stac_types.Item, stac_types.ItemCollection],
+        request: Request,
+        **kwargs,
     ) -> Optional[Union[stac_types.Item, Response]]:
         """Create item."""
+        if item["type"] == "FeatureCollection":
+            items = item["features"]
+            async with request.app.state.get_connection(request, "w") as conn:
+                await dbfunc(conn, "create_items", items)
+            return Response(status_code=201)
+
         body_collection_id = item.get("collection")
         if body_collection_id is not None and collection_id != body_collection_id:
             raise HTTPException(
