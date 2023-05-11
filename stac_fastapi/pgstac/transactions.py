@@ -1,6 +1,7 @@
 """transactions extension client."""
 
 import logging
+import re
 from typing import Optional, Union
 
 import attr
@@ -16,14 +17,45 @@ from starlette.responses import JSONResponse, Response
 
 from stac_fastapi.pgstac.db import dbfunc
 from stac_fastapi.pgstac.models.links import CollectionLinks, ItemLinks
+from stac_fastapi.pgstac.utils import INVALID_ID_CHARS
 
 logger = logging.getLogger("uvicorn")
 logger.setLevel(logging.INFO)
+
+ID_REGEX = "[" + "".join(re.escape(char) for char in INVALID_ID_CHARS) + "]"
 
 
 @attr.s
 class TransactionsClient(AsyncBaseTransactionsClient):
     """Transactions extension specific CRUD operations."""
+
+    def _validate_item(
+        self,
+        item: stac_types.Item,
+        collection_id: str,
+        expected_item_id: Optional[str] = None,
+    ) -> None:
+        """Validate item."""
+        body_collection_id = item.get("collection")
+        body_item_id = item.get("id")
+
+        if body_collection_id is not None and collection_id != body_collection_id:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Collection ID from path parameter ({collection_id}) does not match Collection ID from Item ({body_collection_id})",
+            )
+
+        if bool(re.search(ID_REGEX, body_item_id)):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Item ID ({body_item_id}) cannot contain the following characters: {' '.join(INVALID_ID_CHARS)}",
+            )
+
+        if expected_item_id is not None and expected_item_id != body_item_id:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Item ID from path parameter ({expected_item_id}) does not match Item ID from Item ({body_item_id})",
+            )
 
     async def create_item(
         self,
@@ -34,25 +66,28 @@ class TransactionsClient(AsyncBaseTransactionsClient):
     ) -> Optional[Union[stac_types.Item, Response]]:
         """Create item."""
         if item["type"] == "FeatureCollection":
-            items = item["features"]
+            valid_items = []
+            for item in item["features"]:
+                self._validate_item(item, collection_id)
+                item["collection"] = collection_id
+                valid_items.append(item)
+
             async with request.app.state.get_connection(request, "w") as conn:
-                await dbfunc(conn, "create_items", items)
+                await dbfunc(conn, "create_items", valid_items)
             return Response(status_code=201)
 
-        body_collection_id = item.get("collection")
-        if body_collection_id is not None and collection_id != body_collection_id:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Collection ID from path parameter ({collection_id}) does not match Collection ID from Item ({body_collection_id})",
-            )
+        self._validate_item(item, collection_id)
         item["collection"] = collection_id
+
         async with request.app.state.get_connection(request, "w") as conn:
             await dbfunc(conn, "create_item", item)
+
         item["links"] = await ItemLinks(
             collection_id=collection_id,
             item_id=item["id"],
             request=request,
         ).get_links(extra_links=item.get("links"))
+
         return stac_types.Item(**item)
 
     async def update_item(
@@ -64,32 +99,29 @@ class TransactionsClient(AsyncBaseTransactionsClient):
         **kwargs,
     ) -> Optional[Union[stac_types.Item, Response]]:
         """Update item."""
-        body_collection_id = item.get("collection")
-        if body_collection_id is not None and collection_id != body_collection_id:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Collection ID from path parameter ({collection_id}) does not match Collection ID from Item ({body_collection_id})",
-            )
+        self._validate_item(item, collection_id, item_id)
         item["collection"] = collection_id
-        body_item_id = item["id"]
-        if body_item_id != item_id:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Item ID from path parameter ({item_id}) does not match Item ID from Item ({body_item_id})",
-            )
+
         async with request.app.state.get_connection(request, "w") as conn:
             await dbfunc(conn, "update_item", item)
+
         item["links"] = await ItemLinks(
             collection_id=collection_id,
             item_id=item["id"],
             request=request,
         ).get_links(extra_links=item.get("links"))
+
         return stac_types.Item(**item)
 
     async def create_collection(
         self, collection: stac_types.Collection, request: Request, **kwargs
     ) -> Optional[Union[stac_types.Collection, Response]]:
         """Create collection."""
+        if bool(re.search(ID_REGEX, collection["id"])):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Collection ID ({collection['id']}) cannot contain the following characters: {' '.join(INVALID_ID_CHARS)}",
+            )
         async with request.app.state.get_connection(request, "w") as conn:
             await dbfunc(conn, "create_collection", collection)
         collection["links"] = await CollectionLinks(
