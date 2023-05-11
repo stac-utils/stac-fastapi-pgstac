@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.4.6] - 2023-05-11
+
 As a part of this release, this repository was extracted from the main
 [stac-fastapi](https://github.com/stac-utils/stac-fastapi) repository.
 
@@ -11,8 +13,13 @@ As a part of this release, this repository was extracted from the main
 
 ### Changed
 
-* Default branch to **main** ([#544](https://github.com/stac-utils/stac-fastapi/pull/544))
 * Quieter tests ([#22](https://github.com/stac-utils/stac-fastapi-pgstac/pull/22))
+
+## [2.4.5] - 2023-04-04
+
+### Fixed
+
+* Use `V()` instead of f-strings for pgstac queries ([#554](https://github.com/stac-utils/stac-fastapi/pull/554))
 
 ## [2.4.4] - 2023-03-09
 
@@ -253,7 +260,9 @@ As a part of this release, this repository was extracted from the main
 
 * First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi/compare/2.4.4..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.6..main>
+[2.4.6]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.5..2.4.6>
+[2.4.5]: <https://github.com/stac-utils/stac-fastapi/compare/2.4.4..2.4.5>
 [2.4.4]: <https://github.com/stac-utils/stac-fastapi/compare/2.4.3..2.4.4>
 [2.4.3]: <https://github.com/stac-utils/stac-fastapi/compare/2.4.2..2.4.3>
 [2.4.2]: <https://github.com/stac-utils/stac-fastapi/compare/2.4.1..2.4.2>
