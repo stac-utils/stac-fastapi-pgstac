@@ -26,8 +26,7 @@ services:
     ports:
       - "8082:8082"
     volumes:
-      - ./stac_fastapi:/app/stac_fastapi
-      - ./scripts:/app/scripts
+      - .:/app
     depends_on:
       - database
     command: bash -c "./scripts/wait-for-it.sh database:5432 && python -m stac_fastapi.pgstac.app"
