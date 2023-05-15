@@ -3,27 +3,6 @@ from typing import Any, Dict, Optional, Set, Union
 
 from stac_fastapi.types.stac import Item
 
-INVALID_ID_CHARS = [
-    ":",
-    "/",
-    "?",
-    "#",
-    "[",
-    "]",
-    "@",
-    "!",
-    "$",
-    "&",
-    "'",
-    "(",
-    ")",
-    "*",
-    "+",
-    ",",
-    ";",
-    "=",
-]
-
 
 def filter_fields(
     item: Union[Item, Dict[str, Any]],

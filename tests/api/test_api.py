@@ -137,7 +137,7 @@ async def test_app_transaction_extension(
     coll = load_test_collection
     item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
 
 async def test_app_query_extension(load_test_data, app_client, load_test_collection):
@@ -523,7 +523,7 @@ async def test_item_collection_filter_datetime(
     coll = load_test_collection
     first_item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=first_item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     datetime_range = "2020-01-01T00:00:00.00Z/.."
     resp = await app_client.get(

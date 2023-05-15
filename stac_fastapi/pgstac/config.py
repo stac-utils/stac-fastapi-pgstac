@@ -1,6 +1,6 @@
 """Postgres API configuration."""
 
-from typing import Type
+from typing import List, Type
 from urllib.parse import quote
 
 from stac_fastapi.types.config import ApiSettings
@@ -9,6 +9,28 @@ from stac_fastapi.pgstac.types.base_item_cache import (
     BaseItemCache,
     DefaultBaseItemCache,
 )
+
+
+DEFAULT_INVALID_ID_CHARS = [
+    ":",
+    "/",
+    "?",
+    "#",
+    "[",
+    "]",
+    "@",
+    "!",
+    "$",
+    "&",
+    "'",
+    "(",
+    ")",
+    "*",
+    "+",
+    ",",
+    ";",
+    "=",
+]
 
 
 class Settings(ApiSettings):
@@ -22,6 +44,7 @@ class Settings(ApiSettings):
         postgres_port: database port.
         postgres_dbname: database name.
         use_api_hydrate: perform hydration of stac items within stac-fastapi.
+        invalid_id_chars: list of characters that are not allowed in item or collection ids.
     """
 
     postgres_user: str
@@ -38,6 +61,7 @@ class Settings(ApiSettings):
 
     use_api_hydrate: bool = False
     base_item_cache: Type[BaseItemCache] = DefaultBaseItemCache
+    invalid_id_chars: List[str] = DEFAULT_INVALID_ID_CHARS
 
     testing: bool = False
 

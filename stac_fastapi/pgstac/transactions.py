@@ -17,20 +17,32 @@ from starlette.responses import JSONResponse, Response
 
 from stac_fastapi.pgstac.db import dbfunc
 from stac_fastapi.pgstac.models.links import CollectionLinks, ItemLinks
-from stac_fastapi.pgstac.utils import INVALID_ID_CHARS
+from stac_fastapi.pgstac.config import Settings
 
 logger = logging.getLogger("uvicorn")
 logger.setLevel(logging.INFO)
-
-ID_REGEX = "[" + "".join(re.escape(char) for char in INVALID_ID_CHARS) + "]"
 
 
 @attr.s
 class TransactionsClient(AsyncBaseTransactionsClient):
     """Transactions extension specific CRUD operations."""
 
+    def _validate_id(self, id: str, settings: Settings) -> bool:
+        invalid_chars = settings.invalid_id_chars
+        id_regex = "[" + "".join(re.escape(char) for char in invalid_chars) + "]"
+
+        if bool(re.search(id_regex, id)):
+            raise HTTPException(
+                status_code=400,
+                detail=f"ID ({id}) cannot contain the following characters: {' '.join(invalid_chars)}",
+            )
+
+    def _validate_collection(self, request: Request, collection: stac_types.Collection):
+        self._validate_id(collection["id"], request.app.state.settings)
+
     def _validate_item(
         self,
+        request: Request,
         item: stac_types.Item,
         collection_id: str,
         expected_item_id: Optional[str] = None,
@@ -39,16 +51,12 @@ class TransactionsClient(AsyncBaseTransactionsClient):
         body_collection_id = item.get("collection")
         body_item_id = item.get("id")
 
+        self._validate_id(body_item_id, request.app.state.settings)
+
         if body_collection_id is not None and collection_id != body_collection_id:
             raise HTTPException(
                 status_code=400,
                 detail=f"Collection ID from path parameter ({collection_id}) does not match Collection ID from Item ({body_collection_id})",
-            )
-
-        if bool(re.search(ID_REGEX, body_item_id)):
-            raise HTTPException(
-                status_code=400,
-                detail=f"Item ID ({body_item_id}) cannot contain the following characters: {' '.join(INVALID_ID_CHARS)}",
             )
 
         if expected_item_id is not None and expected_item_id != body_item_id:
@@ -68,7 +76,7 @@ class TransactionsClient(AsyncBaseTransactionsClient):
         if item["type"] == "FeatureCollection":
             valid_items = []
             for item in item["features"]:
-                self._validate_item(item, collection_id)
+                self._validate_item(item, request, collection_id)
                 item["collection"] = collection_id
                 valid_items.append(item)
 
@@ -125,11 +133,7 @@ class TransactionsClient(AsyncBaseTransactionsClient):
         self, collection: stac_types.Collection, request: Request, **kwargs
     ) -> Optional[Union[stac_types.Collection, Response]]:
         """Create collection."""
-        if bool(re.search(ID_REGEX, collection["id"])):
-            raise HTTPException(
-                status_code=400,
-                detail=f"Collection ID ({collection['id']}) cannot contain the following characters: {' '.join(INVALID_ID_CHARS)}",
-            )
+        self._validate_collection(request, collection)
         async with request.app.state.get_connection(request, "w") as conn:
             await dbfunc(conn, "create_collection", collection)
         collection["links"] = await CollectionLinks(
