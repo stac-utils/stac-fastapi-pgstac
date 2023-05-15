@@ -64,12 +64,11 @@ async def test_create_item(app_client, load_test_data: Callable, load_test_colle
         f"/collections/{coll.id}/items",
         json=in_json,
     )
-    assert resp.status_code == 200
 
-    post_item = Item.parse_obj(resp.json())
-    assert in_item.dict(exclude={"links"}) == post_item.dict(exclude={"links"})
+    assert resp.status_code == 201
+    assert "location" in resp.headers.keys()
 
-    resp = await app_client.get(f"/collections/{coll.id}/items/{post_item.id}")
+    resp = await app_client.get(resp.headers["location"])
 
     assert resp.status_code == 200
 
@@ -90,9 +89,11 @@ async def test_create_item_no_collection_id(
         f"/collections/{coll.id}/items",
         json=item,
     )
-    assert resp.status_code == 200
 
-    resp = await app_client.get(f"/collections/{coll.id}/items/{item['id']}")
+    assert resp.status_code == 201
+    assert "location" in resp.headers.keys()
+
+    resp = await app_client.get(resp.headers["location"])
 
     assert resp.status_code == 200
 
@@ -123,6 +124,21 @@ async def test_create_item_invalid_collection_id(
 
     item = load_test_data("test_item.json")
     item["collection"] = "wrong-collection-id"
+    resp = await app_client.post(
+        f"/collections/{coll.id}/items",
+        json=item,
+    )
+    assert resp.status_code == 400
+
+
+async def test_create_item_bad_body(
+    app_client, load_test_data: Callable, load_test_collection
+):
+    """Items with invalid type should return an error"""
+    coll = load_test_collection
+
+    item = load_test_data("test_item.json")
+    item["type"] = "not-a-type"
     resp = await app_client.post(
         f"/collections/{coll.id}/items",
         json=item,
@@ -169,7 +185,7 @@ async def test_get_collection_items(app_client, load_test_collection, load_test_
             f"/collections/{coll.id}/items",
             content=item.json(),
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 201
 
     resp = await app_client.get(
         f"/collections/{coll.id}/items",
@@ -201,6 +217,7 @@ async def test_create_item_collection(
     )
 
     assert resp.status_code == 201
+    assert "location" not in resp.headers.keys()
 
     resp = await app_client.get(
         f"/collections/{coll.id}/items",
@@ -232,6 +249,7 @@ async def test_create_item_collection_no_collection_ids(
     )
 
     assert resp.status_code == 201
+    assert "location" not in resp.headers.keys()
 
     resp = await app_client.get(
         f"/collections/{coll.id}/items",

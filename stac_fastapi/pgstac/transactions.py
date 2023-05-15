@@ -63,7 +63,7 @@ class TransactionsClient(AsyncBaseTransactionsClient):
         item: Union[stac_types.Item, stac_types.ItemCollection],
         request: Request,
         **kwargs,
-    ) -> Optional[Union[stac_types.Item, Response]]:
+    ) -> Response:
         """Create item."""
         if item["type"] == "FeatureCollection":
             valid_items = []
@@ -74,21 +74,29 @@ class TransactionsClient(AsyncBaseTransactionsClient):
 
             async with request.app.state.get_connection(request, "w") as conn:
                 await dbfunc(conn, "create_items", valid_items)
+
             return Response(status_code=201)
 
-        self._validate_item(item, collection_id)
-        item["collection"] = collection_id
+        elif item["type"] == "Feature":
+            self._validate_item(item, collection_id)
+            item["collection"] = collection_id
 
-        async with request.app.state.get_connection(request, "w") as conn:
-            await dbfunc(conn, "create_item", item)
+            async with request.app.state.get_connection(request, "w") as conn:
+                await dbfunc(conn, "create_item", item)
 
-        item["links"] = await ItemLinks(
-            collection_id=collection_id,
-            item_id=item["id"],
-            request=request,
-        ).get_links(extra_links=item.get("links"))
+            item_link = ItemLinks(
+                collection_id=collection_id,
+                item_id=item["id"],
+                request=request,
+            ).link_self()
 
-        return stac_types.Item(**item)
+            return Response(status_code=201, headers={"Location": item_link["href"]})
+
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Item body type must be 'Feature' or 'FeatureCollection', not {item['type']}",
+            )
 
     async def update_item(
         self,
