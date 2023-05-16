@@ -15,9 +15,9 @@ from stac_fastapi.types import stac as stac_types
 from stac_fastapi.types.core import AsyncBaseTransactionsClient
 from starlette.responses import JSONResponse, Response
 
+from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.db import dbfunc
 from stac_fastapi.pgstac.models.links import CollectionLinks, ItemLinks
-from stac_fastapi.pgstac.config import Settings
 
 logger = logging.getLogger("uvicorn")
 logger.setLevel(logging.INFO)

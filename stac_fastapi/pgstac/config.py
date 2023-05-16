@@ -10,7 +10,6 @@ from stac_fastapi.pgstac.types.base_item_cache import (
     DefaultBaseItemCache,
 )
 
-
 DEFAULT_INVALID_ID_CHARS = [
     ":",
     "/",
