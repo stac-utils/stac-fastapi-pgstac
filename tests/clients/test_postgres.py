@@ -57,21 +57,17 @@ async def test_delete_collection(app_client, load_test_collection):
 
 async def test_create_item(app_client, load_test_data: Callable, load_test_collection):
     coll = load_test_collection
-
     in_json = load_test_data("test_item.json")
     in_item = Item.parse_obj(in_json)
     resp = await app_client.post(
         f"/collections/{coll.id}/items",
         json=in_json,
     )
-
-    assert resp.status_code == 201
-    assert "location" in resp.headers.keys()
-
-    resp = await app_client.get(resp.headers["location"])
-
     assert resp.status_code == 200
-
+    post_item = Item.parse_obj(resp.json())
+    assert in_item.dict(exclude={"links"}) == post_item.dict(exclude={"links"})
+    resp = await app_client.get(f"/collections/{coll.id}/items/{post_item.id}")
+    assert resp.status_code == 200
     get_item = Item.parse_obj(resp.json())
     assert in_item.dict(exclude={"links"}) == get_item.dict(exclude={"links"})
 
@@ -90,10 +86,9 @@ async def test_create_item_no_collection_id(
         json=item,
     )
 
-    assert resp.status_code == 201
-    assert "location" in resp.headers.keys()
+    assert resp.status_code == 200
 
-    resp = await app_client.get(resp.headers["location"])
+    resp = await app_client.get(f"/collections/{coll.id}/items/{item['id']}")
 
     assert resp.status_code == 200
 
@@ -185,7 +180,7 @@ async def test_get_collection_items(app_client, load_test_collection, load_test_
             f"/collections/{coll.id}/items",
             content=item.json(),
         )
-        assert resp.status_code == 201
+        assert resp.status_code == 200
 
     resp = await app_client.get(
         f"/collections/{coll.id}/items",
@@ -217,7 +212,6 @@ async def test_create_item_collection(
     )
 
     assert resp.status_code == 201
-    assert "location" not in resp.headers.keys()
 
     resp = await app_client.get(
         f"/collections/{coll.id}/items",
@@ -249,7 +243,6 @@ async def test_create_item_collection_no_collection_ids(
     )
 
     assert resp.status_code == 201
-    assert "location" not in resp.headers.keys()
 
     resp = await app_client.get(
         f"/collections/{coll.id}/items",

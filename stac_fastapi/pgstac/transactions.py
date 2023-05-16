@@ -71,12 +71,12 @@ class TransactionsClient(AsyncBaseTransactionsClient):
         item: Union[stac_types.Item, stac_types.ItemCollection],
         request: Request,
         **kwargs,
-    ) -> Response:
+    ) -> Optional[Union[stac_types.Item, Response]]:
         """Create item."""
         if item["type"] == "FeatureCollection":
             valid_items = []
             for item in item["features"]:
-                self._validate_item(item, request, collection_id)
+                self._validate_item(request, item, collection_id)
                 item["collection"] = collection_id
                 valid_items.append(item)
 
@@ -86,20 +86,19 @@ class TransactionsClient(AsyncBaseTransactionsClient):
             return Response(status_code=201)
 
         elif item["type"] == "Feature":
-            self._validate_item(item, collection_id)
+            self._validate_item(request, item, collection_id)
             item["collection"] = collection_id
 
             async with request.app.state.get_connection(request, "w") as conn:
                 await dbfunc(conn, "create_item", item)
 
-            item_link = ItemLinks(
+            item["links"] = await ItemLinks(
                 collection_id=collection_id,
                 item_id=item["id"],
                 request=request,
-            ).link_self()
+            ).get_links(extra_links=item.get("links"))
 
-            return Response(status_code=201, headers={"Location": item_link["href"]})
-
+            return stac_types.Item(**item)
         else:
             raise HTTPException(
                 status_code=400,
@@ -115,7 +114,7 @@ class TransactionsClient(AsyncBaseTransactionsClient):
         **kwargs,
     ) -> Optional[Union[stac_types.Item, Response]]:
         """Update item."""
-        self._validate_item(item, collection_id, item_id)
+        self._validate_item(request, item, collection_id, item_id)
         item["collection"] = collection_id
 
         async with request.app.state.get_connection(request, "w") as conn:

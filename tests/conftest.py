@@ -213,8 +213,9 @@ async def load_test_item(app_client, load_test_data, load_test_collection):
         f"/collections/{coll.id}/items",
         json=data,
     )
-    assert resp.status_code == 201
-    return Item.parse_obj(data)
+    assert resp.status_code == 200
+
+    return Item.parse_obj(resp.json())
 
 
 @pytest.fixture
