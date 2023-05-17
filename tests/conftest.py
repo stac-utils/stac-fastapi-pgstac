@@ -214,6 +214,7 @@ async def load_test_item(app_client, load_test_data, load_test_collection):
         json=data,
     )
     assert resp.status_code == 200
+
     return Item.parse_obj(resp.json())
 
 

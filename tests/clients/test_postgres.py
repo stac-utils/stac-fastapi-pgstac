@@ -57,7 +57,6 @@ async def test_delete_collection(app_client, load_test_collection):
 
 async def test_create_item(app_client, load_test_data: Callable, load_test_collection):
     coll = load_test_collection
-
     in_json = load_test_data("test_item.json")
     in_item = Item.parse_obj(in_json)
     resp = await app_client.post(
@@ -65,16 +64,81 @@ async def test_create_item(app_client, load_test_data: Callable, load_test_colle
         json=in_json,
     )
     assert resp.status_code == 200
-
     post_item = Item.parse_obj(resp.json())
     assert in_item.dict(exclude={"links"}) == post_item.dict(exclude={"links"})
-
     resp = await app_client.get(f"/collections/{coll.id}/items/{post_item.id}")
+    assert resp.status_code == 200
+    get_item = Item.parse_obj(resp.json())
+    assert in_item.dict(exclude={"links"}) == get_item.dict(exclude={"links"})
+
+
+async def test_create_item_no_collection_id(
+    app_client, load_test_data: Callable, load_test_collection
+):
+    """Items with no collection id should be set with the collection id from the path"""
+    coll = load_test_collection
+
+    item = load_test_data("test_item.json")
+    item["collection"] = None
+
+    resp = await app_client.post(
+        f"/collections/{coll.id}/items",
+        json=item,
+    )
+
+    assert resp.status_code == 200
+
+    resp = await app_client.get(f"/collections/{coll.id}/items/{item['id']}")
 
     assert resp.status_code == 200
 
     get_item = Item.parse_obj(resp.json())
-    assert in_item.dict(exclude={"links"}) == get_item.dict(exclude={"links"})
+    assert get_item.collection == coll.id
+
+
+async def test_create_item_invalid_ids(
+    app_client, load_test_data: Callable, load_test_collection
+):
+    """Items with invalid ids should return an error"""
+    coll = load_test_collection
+
+    item = load_test_data("test_item.json")
+    item["id"] = "invalid/id"
+    resp = await app_client.post(
+        f"/collections/{coll.id}/items",
+        json=item,
+    )
+    assert resp.status_code == 400
+
+
+async def test_create_item_invalid_collection_id(
+    app_client, load_test_data: Callable, load_test_collection
+):
+    """Items with invalid collection ids should return an error"""
+    coll = load_test_collection
+
+    item = load_test_data("test_item.json")
+    item["collection"] = "wrong-collection-id"
+    resp = await app_client.post(
+        f"/collections/{coll.id}/items",
+        json=item,
+    )
+    assert resp.status_code == 400
+
+
+async def test_create_item_bad_body(
+    app_client, load_test_data: Callable, load_test_collection
+):
+    """Items with invalid type should return an error"""
+    coll = load_test_collection
+
+    item = load_test_data("test_item.json")
+    item["type"] = "not-a-type"
+    resp = await app_client.post(
+        f"/collections/{coll.id}/items",
+        json=item,
+    )
+    assert resp.status_code == 400
 
 
 async def test_update_item(app_client, load_test_collection, load_test_item):
@@ -125,6 +189,115 @@ async def test_get_collection_items(app_client, load_test_collection, load_test_
     fc = resp.json()
     assert "features" in fc
     assert len(fc["features"]) == 5
+
+
+async def test_create_item_collection(
+    app_client, load_test_data: Callable, load_test_collection
+):
+    """POSTing a FeatureCollection to the items endpoint should create the items"""
+    coll = load_test_collection
+    base_item = load_test_data("test_item.json")
+
+    items = []
+    for _ in range(5):
+        item = deepcopy(base_item)
+        item["id"] = str(uuid.uuid4())
+        items.append(item)
+
+    item_collection = {"type": "FeatureCollection", "features": items, "links": []}
+
+    resp = await app_client.post(
+        f"/collections/{coll.id}/items",
+        json=item_collection,
+    )
+
+    assert resp.status_code == 201
+
+    resp = await app_client.get(
+        f"/collections/{coll.id}/items",
+    )
+    for item in items:
+        resp = await app_client.get(f"/collections/{coll.id}/items/{item['id']}")
+        assert resp.status_code == 200
+
+
+async def test_create_item_collection_no_collection_ids(
+    app_client, load_test_data: Callable, load_test_collection
+):
+    """Items in ItemCollection with no collection ids should be set with the collection id from the path"""
+    coll = load_test_collection
+    base_item = load_test_data("test_item.json")
+
+    items = []
+    for _ in range(5):
+        item = deepcopy(base_item)
+        item["id"] = str(uuid.uuid4())
+        item["collection"] = None
+        items.append(item)
+
+    item_collection = {"type": "FeatureCollection", "features": items, "links": []}
+
+    resp = await app_client.post(
+        f"/collections/{coll.id}/items",
+        json=item_collection,
+    )
+
+    assert resp.status_code == 201
+
+    resp = await app_client.get(
+        f"/collections/{coll.id}/items",
+    )
+    for item in items:
+        resp = await app_client.get(f"/collections/{coll.id}/items/{item['id']}")
+        assert resp.status_code == 200
+        assert resp.json()["collection"] == coll.id
+
+
+async def test_create_item_collection_invalid_collection_ids(
+    app_client, load_test_data: Callable, load_test_collection
+):
+    """Feature collection containing items with invalid collection ids should return an error"""
+    coll = load_test_collection
+    base_item = load_test_data("test_item.json")
+
+    items = []
+    for _ in range(5):
+        item = deepcopy(base_item)
+        item["id"] = str(uuid.uuid4())
+        item["collection"] = "wrong-collection-id"
+        items.append(item)
+
+    item_collection = {"type": "FeatureCollection", "features": items, "links": []}
+
+    resp = await app_client.post(
+        f"/collections/{coll.id}/items",
+        json=item_collection,
+    )
+
+    assert resp.status_code == 400
+
+
+async def test_create_item_collection_invalid_item_ids(
+    app_client, load_test_data: Callable, load_test_collection
+):
+    """Feature collection containing items with invalid ids should return an error"""
+    coll = load_test_collection
+    base_item = load_test_data("test_item.json")
+
+    items = []
+    for _ in range(5):
+        item = deepcopy(base_item)
+        item["id"] = str(uuid.uuid4()) + "/bad/id"
+        items.append(item)
+
+    item_collection = {"type": "FeatureCollection", "features": items, "links": []}
+
+    resp = await app_client.post(
+        f"/collections/{coll.id}/items",
+        json=item_collection,
+    )
+
+    assert resp.status_code == 400
 
 
 async def test_create_bulk_items(
