@@ -109,7 +109,7 @@ async def pgstac(pg):
     with PgstacDB(dsn=settings.testing_connection_string) as db:
         migrator = Migrate(db)
         version = migrator.run_migration()
-    print(f"PGStac Migrated to {version}")
+    logger.info(f"PGStac Migrated to {version}")
 
 
 # Run all the tests that use the api_client in both db hydrate and api hydrate mode
