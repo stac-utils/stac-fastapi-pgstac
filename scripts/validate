@@ -5,14 +5,14 @@
 # Assumptions:
 #
 #   - You have stac-api-validator installed, e.g. via `pip install stac-api-validator`
-#   - You've loaded the joplin data, probably using `python ./scripts/ingest_joplin.py http://localhost:8080``
+#   - You've loaded the joplin data, probably using `python ./scripts/ingest_joplin.py http://localhost:8082``
 #
 # Currently, item-search is not checked, because it crashes stac-api-validator (probably a problem on our side).
 
 set -e
 
 if [ $# -eq 0 ]; then
-    root_url=http://localhost:8080
+    root_url=http://localhost:8082
 else
     root_url="$1"
 fi
