@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [2.4.8] - 2023-06-08
+
+### Changed
+
+- Updated **stac-fastapi** to v2.4.8, which updates our STAC API version to v1.0.0 ([#40](https://github.com/stac-utils/stac-fastapi-pgstac/pull/40))
+
 ## [2.4.7] - 2023-05-17
 
 ### Added
@@ -267,7 +273,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.7..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.8..main>
+[2.4.8]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.7..2.4.8>
 [2.4.7]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.6..2.4.7>
 [2.4.6]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.5..2.4.6>
 [2.4.5]: <https://github.com/stac-utils/stac-fastapi/compare/2.4.4..2.4.5>
