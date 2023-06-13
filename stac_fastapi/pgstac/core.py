@@ -213,7 +213,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         if settings.use_api_hydrate:
 
             async def _get_base_item(collection_id: str) -> Dict[str, Any]:
-                return await self._get_base_item(collection_id, request)
+                return await self._get_base_item(collection_id, request=request)
 
             base_item_cache = settings.base_item_cache(
                 fetch_base_item=_get_base_item, request=request
@@ -267,7 +267,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             An ItemCollection.
         """
         # If collection does not exist, NotFoundError wil be raised
-        await self.get_collection(collection_id, request)
+        await self.get_collection(collection_id, request=request)
 
         base_args = {
             "collections": [collection_id],
@@ -285,7 +285,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         search_request = self.post_request_model(
             **clean,
         )
-        item_collection = await self._search_base(search_request, request)
+        item_collection = await self._search_base(search_request, request=request)
         links = await ItemCollectionLinks(
             collection_id=collection_id, request=request
         ).get_links(extra_links=item_collection["links"])
@@ -307,12 +307,12 @@ class CoreCrudClient(AsyncBaseCoreClient):
             Item.
         """
         # If collection does not exist, NotFoundError wil be raised
-        await self.get_collection(collection_id, request)
+        await self.get_collection(collection_id, request=request)
 
         search_request = self.post_request_model(
             ids=[item_id], collections=[collection_id], limit=1
         )
-        item_collection = await self._search_base(search_request, request)
+        item_collection = await self._search_base(search_request, request=request)
         if not item_collection["features"]:
             raise NotFoundError(
                 f"Item {item_id} in Collection {collection_id} does not exist."
@@ -333,7 +333,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         Returns:
             ItemCollection containing items which match the search criteria.
         """
-        item_collection = await self._search_base(search_request, request)
+        item_collection = await self._search_base(search_request, request=request)
         return ItemCollection(**item_collection)
 
     async def get_search(
