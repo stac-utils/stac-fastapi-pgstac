@@ -1,10 +1,17 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any, Callable, Coroutine, Dict, List, Optional, TypeVar
 from urllib.parse import quote_plus
 
 import orjson
 import pytest
+from fastapi import Request
+from httpx import AsyncClient
 from pystac import Collection, Extent, Item, SpatialExtent, TemporalExtent
+from stac_fastapi.api.app import StacApi
+from stac_fastapi.types import stac as stac_types
+
+from stac_fastapi.pgstac.core import CoreCrudClient, Settings
+from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
 
 STAC_CORE_ROUTES = [
     "GET /",
@@ -622,3 +629,47 @@ async def test_sorting_and_paging(app_client, load_test_collection, direction: s
     }
     items = await search(query)
     assert len(items) == 10, items
+
+
+@pytest.mark.asyncio
+async def test_wrapped_function() -> None:
+    # Ensure wrappers, e.g. Planetary Computer's rate limiting, work.
+    # https://github.com/gadomski/planetary-computer-apis/blob/2719ccf6ead3e06de0784c39a2918d4d1811368b/pccommon/pccommon/redis.py#L205-L238
+
+    T = TypeVar("T")
+
+    def wrap() -> (
+        Callable[
+            [Callable[..., Coroutine[Any, Any, T]]],
+            Callable[..., Coroutine[Any, Any, T]],
+        ]
+    ):
+        def decorator(
+            fn: Callable[..., Coroutine[Any, Any, T]]
+        ) -> Callable[..., Coroutine[Any, Any, T]]:
+            async def _wrapper(*args: Any, **kwargs: Any) -> T:
+                request: Optional[Request] = kwargs.get("request")
+                if request:
+                    pass  # This is where rate limiting would be applied
+                else:
+                    raise ValueError(f"Missing request in {fn.__name__}")
+                return await fn(*args, **kwargs)
+
+            return _wrapper
+
+        return decorator
+
+    class Client(CoreCrudClient):
+        @wrap()
+        async def all_collections(self, **kwargs) -> stac_types.Collections:
+            return await super().all_collections(**kwargs)
+
+    api = StacApi(client=Client(), settings=Settings(testing=True))
+    app = api.app
+    await connect_to_db(app)
+    try:
+        async with AsyncClient(app=app) as client:
+            response = await client.get("http://test/collections")
+        assert response.status_code == 200
+    finally:
+        await close_db_connection(app)
