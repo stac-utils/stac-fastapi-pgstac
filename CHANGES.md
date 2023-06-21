@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.4.9] - 2023-06-21
+
 ### Fixed
 
 - Pass `request` by name when calling endpoints from other endpoints ([#44](https://github.com/stac-utils/stac-fastapi-pgstac/pull/44))
@@ -277,7 +279,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.8..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.9..main>
+[2.4.9]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.8..2.4.9>
 [2.4.8]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.7..2.4.8>
 [2.4.7]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.6..2.4.7>
 [2.4.6]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.5..2.4.6>
