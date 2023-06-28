@@ -28,7 +28,6 @@ extra_reqs = {
         "pytest-cov",
         "pytest-asyncio>=0.17",
         "pre-commit",
-        "requests",
         "shapely",
         "httpx",
         "twine",

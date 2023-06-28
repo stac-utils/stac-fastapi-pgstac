@@ -1,4 +1,6 @@
-FROM python:3.8-slim as base
+ARG PYTHON_VERSION=3.11
+
+FROM python:${PYTHON_VERSION}-slim as base
 
 # Any python libraries that require system libraries to be installed will likely
 # need the following packages in order to build
@@ -16,4 +18,18 @@ WORKDIR /app
 
 COPY . /app
 
-RUN pip install -e .[dev,server]
+COPY README.md README.md
+COPY LICENSE LICENSE
+COPY stac_fastapi/ stac_fastapi/
+COPY pyproject.toml pyproject.toml
+COPY setup.cfg setup.cfg
+COPY setup.py setup.py
+COPY VERSION VERSION
+
+RUN python -m pip install -e .[server]
+RUN rm -rf README.md LICENSE stac_fastapi/ pyproject.toml setup.cfg setup.py VERSION
+
+# http://www.uvicorn.org/settings/
+ENV APP_HOST 0.0.0.0
+ENV APP_PORT 80
+CMD uvicorn stac_fastapi.pgstac.app:app --host ${APP_HOST} --port ${APP_PORT}

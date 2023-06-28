@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 from urllib.parse import urljoin
 
-import requests
+import httpx
 
 workingdir = Path(__file__).parent.absolute()
 joplindata = workingdir.parent / "testdata" / "joplin"
@@ -17,11 +17,11 @@ if not app_host:
 
 def post_or_put(url: str, data: dict):
     """Post or put data to url."""
-    r = requests.post(url, json=data)
+    r = httpx.post(url, json=data)
     if r.status_code == 409:
         new_url = url if data["type"] == "Collection" else url + f"/{data['id']}"
         # Exists, so update
-        r = requests.put(new_url, json=data)
+        r = httpx.put(new_url, json=data)
         # Unchanged may throw a 404
         if not r.status_code == 404:
             r.raise_for_status()

@@ -17,23 +17,22 @@ services:
       - POSTGRES_HOST_WRITER=database
       - POSTGRES_PORT=5432
       - WEB_CONCURRENCY=10
-      - VSI_CACHE=TRUE
-      - GDAL_HTTP_MERGE_CONSECUTIVE_RANGES=YES
-      - GDAL_DISABLE_READDIR_ON_OPEN=EMPTY_DIR
       - DB_MIN_CONN_SIZE=1
       - DB_MAX_CONN_SIZE=1
       - USE_API_HYDRATE=${USE_API_HYDRATE:-false}
+      # Uvicorn Options
+      # - WEB_CONCURRENCY=1
     ports:
       - "8082:8082"
     volumes:
       - .:/app
     depends_on:
       - database
-    command: bash -c "./scripts/wait-for-it.sh database:5432 && python -m stac_fastapi.pgstac.app"
+    command: bash -c "./scripts/wait-for-it.sh database:5432 && uvicorn stac_fastapi.pgstac.app:app --host 0.0.0.0 --port 8082"
 
   database:
     container_name: stac-db
-    image: ghcr.io/stac-utils/pgstac:v0.7.9
+    image: ghcr.io/stac-utils/pgstac:v0.7.10
     environment:
       - POSTGRES_USER=username
       - POSTGRES_PASSWORD=password
