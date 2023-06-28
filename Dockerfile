@@ -26,7 +26,7 @@ COPY setup.cfg setup.cfg
 COPY setup.py setup.py
 COPY VERSION VERSION
 
-RUN python -m pip install -e .[server]
+RUN python -m pip install -e .[server] httpx
 RUN rm -rf README.md LICENSE stac_fastapi/ pyproject.toml setup.cfg setup.py VERSION
 
 # http://www.uvicorn.org/settings/
