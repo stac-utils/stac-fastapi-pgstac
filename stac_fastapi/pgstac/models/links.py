@@ -204,6 +204,14 @@ class CollectionLinks(CollectionLinksBase):
             href=self.resolve(f"collections/{self.collection_id}/items"),
         )
 
+    def link_queryables(self) -> Dict:
+        """Create the `queryables` link."""
+        return dict(
+            rel=Relations.queryables.value,
+            type=MimeTypes.json.value,
+            href=self.resolve(f"collections/{self.collection_id}/queryables"),
+        )
+
 
 @attr.s
 class ItemCollectionLinks(CollectionLinksBase):
