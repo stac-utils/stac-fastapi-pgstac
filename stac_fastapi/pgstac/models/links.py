@@ -208,7 +208,7 @@ class CollectionLinks(CollectionLinksBase):
         """Create the `queryables` link."""
         return dict(
             rel=Relations.queryables.value,
-            type=MimeTypes.schemajson.value,
+            type=MimeTypes.jsonschema.value,
             href=self.resolve(f"collections/{self.collection_id}/queryables"),
         )
 
