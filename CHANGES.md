@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add `/queryables` link to the collections ([#49](https://github.com/stac-utils/stac-fastapi-pgstac/pull/49))
+
 ## [2.4.9] - 2023-06-21
 
 ### Fixed
