@@ -11,7 +11,7 @@ from starlette.requests import Request
 
 # These can be inferred from the item/collection so they aren't included in the database
 # Instead they are dynamically generated when querying the database using the classes defined below
-INFERRED_LINK_RELS = ["self", "item", "parent", "collection", "root"]
+INFERRED_LINK_RELS = ["self", "item", "parent", "collection", "root", Relations.queryables.value]
 
 
 def filter_links(links: List[Dict]) -> List[Dict]:
@@ -202,6 +202,14 @@ class CollectionLinks(CollectionLinksBase):
             rel="items",
             type=MimeTypes.geojson.value,
             href=self.resolve(f"collections/{self.collection_id}/items"),
+        )
+
+    def link_queryables(self) -> Dict:
+        """Create the `queryables` link."""
+        return dict(
+            rel=Relations.queryables.value,
+            type=MimeTypes.jsonschema.value,
+            href=self.resolve(f"collections/{self.collection_id}/queryables"),
         )
 
 
