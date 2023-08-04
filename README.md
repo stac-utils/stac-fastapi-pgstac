@@ -81,7 +81,7 @@ mkdocs serve
 ## History
 
 **stac-fastapi-pgstac** was initially added to **stac-fastapi** by [developmentseed](https://github.com/developmentseed).
-In April of 2023, it was removed from the core **stac-fastapi** repository and moved to its current location (<http://github.com/stac-util/stac-fastapi-pgstac>).
+In April of 2023, it was removed from the core **stac-fastapi** repository and moved to its current location (<http://github.com/stac-utils/stac-fastapi-pgstac>).
 
 ## License
 
