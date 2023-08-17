@@ -17,3 +17,5 @@ WORKDIR /app
 COPY . /app
 
 RUN pip install -e .[dev,server]
+
+CMD ["uvicorn", "stac_fastapi.pgstac.app:app", "--host", "0.0.0.0", "--port", "8080"]
