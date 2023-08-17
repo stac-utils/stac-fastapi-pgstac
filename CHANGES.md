@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Added back the `CMD` to the Dockerfile that was dropped during the repo split ([#52](https://github.com/stac-utils/stac-fastapi-pgstac/pull/52))
+
 ## [2.4.9] - 2023-06-21
 
 ### Fixed
