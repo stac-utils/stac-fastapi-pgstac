@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.4.10] - 2023-08-18
+
 ### Fixed
 
 - Added back the `CMD` to the Dockerfile that was dropped during the repo split ([#52](https://github.com/stac-utils/stac-fastapi-pgstac/pull/52))
@@ -283,7 +285,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.9..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.10..main>
+[2.4.10]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.9..2.4.10>
 [2.4.9]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.8..2.4.9>
 [2.4.8]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.7..2.4.8>
 [2.4.7]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.6..2.4.7>
