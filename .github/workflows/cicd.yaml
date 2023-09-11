@@ -15,7 +15,7 @@ jobs:
 
     services:
       db_service:
-        image: ghcr.io/stac-utils/pgstac:v0.7.1
+        image: ghcr.io/stac-utils/pgstac:v0.7.10
         env:
           POSTGRES_USER: username
           POSTGRES_PASSWORD: password
@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       pgstac:
-        image: ghcr.io/stac-utils/pgstac:v0.7.1
+        image: ghcr.io/stac-utils/pgstac:v0.7.10
         env:
           POSTGRES_USER: username
           POSTGRES_PASSWORD: password
