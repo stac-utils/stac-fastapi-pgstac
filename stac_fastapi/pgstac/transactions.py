@@ -180,16 +180,16 @@ class BulkTransactionsClient(AsyncBaseBulkTransactionsClient):
     """Postgres bulk transactions."""
 
     async def bulk_item_insert(
-        self, items: Items, request: Request, method: BulkTransactionMethod, **kwargs
+        self, items: Items, request: Request, **kwargs
     ) -> str:
         """Bulk item insertion using pgstac."""
-        items = list(items.items.values())
+        items_to_insert = list(items.items.values())
 
         async with request.app.state.get_connection(request, "w") as conn:
-            if method == BulkTransactionMethod.INSERT:
-                await dbfunc(conn, "create_items", items)
-            elif method == BulkTransactionMethod.UPSERT:
-                await dbfunc(conn, "upsert_items", items)
+            if items.method == BulkTransactionMethod.INSERT:
+                await dbfunc(conn, "create_items", items_to_insert)
+            elif items.method == BulkTransactionMethod.UPSERT:
+                await dbfunc(conn, "upsert_items", items_to_insert)
 
-        return_msg = f"Successfully added {len(items)} items."
+        return_msg = f"Successfully added {len(items_to_insert)} items."
         return return_msg
