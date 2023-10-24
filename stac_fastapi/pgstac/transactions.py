@@ -9,8 +9,8 @@ from buildpg import render
 from fastapi import HTTPException, Request
 from stac_fastapi.extensions.third_party.bulk_transactions import (
     AsyncBaseBulkTransactionsClient,
-    Items,
     BulkTransactionMethod,
+    Items,
 )
 from stac_fastapi.types import stac as stac_types
 from stac_fastapi.types.core import AsyncBaseTransactionsClient
@@ -179,9 +179,7 @@ class TransactionsClient(AsyncBaseTransactionsClient):
 class BulkTransactionsClient(AsyncBaseBulkTransactionsClient):
     """Postgres bulk transactions."""
 
-    async def bulk_item_insert(
-        self, items: Items, request: Request, **kwargs
-    ) -> str:
+    async def bulk_item_insert(self, items: Items, request: Request, **kwargs) -> str:
         """Bulk item insertion using pgstac."""
         items_to_insert = list(items.items.values())
 
