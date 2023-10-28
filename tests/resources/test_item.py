@@ -758,10 +758,10 @@ async def test_item_search_get_query_extension(
     )
 
 
-async def test_item_search_get_filter_extension_cql(
+async def test_item_search_post_filter_extension_cql(
     app_client, load_test_data, load_test_collection
 ):
-    """Test GET search with JSONB query (cql json filter extension)"""
+    """Test POST search with JSONB query (cql json filter extension)"""
     test_item = load_test_data("test_item.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
@@ -808,10 +808,10 @@ async def test_item_search_get_filter_extension_cql(
     )
 
 
-async def test_item_search_get_filter_extension_cql2(
+async def test_item_search_post_filter_extension_cql2(
     app_client, load_test_data, load_test_collection
 ):
-    """Test GET search with JSONB query (cql2 json filter extension)"""
+    """Test POST search with JSONB query (cql2 json filter extension)"""
     test_item = load_test_data("test_item.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
@@ -862,10 +862,10 @@ async def test_item_search_get_filter_extension_cql2(
     )
 
 
-async def test_item_search_get_filter_extension_cql2_with_query_fails(
+async def test_item_search_post_filter_extension_cql2_with_query_fails(
     app_client, load_test_data, load_test_collection
 ):
-    """Test GET search with JSONB query (cql2 json filter extension)"""
+    """Test POST search with JSONB query (cql2 json filter extension)"""
     test_item = load_test_data("test_item.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
@@ -1285,10 +1285,10 @@ async def test_preserves_extra_link(
     assert extra_link[0]["href"] == expected_href
 
 
-async def test_item_search_get_filter_extension_cql_explicitlang(
+async def test_item_search_post_filter_extension_cql_explicitlang(
     app_client, load_test_data, load_test_collection
 ):
-    """Test GET search with JSONB query (cql json filter extension)"""
+    """Test POST search with JSONB query (cql json filter extension)"""
     test_item = load_test_data("test_item.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
@@ -1331,10 +1331,10 @@ async def test_item_search_get_filter_extension_cql_explicitlang(
     )
 
 
-async def test_item_search_get_filter_extension_cql2_2(
+async def test_item_search_post_filter_extension_cql2_2(
     app_client, load_test_data, load_test_collection
 ):
-    """Test GET search with JSONB query (cql json filter extension)"""
+    """Test POST search with JSONB query (cql json filter extension)"""
     test_item = load_test_data("test_item.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
@@ -1421,7 +1421,7 @@ async def test_search_datetime_validation_errors(app_client):
         assert resp.status_code == 400
 
 
-async def test_filter_cql2text(app_client, load_test_data, load_test_collection):
+async def test_get_filter_cql2text(app_client, load_test_data, load_test_collection):
     """Test GET search with cql2-text"""
     test_item = load_test_data("test_item.json")
     resp = await app_client.post(
