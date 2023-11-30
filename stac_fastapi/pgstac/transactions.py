@@ -185,9 +185,11 @@ class BulkTransactionsClient(AsyncBaseBulkTransactionsClient):
 
         async with request.app.state.get_connection(request, "w") as conn:
             if items.method == BulkTransactionMethod.INSERT:
+                method_verb = "added"
                 await dbfunc(conn, "create_items", items_to_insert)
             elif items.method == BulkTransactionMethod.UPSERT:
+                method_verb = "upserted"
                 await dbfunc(conn, "upsert_items", items_to_insert)
 
-        return_msg = f"Successfully added {len(items_to_insert)} items."
+        return_msg = f"Successfully {method_verb} {len(items_to_insert)} items."
         return return_msg
