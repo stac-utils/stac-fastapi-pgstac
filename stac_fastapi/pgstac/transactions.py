@@ -9,6 +9,7 @@ from buildpg import render
 from fastapi import HTTPException, Request
 from stac_fastapi.extensions.third_party.bulk_transactions import (
     AsyncBaseBulkTransactionsClient,
+    BulkTransactionMethod,
     Items,
 )
 from stac_fastapi.types import stac as stac_types
@@ -180,9 +181,15 @@ class BulkTransactionsClient(AsyncBaseBulkTransactionsClient):
 
     async def bulk_item_insert(self, items: Items, request: Request, **kwargs) -> str:
         """Bulk item insertion using pgstac."""
-        items = list(items.items.values())
-        async with request.app.state.get_connection(request, "w") as conn:
-            await dbfunc(conn, "create_items", items)
+        items_to_insert = list(items.items.values())
 
-        return_msg = f"Successfully added {len(items)} items."
+        async with request.app.state.get_connection(request, "w") as conn:
+            if items.method == BulkTransactionMethod.INSERT:
+                method_verb = "added"
+                await dbfunc(conn, "create_items", items_to_insert)
+            elif items.method == BulkTransactionMethod.UPSERT:
+                method_verb = "upserted"
+                await dbfunc(conn, "upsert_items", items_to_insert)
+
+        return_msg = f"Successfully {method_verb} {len(items_to_insert)} items."
         return return_msg
