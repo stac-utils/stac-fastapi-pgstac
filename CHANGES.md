@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [2.4.11] - 2023-12-01
+
+### Changed
+
 - Add `method` parameter to Bulk Transactions requests in order to support upserting bulk data ([#64](https://github.com/stac-utils/stac-fastapi-pgstac/pull/64))
 
 ## [2.4.10] - 2023-08-18
