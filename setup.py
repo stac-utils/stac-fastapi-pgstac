@@ -26,7 +26,7 @@ extra_reqs = {
         "pypgstac[psycopg]==0.7.*",
         "pytest",
         "pytest-cov",
-        "pytest-asyncio>=0.17",
+        "pytest-asyncio>=0.17,<0.23.0",
         "pre-commit",
         "requests",
         "shapely",
