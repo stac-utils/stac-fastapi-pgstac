@@ -8,7 +8,7 @@ with open("README.md") as f:
 install_requires = [
     "attrs",
     "orjson",
-    "pydantic[dotenv]>=1.10.8",  # https://github.com/pydantic/pydantic/issues/5821
+    "pydantic[dotenv]>=1.10.8,<2", # https://github.com/pydantic/pydantic/issues/5821
     "stac_pydantic==2.0.*",
     "stac-fastapi.types~=2.4.9",
     "stac-fastapi.api~=2.4.9",
@@ -17,13 +17,13 @@ install_requires = [
     "buildpg",
     "brotli_asgi",
     "pygeofilter>=0.2",
-    "pypgstac==0.7.*",
+    "pypgstac>=0.7.0,!=0.8.0,!=0.8.1,",
 ]
 
 extra_reqs = {
     "dev": [
         "pystac[validation]",
-        "pypgstac[psycopg]==0.7.*",
+        "pypgstac[psycopg]>=0.7.0,!=0.8.0,!=0.8.1,",
         "pytest",
         "pytest-cov",
         "pytest-asyncio>=0.17,<0.23.0",
