@@ -8,7 +8,7 @@ with open("README.md") as f:
 install_requires = [
     "attrs",
     "orjson",
-    "pydantic[dotenv]>=1.10.8,<2", # https://github.com/pydantic/pydantic/issues/5821
+    "pydantic[dotenv]>=1.10.8,<2",  # https://github.com/pydantic/pydantic/issues/5821
     "stac_pydantic==2.0.*",
     "stac-fastapi.types~=2.4.9",
     "stac-fastapi.api~=2.4.9",
