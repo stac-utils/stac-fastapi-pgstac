@@ -3,6 +3,7 @@
 from typing import List, Type
 from urllib.parse import quote
 
+from pydantic import BaseModel, Extra
 from stac_fastapi.types.config import ApiSettings
 
 from stac_fastapi.pgstac.types.base_item_cache import (
@@ -32,6 +33,13 @@ DEFAULT_INVALID_ID_CHARS = [
 ]
 
 
+class ServerSettings(BaseModel, extra=Extra.allow):
+    """Server runtime parameters."""
+
+    search_path: str = "pgstac,public"
+    application_name: str = "pgstac"
+
+
 class Settings(ApiSettings):
     """Postgres-specific API settings.
 
@@ -58,6 +66,8 @@ class Settings(ApiSettings):
     db_max_queries: int = 50000
     db_max_inactive_conn_lifetime: float = 300
 
+    server_settings: ServerSettings = ServerSettings()
+
     use_api_hydrate: bool = False
     base_item_cache: Type[BaseItemCache] = DefaultBaseItemCache
     invalid_id_chars: List[str] = DEFAULT_INVALID_ID_CHARS
@@ -78,3 +88,8 @@ class Settings(ApiSettings):
     def testing_connection_string(self):
         """Create testing psql connection string."""
         return f"postgresql://{self.postgres_user}:{quote(self.postgres_pass)}@{self.postgres_host_writer}:{self.postgres_port}/pgstactestdb"
+
+    class Config(ApiSettings.Config):
+        """Model config."""
+
+        env_nested_delimiter = "__"
