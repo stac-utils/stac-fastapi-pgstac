@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 from urllib.parse import unquote_plus, urljoin
 
 import attr
+import json
 import orjson
 from asyncpg.exceptions import InvalidDatetimeFormatError
 from buildpg import render
@@ -16,6 +17,7 @@ from pypgstac.hydration import hydrate
 from stac_fastapi.types.core import AsyncBaseCoreClient
 from stac_fastapi.types.errors import InvalidQueryParameter, NotFoundError
 from stac_fastapi.types.requests import get_base_url
+from stac_fastapi.types.rfc3339 import DateTimeType
 from stac_fastapi.types.stac import Collection, Collections, Item, ItemCollection
 from stac_pydantic.links import Relations
 from stac_pydantic.shared import MimeTypes
@@ -159,6 +161,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
         search_request.conf["nohydrate"] = settings.use_api_hydrate
         search_request_json = search_request.json(exclude_none=True, by_alias=True)
 
+        print(search_request_json)
+
         try:
             async with request.app.state.get_connection(request, "r") as conn:
                 q, p = render(
@@ -268,6 +272,13 @@ class CoreCrudClient(AsyncBaseCoreClient):
         """
         # If collection does not exist, NotFoundError wil be raised
         await self.get_collection(collection_id, request=request)
+
+        query_params = dict(request.query_params)  # Convert MultiDict to dict
+
+        # I am not sure why I have to do this .... as of stac-fastapi 2.5.2
+        if "datetime" in query_params:
+            datetime = query_params["datetime"]
+        print("datetime: ", datetime)
 
         base_args = {
             "collections": [collection_id],
@@ -387,8 +398,27 @@ class CoreCrudClient(AsyncBaseCoreClient):
         if datetime:
             base_args["datetime"] = datetime
 
+        # As of stac-fastapi 2.5.x, the intersects GET request parameter is being sent as a list
         if intersects:
-            base_args["intersects"] = orjson.loads(unquote_plus(intersects))
+            intersects_dict = {"type": None, "coordinates": None}
+
+            combined_json_string = intersects[0]
+
+            # Iterate over the remaining fragments and add each with a preceding comma
+            for fragment in intersects[1:]:
+                combined_json_string += "," + fragment
+
+            combined_json_string = combined_json_string.replace("'", "")
+            combined_json_string = "".join(
+                char for char in combined_json_string if char.isprintable()
+            )
+
+            try:
+                intersects_dict = json.loads(combined_json_string)
+            except json.JSONDecodeError as error:
+                print("Failed to parse JSON:", error)
+
+            base_args["intersects"] = intersects_dict
 
         if sortby:
             # https://github.com/radiantearth/stac-spec/tree/master/api-spec/extensions/sort#http-get-or-post-form
