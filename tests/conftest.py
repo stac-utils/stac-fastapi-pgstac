@@ -8,12 +8,12 @@ from urllib.parse import urljoin
 
 import asyncpg
 import pytest
-
 from fastapi import APIRouter
 from fastapi.responses import ORJSONResponse
 from httpx import AsyncClient
 from pypgstac.db import PgstacDB
 from pypgstac.migrate import Migrate
+from pytest_postgresql.janitor import DatabaseJanitor
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.models import create_get_request_model, create_post_request_model
 from stac_fastapi.extensions.core import (
@@ -34,7 +34,6 @@ from stac_fastapi.pgstac.extensions import QueryExtension
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
-from pytest_postgresql.janitor import DatabaseJanitor
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
@@ -57,7 +56,9 @@ def database(postgresql_proc):
         version=postgresql_proc.version,
         password="secret",
     ) as jan:
-        connection = f'postgresql://{jan.user}:{jan.password}@{jan.host}:{jan.port}/{jan.dbname}'
+        connection = (
+            f"postgresql://{jan.user}:{jan.password}@{jan.host}:{jan.port}/{jan.dbname}"
+        )
         with PgstacDB(dsn=connection) as db:
             migrator = Migrate(db)
             version = migrator.run_migration()
@@ -68,7 +69,7 @@ def database(postgresql_proc):
 
 @pytest.fixture(autouse=True)
 async def pgstac(database):
-    connection = f'postgresql://{database.user}:{database.password}@{database.host}:{database.port}/{database.dbname}'
+    connection = f"postgresql://{database.user}:{database.password}@{database.host}:{database.port}/{database.dbname}"
     yield
     conn = await asyncpg.connect(dsn=connection)
     await conn.execute(
