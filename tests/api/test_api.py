@@ -636,7 +636,7 @@ async def test_sorting_and_paging(app_client, load_test_collection, direction: s
 
 
 @pytest.mark.asyncio
-async def test_wrapped_function(load_test_data) -> None:
+async def test_wrapped_function(load_test_data, database) -> None:
     # Ensure wrappers, e.g. Planetary Computer's rate limiting, work.
     # https://github.com/gadomski/planetary-computer-apis/blob/2719ccf6ead3e06de0784c39a2918d4d1811368b/pccommon/pccommon/redis.py#L205-L238
 
@@ -672,7 +672,16 @@ async def test_wrapped_function(load_test_data) -> None:
                 collection_id, request=request, **kwargs
             )
 
-    settings = Settings(testing=True)
+    settings = Settings(
+        postgres_user=database.user,
+        postgres_pass=database.password,
+        postgres_host_reader=database.host,
+        postgres_host_writer=database.host,
+        postgres_port=database.port,
+        postgres_dbname=database.dbname,
+        testing=True,
+    )
+
     extensions = [
         TransactionExtension(client=TransactionsClient(), settings=settings),
         FieldsExtension(),
