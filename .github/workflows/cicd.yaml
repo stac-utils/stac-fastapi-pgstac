@@ -5,8 +5,6 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  LATEST_PY_VERSION: '3.9'
 
 jobs:
   test:
@@ -29,7 +27,7 @@ jobs:
           cache-dependency-path: setup.py
 
       - name: Lint code
-        if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
+        if: ${{ matrix.python-version == 3.8 }}
         run: |
           python -m pip install pre-commit
           pre-commit run --all-files
@@ -73,7 +71,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.LATEST_PY_VERSION }}
+          python-version: "3.10"
           cache: pip
           cache-dependency-path: setup.py
 
@@ -105,7 +103,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.LATEST_PY_VERSION }}
+          python-version: "3.10"
           cache: pip
           cache-dependency-path: setup.py
 
