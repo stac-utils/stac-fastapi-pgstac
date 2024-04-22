@@ -4,11 +4,25 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    groups:
+      all:
+        patterns:
+        - "*"
+
   - package-ecosystem: pip
     directory: "/.github/workflows"
     schedule:
       interval: weekly
+    groups:
+      all:
+        patterns:
+        - "*"
+
   - package-ecosystem: pip
     directory: "/"
     schedule:
       interval: weekly
+    groups:
+      all:
+        patterns:
+        - "*"
