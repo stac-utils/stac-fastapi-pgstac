@@ -88,7 +88,7 @@ async def test_update_new_collection(app_client, load_test_collection):
     in_coll = load_test_collection
     in_coll.id = "test-updatenew"
 
-    resp = await app_client.put(f"/collections/in_coll.id", json=in_coll.dict())
+    resp = await app_client.put(f"/collections/{in_coll.id}", json=in_coll.dict())
     assert resp.status_code == 404
 
 

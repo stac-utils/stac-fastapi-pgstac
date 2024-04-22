@@ -1,11 +1,11 @@
 """Item crud client."""
+import json
 import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import unquote_plus, urljoin
 
 import attr
-import json
 import orjson
 from asyncpg.exceptions import InvalidDatetimeFormatError
 from buildpg import render
@@ -17,7 +17,6 @@ from pypgstac.hydration import hydrate
 from stac_fastapi.types.core import AsyncBaseCoreClient
 from stac_fastapi.types.errors import InvalidQueryParameter, NotFoundError
 from stac_fastapi.types.requests import get_base_url
-from stac_fastapi.types.rfc3339 import DateTimeType
 from stac_fastapi.types.stac import Collection, Collections, Item, ItemCollection
 from stac_pydantic.links import Relations
 from stac_pydantic.shared import MimeTypes
