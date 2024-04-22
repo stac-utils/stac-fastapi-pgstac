@@ -9,15 +9,15 @@ install_requires = [
     "attrs",
     "orjson",
     "pydantic[dotenv]>=1.10.8",  # https://github.com/pydantic/pydantic/issues/5821
-    "stac_pydantic==2.0.*",
-    "stac-fastapi.types~=2.4.9",
-    "stac-fastapi.api~=2.4.9",
-    "stac-fastapi.extensions~=2.4.9",
+    "stac_pydantic>=2.0,<3.1",
+    "stac-fastapi.types>=2.4.9,<2.6.0",
+    "stac-fastapi.api>=2.4.9,<2.6.0",
+    "stac-fastapi.extensions>=2.4.9,<2.6.0",
     "asyncpg",
     "buildpg",
     "brotli_asgi",
     "pygeofilter>=0.2",
-    "pypgstac==0.7.*",
+    "pypgstac>=0.7,<0.9",
 ]
 
 extra_reqs = {
