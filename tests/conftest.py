@@ -8,6 +8,7 @@ from urllib.parse import urljoin
 
 import asyncpg
 import pytest
+
 from fastapi import APIRouter
 from fastapi.responses import ORJSONResponse
 from httpx import AsyncClient
@@ -33,11 +34,10 @@ from stac_fastapi.pgstac.extensions import QueryExtension
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
+from pytest_postgresql.janitor import DatabaseJanitor
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
-settings = Settings(testing=True)
-pgstac_api_hydrate_settings = Settings(testing=True, use_api_hydrate=True)
 
 logger = logging.getLogger(__name__)
 
@@ -48,82 +48,66 @@ def event_loop():
 
 
 @pytest.fixture(scope="session")
-async def pg():
-    logger.info(f"Connecting to write database {settings.writer_connection_string}")
-    os.environ["orig_postgres_dbname"] = settings.postgres_dbname
-    conn = await asyncpg.connect(dsn=settings.writer_connection_string)
-    try:
-        await conn.execute("CREATE DATABASE pgstactestdb;")
-        await conn.execute(
-            """
-            ALTER DATABASE pgstactestdb SET search_path to pgstac, public;
-            ALTER DATABASE pgstactestdb SET log_statement to 'all';
-            """
-        )
-    except asyncpg.exceptions.DuplicateDatabaseError:
-        await conn.execute("DROP DATABASE pgstactestdb;")
-        await conn.execute("CREATE DATABASE pgstactestdb;")
-        await conn.execute(
-            "ALTER DATABASE pgstactestdb SET search_path to pgstac, public;"
-        )
-    await conn.close()
-    logger.info("migrating...")
-    os.environ["postgres_dbname"] = "pgstactestdb"
-    conn = await asyncpg.connect(dsn=settings.testing_connection_string)
-    await conn.execute("SELECT true")
-    await conn.close()
-    db = PgstacDB(dsn=settings.testing_connection_string)
-    migrator = Migrate(db)
-    version = migrator.run_migration()
-    db.close()
-    logger.info(f"PGStac Migrated to {version}")
+def database(postgresql_proc):
+    with DatabaseJanitor(
+        user=postgresql_proc.user,
+        host=postgresql_proc.host,
+        port=postgresql_proc.port,
+        dbname="pgstactestdb",
+        version=postgresql_proc.version,
+        password="secret",
+    ) as jan:
+        connection = f'postgresql://{jan.user}:{jan.password}@{jan.host}:{jan.port}/{jan.dbname}'
+        with PgstacDB(dsn=connection) as db:
+            migrator = Migrate(db)
+            version = migrator.run_migration()
+            assert version
 
-    yield settings.testing_connection_string
-
-    print("Getting rid of test database")
-    os.environ["postgres_dbname"] = os.environ["orig_postgres_dbname"]
-    conn = await asyncpg.connect(dsn=settings.writer_connection_string)
-    try:
-        await conn.execute("DROP DATABASE pgstactestdb;")
-        await conn.close()
-    except Exception:
-        try:
-            await conn.execute("DROP DATABASE pgstactestdb WITH (force);")
-            await conn.close()
-        except Exception:
-            pass
+        yield jan
 
 
 @pytest.fixture(autouse=True)
-async def pgstac(pg):
-    logger.info(f"{os.environ['postgres_dbname']}")
+async def pgstac(database):
+    connection = f'postgresql://{database.user}:{database.password}@{database.host}:{database.port}/{database.dbname}'
     yield
-    logger.info("Truncating Data")
-    conn = await asyncpg.connect(dsn=settings.testing_connection_string)
+    conn = await asyncpg.connect(dsn=connection)
     await conn.execute(
         """
         DROP SCHEMA IF EXISTS pgstac CASCADE;
         """
     )
     await conn.close()
-    with PgstacDB(dsn=settings.testing_connection_string) as db:
+    with PgstacDB(dsn=connection) as db:
         migrator = Migrate(db)
         version = migrator.run_migration()
+
     logger.info(f"PGStac Migrated to {version}")
 
 
 # Run all the tests that use the api_client in both db hydrate and api hydrate mode
 @pytest.fixture(
     params=[
-        (settings, ""),
-        (settings, "/router_prefix"),
-        (pgstac_api_hydrate_settings, ""),
-        (pgstac_api_hydrate_settings, "/router_prefix"),
+        # hydratation, prefix
+        (False, ""),
+        (False, "/router_prefix"),
+        (True, ""),
+        (True, "/router_prefix"),
     ],
     scope="session",
 )
-def api_client(request, pg):
-    api_settings, prefix = request.param
+def api_client(request, database):
+    hydrate, prefix = request.param
+
+    api_settings = Settings(
+        postgres_user=database.user,
+        postgres_pass=database.password,
+        postgres_host_reader=database.host,
+        postgres_host_writer=database.host,
+        postgres_port=database.port,
+        postgres_dbname=database.dbname,
+        use_api_hydrate=hydrate,
+        testing=True,
+    )
 
     api_settings.openapi_url = prefix + api_settings.openapi_url
     api_settings.docs_url = prefix + api_settings.docs_url
@@ -135,7 +119,7 @@ def api_client(request, pg):
     )
 
     extensions = [
-        TransactionExtension(client=TransactionsClient(), settings=settings),
+        TransactionExtension(client=TransactionsClient(), settings=api_settings),
         QueryExtension(),
         SortExtension(),
         FieldsExtension(),

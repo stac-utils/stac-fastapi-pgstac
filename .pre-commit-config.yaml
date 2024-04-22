@@ -3,18 +3,18 @@ repos:
     rev: 5.12.0
     hooks:
       - id: isort
-        language_version: python3.8
+        language_version: python
   - repo: https://github.com/psf/black
     rev: 22.12.0
     hooks:
       - id: black
         args: ["--safe"]
-        language_version: python3.8
+        language_version: python
   - repo: https://github.com/pycqa/flake8
     rev: 6.0.0
     hooks:
       - id: flake8
-        language_version: python3.8
+        language_version: python
         args: [
             # E501 let black handle all line length decisions
             # W503 black conflicts with "line break before operator" rule
@@ -26,7 +26,7 @@ repos:
     rev: v2.1.1
     hooks:
       - id: pydocstyle
-        language_version: python3.8
+        language_version: python
         exclude: ".*(test|scripts).*"
         args:
           [
@@ -46,7 +46,7 @@ repos:
     rev: 6.3.0
     hooks:
       - id: pydocstyle
-        language_version: python3.8
+        language_version: python
         exclude: ".*(test|scripts).*"
         #args: [
         # Don't require docstrings for tests

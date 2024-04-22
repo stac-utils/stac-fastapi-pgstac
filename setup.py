@@ -24,6 +24,7 @@ extra_reqs = {
     "dev": [
         "pystac[validation]",
         "pypgstac[psycopg]==0.7.*",
+        "pytest-postgresql",
         "pytest",
         "pytest-cov",
         "pytest-asyncio>=0.17,<0.23.0",

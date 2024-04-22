@@ -5,38 +5,18 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  LATEST_PY_VERSION: '3.11'
+
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     timeout-minutes: 20
 
     services:
-      db_service:
-        image: ghcr.io/stac-utils/pgstac:v0.7.10
-        env:
-          POSTGRES_USER: username
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: postgis
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-          PGUSER: username
-          PGPASSWORD: password
-          PGDATABASE: postgis
-          ALLOW_IP_RANGE: 0.0.0.0/0
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 10s
-          --health-retries 10
-          --log-driver none
-        ports:
-          # Maps tcp port 5432 on service container to the host
-          - 5432:5432
-
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -50,25 +30,26 @@ jobs:
           cache-dependency-path: setup.py
 
       - name: Lint code
-        if: ${{ matrix.python-version == 3.8 }}
+        if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
         run: |
           python -m pip install pre-commit
           pre-commit run --all-files
 
-      - name: Install
+      - name: install lib postgres
         run: |
-          pip install .[dev,server]
+          sudo apt update
+          wget -q https://www.postgresql.org/media/keys/ACCC4CF8.asc -O- | sudo apt-key add -
+          echo "deb [arch=amd64] http://apt.postgresql.org/pub/repos/apt/ focal-pgdg main" | sudo tee /etc/apt/sources.list.d/postgresql.list
+          sudo apt update
+          sudo apt-get install --yes libpq-dev postgis postgresql-14-postgis-3
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[dev,server]
 
       - name: Run test suite
-        run: make test
-        env:
-          ENVIRONMENT: testing
-          POSTGRES_USER: username
-          POSTGRES_PASS: password
-          POSTGRES_DBNAME: postgis
-          POSTGRES_HOST_READER: localhost
-          POSTGRES_HOST_WRITER: localhost
-          POSTGRES_PORT: 5432
+        run:  python -m pytest --cov stac_fastapi.pgstac --cov-report xml --cov-report term-missing
 
   validate:
     runs-on: ubuntu-latest
@@ -90,17 +71,23 @@ jobs:
           --log-driver none
         ports:
           - 5432:5432
+
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: ${{ env.LATEST_PY_VERSION }}
           cache: pip
           cache-dependency-path: setup.py
+
       - name: Install stac-fastapi and stac-api-validator
-        run: pip install .[server] stac-api-validator==0.4.1
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[server] stac-api-validator==0.4.1
+
       - name: Load data and validate
         run: python -m stac_fastapi.pgstac.app & ./scripts/wait-for-it.sh localhost:8080 && python ./scripts/ingest_joplin.py http://localhost:8080 && ./scripts/validate http://localhost:8080
         env:
@@ -120,15 +107,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: ${{ env.LATEST_PY_VERSION }}
           cache: pip
           cache-dependency-path: setup.py
+
       - name: Install with documentation dependencies
-        run: pip install .[docs,dev,server]
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[docs,dev,server]
+
       - name: Generate API docs
         run: make docs
+
       - name: Build documentation
         run: mkdocs build --strict
