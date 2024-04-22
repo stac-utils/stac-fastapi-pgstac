@@ -161,8 +161,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
         search_request.conf["nohydrate"] = settings.use_api_hydrate
         search_request_json = search_request.json(exclude_none=True, by_alias=True)
 
-        print(search_request_json)
-
         try:
             async with request.app.state.get_connection(request, "r") as conn:
                 q, p = render(
@@ -278,7 +276,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
         # I am not sure why I have to do this .... as of stac-fastapi 2.5.2
         if "datetime" in query_params:
             datetime = query_params["datetime"]
-        print("datetime: ", datetime)
 
         base_args = {
             "collections": [collection_id],
@@ -399,6 +396,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             base_args["datetime"] = datetime
 
         # As of stac-fastapi 2.5.x, the intersects GET request parameter is being sent as a list
+        # There's a fix for this here: https://github.com/stac-utils/stac-fastapi/pull/668
         if intersects:
             intersects_dict = {"type": None, "coordinates": None}
 
