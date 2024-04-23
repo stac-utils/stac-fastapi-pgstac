@@ -3,7 +3,6 @@ services:
   app:
     container_name: stac-fastapi-pgstac
     image: stac-utils/stac-fastapi-pgstac
-    platform: linux/amd64
     build: .
     environment:
       - APP_HOST=0.0.0.0
@@ -30,6 +29,19 @@ services:
     depends_on:
       - database
     command: bash -c "./scripts/wait-for-it.sh database:5432 && python -m stac_fastapi.pgstac.app"
+
+  tests:
+    container_name: stac-fastapi-pgstac-test
+    image: stac-utils/stac-fastapi-pgstac-test
+    build:
+      context: .
+      dockerfile: Dockerfile.tests
+    environment:
+      - ENVIRONMENT=local
+      - DB_MIN_CONN_SIZE=1
+      - DB_MAX_CONN_SIZE=1
+      - USE_API_HYDRATE=${USE_API_HYDRATE:-false}
+    command: bash -c "python -m pytest -s -vv"
 
   database:
     container_name: stac-db
