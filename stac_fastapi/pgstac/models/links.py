@@ -59,13 +59,19 @@ class BaseLinks:
 
     def link_self(self) -> Dict:
         """Return the self link."""
-        return dict(rel=Relations.self.value, type=MimeTypes.json.value, href=self.url)
+        return {
+            "rel": Relations.self.value,
+            "type": MimeTypes.json.value,
+            "href": self.url,
+        }
 
     def link_root(self) -> Dict:
         """Return the catalog root."""
-        return dict(
-            rel=Relations.root.value, type=MimeTypes.json.value, href=self.base_url
-        )
+        return {
+            "rel": Relations.root.value,
+            "type": MimeTypes.json.value,
+            "href": self.base_url,
+        }
 
     def create_links(self) -> List[Dict[str, Any]]:
         """Return all inferred links."""
@@ -124,13 +130,14 @@ class PagingLinks(BaseLinks):
             method = self.request.method
             if method == "GET":
                 href = merge_params(self.url, {"token": f"next:{self.next}"})
-                link = dict(
-                    rel=Relations.next.value,
-                    type=MimeTypes.geojson.value,
-                    method=method,
-                    href=href,
-                )
+                link = {
+                    "rel": Relations.next.value,
+                    "type": MimeTypes.geojson.value,
+                    "method": method,
+                    "href": href,
+                }
                 return link
+
             if method == "POST":
                 return {
                     "rel": Relations.next,
@@ -148,12 +155,13 @@ class PagingLinks(BaseLinks):
             method = self.request.method
             if method == "GET":
                 href = merge_params(self.url, {"token": f"prev:{self.prev}"})
-                return dict(
-                    rel=Relations.previous.value,
-                    type=MimeTypes.geojson.value,
-                    method=method,
-                    href=href,
-                )
+                return {
+                    "rel": Relations.previous.value,
+                    "type": MimeTypes.geojson.value,
+                    "method": method,
+                    "href": href,
+                }
+
             if method == "POST":
                 return {
                     "rel": Relations.previous,
@@ -173,11 +181,11 @@ class CollectionLinksBase(BaseLinks):
 
     def collection_link(self, rel: str = Relations.collection.value) -> Dict:
         """Create a link to a collection."""
-        return dict(
-            rel=rel,
-            type=MimeTypes.json.value,
-            href=self.resolve(f"collections/{self.collection_id}"),
-        )
+        return {
+            "rel": rel,
+            "type": MimeTypes.json.value,
+            "href": self.resolve(f"collections/{self.collection_id}"),
+        }
 
 
 @attr.s
@@ -190,19 +198,19 @@ class CollectionLinks(CollectionLinksBase):
 
     def link_parent(self) -> Dict:
         """Create the `parent` link."""
-        return dict(
-            rel=Relations.parent.value,
-            type=MimeTypes.json.value,
-            href=self.base_url,
-        )
+        return {
+            "rel": Relations.parent.value,
+            "type": MimeTypes.json.value,
+            "href": self.base_url,
+        }
 
     def link_items(self) -> Dict:
         """Create the `item` link."""
-        return dict(
-            rel="items",
-            type=MimeTypes.geojson.value,
-            href=self.resolve(f"collections/{self.collection_id}/items"),
-        )
+        return {
+            "rel": "items",
+            "type": MimeTypes.geojson.value,
+            "href": self.resolve(f"collections/{self.collection_id}/items"),
+        }
 
 
 @attr.s
@@ -211,11 +219,11 @@ class ItemCollectionLinks(CollectionLinksBase):
 
     def link_self(self) -> Dict:
         """Return the self link."""
-        return dict(
-            rel=Relations.self.value,
-            type=MimeTypes.geojson.value,
-            href=self.resolve(f"collections/{self.collection_id}/items"),
-        )
+        return {
+            "rel": Relations.self.value,
+            "type": MimeTypes.geojson.value,
+            "href": self.resolve(f"collections/{self.collection_id}/items"),
+        }
 
     def link_parent(self) -> Dict:
         """Create the `parent` link."""
@@ -234,11 +242,13 @@ class ItemLinks(CollectionLinksBase):
 
     def link_self(self) -> Dict:
         """Create the self link."""
-        return dict(
-            rel=Relations.self.value,
-            type=MimeTypes.geojson.value,
-            href=self.resolve(f"collections/{self.collection_id}/items/{self.item_id}"),
-        )
+        return {
+            "rel": Relations.self.value,
+            "type": MimeTypes.geojson.value,
+            "href": self.resolve(
+                f"collections/{self.collection_id}/items/{self.item_id}"
+            ),
+        }
 
     def link_parent(self) -> Dict:
         """Create the `parent` link."""

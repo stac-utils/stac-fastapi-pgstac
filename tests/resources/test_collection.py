@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Optional
 
 import pystac
 import pytest
@@ -20,9 +20,7 @@ async def test_create_collection(app_client, load_test_data: Callable):
     get_coll = Collection.parse_obj(resp.json())
     assert post_coll.dict(exclude={"links"}) == get_coll.dict(exclude={"links"})
 
-    post_self_link = next(
-        (link for link in post_coll.links if link.rel == "self"), None
-    )
+    post_self_link = next((link for link in post_coll.links if link.rel == "self"), None)
     get_self_link = next((link for link in get_coll.links if link.rel == "self"), None)
     assert post_self_link is not None and get_self_link is not None
     assert post_self_link.href == get_self_link.href
@@ -153,7 +151,8 @@ async def test_returns_valid_links_in_collections(app_client, load_test_data):
     # Find collection in list by ID
     single_coll = next(coll for coll in collections if coll["id"] == in_json["id"])
     is_coll_from_list_valid = False
-    single_coll_mocked_link = dict()
+
+    single_coll_mocked_link: Optional[pystac.Collection] = None
     if single_coll is not None:
         single_coll_mocked_link = pystac.Collection.from_dict(
             single_coll, root=mock_root, preserve_dict=False

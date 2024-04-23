@@ -1,4 +1,5 @@
 """Item crud client."""
+
 import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
@@ -168,10 +169,10 @@ class CoreCrudClient(AsyncBaseCoreClient):
                     req=search_request_json,
                 )
                 items = await conn.fetchval(q, *p)
-        except InvalidDatetimeFormatError:
+        except InvalidDatetimeFormatError as e:
             raise InvalidQueryParameter(
                 f"Datetime parameter {search_request.datetime} is invalid."
-            )
+            ) from e
 
         next: Optional[str] = items.pop("next", None)
         prev: Optional[str] = items.pop("prev", None)
@@ -203,8 +204,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 and all([collection_id, item_id])
             ):
                 feature["links"] = await ItemLinks(
-                    collection_id=collection_id,
-                    item_id=item_id,
+                    collection_id=collection_id,  # type: ignore
+                    item_id=item_id,  # type: ignore
                     request=request,
                 ).get_links(extra_links=feature.get("links"))
 
@@ -251,7 +252,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         bbox: Optional[List[NumType]] = None,
         datetime: Optional[Union[str, datetime]] = None,
         limit: Optional[int] = None,
-        token: str = None,
+        token: Optional[str] = None,
         **kwargs,
     ) -> ItemCollection:
         """Get all items from a specific collection.
@@ -336,7 +337,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         item_collection = await self._search_base(search_request, request=request)
         return ItemCollection(**item_collection)
 
-    async def get_search(
+    async def get_search(  # noqa: C901
         self,
         request: Request,
         collections: Optional[List[str]] = None,
@@ -428,5 +429,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
         except ValidationError as e:
             raise HTTPException(
                 status_code=400, detail=f"Invalid parameters provided {e}"
-            )
+            ) from e
+
         return await self.post_search(search_request, request=request)

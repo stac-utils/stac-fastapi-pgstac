@@ -1,4 +1,5 @@
 """Get Queryables."""
+
 from typing import Any, Optional
 
 from buildpg import render

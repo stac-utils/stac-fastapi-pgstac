@@ -1,10 +1,11 @@
 """stac-fastapi utility methods."""
+
 from typing import Any, Dict, Optional, Set, Union
 
 from stac_fastapi.types.stac import Item
 
 
-def filter_fields(
+def filter_fields(  # noqa: C901
     item: Union[Item, Dict[str, Any]],
     include: Optional[Set[str]] = None,
     exclude: Optional[Set[str]] = None,
@@ -36,7 +37,7 @@ def filter_fields(
                     # key path indicates a sub-key to be included. Walk the dict
                     # from the root key and get the full nested value to include.
                     value = include_fields(
-                        source[key_root], fields=set([".".join(key_path_parts[1:])])
+                        source[key_root], fields={".".join(key_path_parts[1:])}
                     )
 
                     if isinstance(clean_item.get(key_root), dict):
@@ -68,9 +69,7 @@ def filter_fields(
             if key_root in source:
                 if isinstance(source[key_root], dict) and len(key_path_part) > 1:
                     # Walk the nested path of this key to remove the leaf-key
-                    exclude_fields(
-                        source[key_root], fields=set([".".join(key_path_part[1:])])
-                    )
+                    exclude_fields(source[key_root], fields={".".join(key_path_part[1:])})
                     # If, after removing the leaf-key, the root is now an empty
                     # dict, remove it entirely
                     if not source[key_root]:
@@ -91,7 +90,7 @@ def filter_fields(
     # If, after including all the specified fields, there are no included properties,
     # return just id and collection.
     if not clean_item:
-        return Item({"id": item.get(id), "collection": item.get("collection")})
+        return Item({"id": item["id"], "collection": item["collection"]})
 
     exclude_fields(clean_item, exclude)
 

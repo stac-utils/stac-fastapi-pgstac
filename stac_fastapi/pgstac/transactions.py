@@ -28,7 +28,7 @@ logger.setLevel(logging.INFO)
 class TransactionsClient(AsyncBaseTransactionsClient):
     """Transactions extension specific CRUD operations."""
 
-    def _validate_id(self, id: str, settings: Settings) -> bool:
+    def _validate_id(self, id: str, settings: Settings):
         invalid_chars = settings.invalid_id_chars
         id_regex = "[" + "".join(re.escape(char) for char in invalid_chars) + "]"
 
@@ -76,7 +76,7 @@ class TransactionsClient(AsyncBaseTransactionsClient):
         """Create item."""
         if item["type"] == "FeatureCollection":
             valid_items = []
-            for item in item["features"]:
+            for item in item["features"]:  # noqa: B020
                 self._validate_item(request, item, collection_id)
                 item["collection"] = collection_id
                 valid_items.append(item)

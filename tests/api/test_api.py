@@ -87,16 +87,12 @@ async def test_get_features_self_link(app_client, load_test_collection):
     resp = await app_client.get(f"collections/{load_test_collection.id}/items")
     assert resp.status_code == 200
     resp_json = resp.json()
-    self_link = next(
-        (link for link in resp_json["links"] if link["rel"] == "self"), None
-    )
+    self_link = next((link for link in resp_json["links"] if link["rel"] == "self"), None)
     assert self_link is not None
     assert self_link["href"].endswith("/items")
 
 
-async def test_get_feature_content_type(
-    app_client, load_test_collection, load_test_item
-):
+async def test_get_feature_content_type(app_client, load_test_collection, load_test_item):
     resp = await app_client.get(
         f"collections/{load_test_collection.id}/items/{load_test_item.id}"
     )
@@ -105,9 +101,7 @@ async def test_get_feature_content_type(
 
 async def test_api_headers(app_client):
     resp = await app_client.get("/api")
-    assert (
-        resp.headers["content-type"] == "application/vnd.oai.openapi+json;version=3.0"
-    )
+    assert resp.headers["content-type"] == "application/vnd.oai.openapi+json;version=3.0"
     assert resp.status_code == 200
 
 
@@ -117,9 +111,9 @@ async def test_core_router(api_client, app):
         method, path = core_route.split(" ")
         core_routes.add("{} {}".format(method, app.state.router_prefix + path))
 
-    api_routes = set(
-        [f"{list(route.methods)[0]} {route.path}" for route in api_client.app.routes]
-    )
+    api_routes = {
+        f"{list(route.methods)[0]} {route.path}" for route in api_client.app.routes
+    }
     assert not core_routes - api_routes
 
 
@@ -136,9 +130,9 @@ async def test_transactions_router(api_client, app):
         method, path = transaction_route.split(" ")
         transaction_routes.add("{} {}".format(method, app.state.router_prefix + path))
 
-    api_routes = set(
-        [f"{list(route.methods)[0]} {route.path}" for route in api_client.app.routes]
-    )
+    api_routes = {
+        f"{list(route.methods)[0]} {route.path}" for route in api_client.app.routes
+    }
     assert not transaction_routes - api_routes
 
 
@@ -230,9 +224,7 @@ async def test_app_query_extension_gt(load_test_data, app_client, load_test_coll
     assert len(resp_json["features"]) == 0
 
 
-async def test_app_query_extension_gte(
-    load_test_data, app_client, load_test_collection
-):
+async def test_app_query_extension_gte(load_test_data, app_client, load_test_collection):
     coll = load_test_collection
     item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=item)
@@ -333,20 +325,18 @@ async def test_app_search_response(load_test_data, app_client, load_test_collect
     assert resp_json.get("stac_extensions") is None
 
 
-async def test_search_point_intersects(
-    load_test_data, app_client, load_test_collection
-):
+async def test_search_point_intersects(load_test_data, app_client, load_test_collection):
     coll = load_test_collection
     item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=item)
     assert resp.status_code == 200
 
-    new_coordinates = list()
+    new_coordinates = []
     for coordinate in item["geometry"]["coordinates"][0]:
         new_coordinates.append([coordinate[0] * -1, coordinate[1] * -1])
     item["id"] = "test-item-other-hemispheres"
     item["geometry"]["coordinates"] = [new_coordinates]
-    item["bbox"] = list(value * -1 for value in item["bbox"])
+    item["bbox"] = [value * -1 for value in item["bbox"]]
     resp = await app_client.post(f"/collections/{coll.id}/items", json=item)
     assert resp.status_code == 200
 
@@ -391,9 +381,7 @@ async def test_search_line_string_intersects(
 
 
 @pytest.mark.asyncio
-async def test_landing_forwarded_header(
-    load_test_data, app_client, load_test_collection
-):
+async def test_landing_forwarded_header(load_test_data, app_client, load_test_collection):
     coll = load_test_collection
     item = load_test_data("test_item.json")
     await app_client.post(f"/collections/{coll.id}/items", json=item)
@@ -412,9 +400,7 @@ async def test_landing_forwarded_header(
 
 
 @pytest.mark.asyncio
-async def test_search_forwarded_header(
-    load_test_data, app_client, load_test_collection
-):
+async def test_search_forwarded_header(load_test_data, app_client, load_test_collection):
     coll = load_test_collection
     item = load_test_data("test_item.json")
     await app_client.post(f"/collections/{coll.id}/items", json=item)
@@ -612,7 +598,7 @@ async def test_sorting_and_paging(app_client, load_test_collection, direction: s
         assert response.status_code == 200
 
     async def search(query: Dict[str, Any]) -> List[Item]:
-        items: List[Item] = list()
+        items: List[Item] = []
         while True:
             response = await app_client.post("/search", json=query)
             json = response.json()
@@ -649,7 +635,7 @@ async def test_wrapped_function(load_test_data, database) -> None:
         ]
     ):
         def decorator(
-            fn: Callable[..., Coroutine[Any, Any, T]]
+            fn: Callable[..., Coroutine[Any, Any, T]],
         ) -> Callable[..., Coroutine[Any, Any, T]]:
             async def _wrapper(*args: Any, **kwargs: Any) -> T:
                 request: Optional[Request] = kwargs.get("request")
@@ -668,9 +654,7 @@ async def test_wrapped_function(load_test_data, database) -> None:
         async def get_collection(
             self, collection_id: str, request: Request, **kwargs
         ) -> stac_types.Item:
-            return await super().get_collection(
-                collection_id, request=request, **kwargs
-            )
+            return await super().get_collection(collection_id, request=request, **kwargs)
 
     settings = Settings(
         postgres_user=database.user,

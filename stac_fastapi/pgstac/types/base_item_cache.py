@@ -1,4 +1,5 @@
 """base_item_cache classes for pgstac fastapi."""
+
 import abc
 from typing import Any, Callable, Coroutine, Dict
 
@@ -43,7 +44,7 @@ class DefaultBaseItemCache(BaseItemCache):
         request: Request,
     ):
         """Initialize the base item cache."""
-        self._base_items = {}
+        self._base_items: Dict = {}
         super().__init__(fetch_base_item, request)
 
     async def get(self, collection_id: str):
