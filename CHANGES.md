@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Updated stac-fastapi libraries to v2.5.3 ([#101](https://github.com/stac-utils/stac-fastapi-pgstac/pull/101))
+
 ## [2.4.11] - 2023-12-01
 
 ### Changed
