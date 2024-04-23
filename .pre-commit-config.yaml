@@ -21,3 +21,4 @@ repos:
         additional_dependencies:
         - types-requests
         - types-attrs
+        - pydantic~=1.10
