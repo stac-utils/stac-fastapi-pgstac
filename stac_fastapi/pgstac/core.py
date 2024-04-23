@@ -1,7 +1,5 @@
 """Item crud client."""
-import json
 import re
-from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import unquote_plus, urljoin
 
@@ -17,9 +15,10 @@ from pypgstac.hydration import hydrate
 from stac_fastapi.types.core import AsyncBaseCoreClient
 from stac_fastapi.types.errors import InvalidQueryParameter, NotFoundError
 from stac_fastapi.types.requests import get_base_url
+from stac_fastapi.types.rfc3339 import DateTimeType
 from stac_fastapi.types.stac import Collection, Collections, Item, ItemCollection
 from stac_pydantic.links import Relations
-from stac_pydantic.shared import MimeTypes
+from stac_pydantic.shared import BBox, MimeTypes
 
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.models.links import (
@@ -29,7 +28,7 @@ from stac_fastapi.pgstac.models.links import (
     PagingLinks,
 )
 from stac_fastapi.pgstac.types.search import PgstacSearch
-from stac_fastapi.pgstac.utils import filter_fields
+from stac_fastapi.pgstac.utils import filter_fields, format_datetime_range
 
 NumType = Union[float, int]
 
@@ -156,8 +155,12 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         settings: Settings = request.app.state.settings
 
+        if search_request.datetime:
+            search_request.datetime = format_datetime_range(search_request.datetime)
+
         search_request.conf = search_request.conf or {}
         search_request.conf["nohydrate"] = settings.use_api_hydrate
+
         search_request_json = search_request.json(exclude_none=True, by_alias=True)
 
         try:
@@ -249,8 +252,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
         self,
         collection_id: str,
         request: Request,
-        bbox: Optional[List[NumType]] = None,
-        datetime: Optional[Union[str, datetime]] = None,
+        bbox: Optional[BBox] = None,
+        datetime: Optional[DateTimeType] = None,
         limit: Optional[int] = None,
         token: str = None,
         **kwargs,
@@ -269,12 +272,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
         """
         # If collection does not exist, NotFoundError wil be raised
         await self.get_collection(collection_id, request=request)
-
-        query_params = dict(request.query_params)  # Convert MultiDict to dict
-
-        # I am not sure why I have to do this .... as of stac-fastapi 2.5.2
-        if "datetime" in query_params:
-            datetime = query_params["datetime"]
 
         base_args = {
             "collections": [collection_id],
@@ -348,8 +345,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
         request: Request,
         collections: Optional[List[str]] = None,
         ids: Optional[List[str]] = None,
-        bbox: Optional[List[NumType]] = None,
-        datetime: Optional[Union[str, datetime]] = None,
+        bbox: Optional[BBox] = None,
+        datetime: Optional[DateTimeType] = None,
         limit: Optional[int] = None,
         query: Optional[str] = None,
         token: Optional[str] = None,
@@ -394,28 +391,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
         if datetime:
             base_args["datetime"] = datetime
 
-        # As of stac-fastapi 2.5.x, the intersects GET request parameter is being sent as a list
-        # There's a fix for this here: https://github.com/stac-utils/stac-fastapi/pull/668
         if intersects:
-            intersects_dict = {"type": None, "coordinates": None}
-
-            combined_json_string = intersects[0]
-
-            # Iterate over the remaining fragments and add each with a preceding comma
-            for fragment in intersects[1:]:
-                combined_json_string += "," + fragment
-
-            combined_json_string = combined_json_string.replace("'", "")
-            combined_json_string = "".join(
-                char for char in combined_json_string if char.isprintable()
-            )
-
-            try:
-                intersects_dict = json.loads(combined_json_string)
-            except json.JSONDecodeError as error:
-                print("Failed to parse JSON:", error)
-
-            base_args["intersects"] = intersects_dict
+            base_args["intersects"] = orjson.loads(unquote_plus(intersects))
 
         if sortby:
             # https://github.com/radiantearth/stac-spec/tree/master/api-spec/extensions/sort#http-get-or-post-form
