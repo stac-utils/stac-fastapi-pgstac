@@ -4,6 +4,10 @@
 
 ## [2.5.0] - 2024-04-25
 
+### Added
+
+- Ability to configure the database runtime parameters ([#92](https://github.com/stac-utils/stac-fastapi-pgstac/pull/92))
+
 ## [2.4.11] - 2023-12-01
 
 ### Changed

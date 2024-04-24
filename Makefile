@@ -10,6 +10,8 @@ run = docker-compose run --rm \
 				-e APP_PORT=${APP_PORT} \
 				app
 
+runtests = docker-compose run --rm tests
+
 .PHONY: image
 image:
 	docker-compose build
@@ -28,7 +30,7 @@ docker-shell:
 
 .PHONY: test
 test:
-	$(run) /bin/bash -c 'export && ./scripts/wait-for-it.sh database:5432 && cd /app/tests/ && pytest -vvv --log-cli-level $(LOG_LEVEL)'
+	$(runtests) /bin/bash -c 'export && python -m pytest /app/tests/api/test_api.py --log-cli-level $(LOG_LEVEL)'
 
 .PHONY: run-database
 run-database:

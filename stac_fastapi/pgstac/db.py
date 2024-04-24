@@ -132,9 +132,6 @@ class DB:
             max_queries=settings.db_max_queries,
             max_inactive_connection_lifetime=settings.db_max_inactive_conn_lifetime,
             init=con_init,
-            server_settings={
-                "search_path": "pgstac,public",
-                "application_name": "pgstac",
-            },
+            server_settings=settings.server_settings.dict(),
         )
         return pool
