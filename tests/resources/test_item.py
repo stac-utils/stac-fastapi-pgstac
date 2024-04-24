@@ -1417,9 +1417,8 @@ async def test_search_datetime_validation_errors(app_client):
         resp = await app_client.post("/search", json=body)
         assert resp.status_code == 400
 
-        # ValueError: Invalid RFC3339 datetime. - not sure about this
-        # resp = await app_client.get("/search?datetime={}".format(dt))
-        # assert resp.status_code == 400
+        resp = await app_client.get("/search?datetime={}".format(dt))
+        assert resp.status_code == 200
 
 
 async def test_get_filter_cql2text(app_client, load_test_data, load_test_collection):
