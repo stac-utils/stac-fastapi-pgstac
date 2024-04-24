@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2.5.0] - 2024-04-25
+
 ## [2.4.11] - 2023-12-01
 
 ### Changed
@@ -291,7 +293,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.10..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.5.0..main>
+[2.5.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.10..2.5.0>
 [2.4.10]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.9..2.4.10>
 [2.4.9]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.8..2.4.9>
 [2.4.8]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.7..2.4.8>
