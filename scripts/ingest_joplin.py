@@ -1,4 +1,5 @@
 """Ingest sample data during docker-compose"""
+
 import json
 import sys
 from pathlib import Path

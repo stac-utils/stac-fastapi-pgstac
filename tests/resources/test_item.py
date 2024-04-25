@@ -82,9 +82,7 @@ async def test_create_item(app_client, load_test_data: Callable, load_test_colle
     get_item = Item.parse_obj(resp.json())
     assert in_item.dict(exclude={"links"}) == get_item.dict(exclude={"links"})
 
-    post_self_link = next(
-        (link for link in post_item.links if link.rel == "self"), None
-    )
+    post_self_link = next((link for link in post_item.links if link.rel == "self"), None)
     get_self_link = next((link for link in get_item.links if link.rel == "self"), None)
     assert post_self_link is not None and get_self_link is not None
     assert post_self_link.href == get_self_link.href
@@ -371,7 +369,7 @@ async def test_item_search_by_id_post(app_client, load_test_data, load_test_coll
     assert resp.status_code == 200
     resp_json = resp.json()
     assert len(resp_json["features"]) == len(ids)
-    assert set([feat["id"] for feat in resp_json["features"]]) == set(ids)
+    assert {feat["id"] for feat in resp_json["features"]} == set(ids)
 
 
 async def test_item_search_by_id_no_results_post(
@@ -533,7 +531,7 @@ async def test_item_search_by_id_get(app_client, load_test_data, load_test_colle
     assert resp.status_code == 200
     resp_json = resp.json()
     assert len(resp_json["features"]) == len(ids)
-    assert set([feat["id"] for feat in resp_json["features"]]) == set(ids)
+    assert {feat["id"] for feat in resp_json["features"]} == set(ids)
 
 
 async def test_item_search_bbox_get(app_client, load_test_data, load_test_collection):
@@ -915,7 +913,7 @@ async def test_pagination_item_collection(
     ids = []
 
     # Ingest 5 items
-    for idx in range(5):
+    for _ in range(5):
         uid = str(uuid.uuid4())
         test_item["id"] = uid
         resp = await app_client.post(
@@ -934,14 +932,13 @@ async def test_pagination_item_collection(
         idx += 1
         page_data = page.json()
         item_ids.append(page_data["features"][0]["id"])
-        nextlink = [
-            link["href"] for link in page_data["links"] if link["rel"] == "next"
-        ]
+        nextlink = [link["href"] for link in page_data["links"] if link["rel"] == "next"]
         if len(nextlink) < 1:
             break
+
         page = await app_client.get(nextlink.pop())
-        if idx >= 10:
-            assert False
+
+        assert idx < 10
 
     # Our limit is 1 so we expect len(ids) number of requests before we run out of pages
     assert idx == len(ids)
@@ -956,7 +953,7 @@ async def test_pagination_post(app_client, load_test_data, load_test_collection)
     ids = []
 
     # Ingest 5 items
-    for idx in range(5):
+    for _ in range(5):
         uid = str(uuid.uuid4())
         test_item["id"] = uid
         resp = await app_client.post(
@@ -981,12 +978,12 @@ async def test_pagination_post(app_client, load_test_data, load_test_collection)
         next_link = list(filter(lambda link: link["rel"] == "next", page_data["links"]))
         if not next_link:
             break
+
         # Merge request bodies
         request_body.update(next_link[0]["body"])
         page = await app_client.post("/search", json=request_body)
 
-        if idx > 10:
-            assert False
+        assert idx < 10
 
     # Our limit is 1 so we expect len(ids) number of requests before we run out of pages
     assert idx == len(ids)
@@ -1003,7 +1000,7 @@ async def test_pagination_token_idempotent(
     ids = []
 
     # Ingest 5 items
-    for idx in range(5):
+    for _ in range(5):
         uid = str(uuid.uuid4())
         test_item["id"] = uid
         resp = await app_client.post(
@@ -1133,7 +1130,7 @@ async def test_field_extension_include_multiple_subkeys(
     resp_json = resp.json()
 
     resp_prop_keys = resp_json["features"][0]["properties"].keys()
-    assert set(resp_prop_keys) == set(["width", "height"])
+    assert set(resp_prop_keys) == {"width", "height"}
 
 
 async def test_field_extension_include_multiple_deeply_nested_subkeys(
@@ -1147,8 +1144,8 @@ async def test_field_extension_include_multiple_deeply_nested_subkeys(
     resp_json = resp.json()
 
     resp_assets = resp_json["features"][0]["assets"]
-    assert set(resp_assets.keys()) == set(["ANG"])
-    assert set(resp_assets["ANG"].keys()) == set(["type", "href"])
+    assert set(resp_assets.keys()) == {"ANG"}
+    assert set(resp_assets["ANG"].keys()) == {"type", "href"}
 
 
 async def test_field_extension_exclude_multiple_deeply_nested_subkeys(
