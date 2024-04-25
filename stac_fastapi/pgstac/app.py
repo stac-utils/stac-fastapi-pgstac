@@ -46,8 +46,7 @@ extensions_map = {
 
 if enabled_extensions := os.getenv("ENABLED_EXTENSIONS"):
     extensions = [
-        extensions_map[extension_name]
-        for extension_name in enabled_extensions.split(",")
+        extensions_map[extension_name] for extension_name in enabled_extensions.split(",")
     ]
 else:
     extensions = list(extensions_map.values())
@@ -57,7 +56,7 @@ post_request_model = create_post_request_model(extensions, base_model=PgstacSear
 api = StacApi(
     settings=settings,
     extensions=extensions,
-    client=CoreCrudClient(post_request_model=post_request_model),
+    client=CoreCrudClient(post_request_model=post_request_model),  # type: ignore
     response_class=ORJSONResponse,
     search_get_request_model=create_get_request_model(extensions),
     search_post_request_model=post_request_model,
@@ -90,8 +89,8 @@ def run():
             reload=settings.reload,
             root_path=os.getenv("UVICORN_ROOT_PATH", ""),
         )
-    except ImportError:
-        raise RuntimeError("Uvicorn must be installed in order to use command")
+    except ImportError as e:
+        raise RuntimeError("Uvicorn must be installed in order to use command") from e
 
 
 if __name__ == "__main__":
