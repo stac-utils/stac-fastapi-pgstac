@@ -2,10 +2,13 @@
 
 ## [Unreleased]
 
+
+## [2.5.0] - 2024-04-25
+
 ### Changed
 
-- Updated stac-fastapi libraries to v2.5.4 ([#101](https://github.com/stac-utils/stac-fastapi-pgstac/pull/101))
-- 
+- Updated stac-fastapi libraries to v2.5.5 ([#101](https://github.com/stac-utils/stac-fastapi-pgstac/pull/101))
+
 ### Added
 
 - Ability to configure the database runtime parameters ([#92](https://github.com/stac-utils/stac-fastapi-pgstac/pull/92))
@@ -299,7 +302,9 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.10..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.5.0..main>
+[2.5.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.11..2.5.0>
+[2.4.11]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.10..2.4.11>
 [2.4.10]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.9..2.4.10>
 [2.4.9]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.8..2.4.9>
 [2.4.8]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.7..2.4.8>
