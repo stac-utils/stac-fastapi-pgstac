@@ -10,9 +10,9 @@ install_requires = [
     "orjson",
     "pydantic[dotenv]>=1.10.8",  # https://github.com/pydantic/pydantic/issues/5821
     "stac_pydantic==2.0.*",
-    "stac-fastapi.types~=2.5.5",
-    "stac-fastapi.api~=2.5.5",
-    "stac-fastapi.extensions~=2.5.5",
+    "stac-fastapi.types~=2.5.5.post1",
+    "stac-fastapi.api~=2.5.5.post1",
+    "stac-fastapi.extensions~=2.5.5.post1",
     "asyncpg",
     "buildpg",
     "brotli_asgi",
