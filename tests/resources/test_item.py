@@ -39,7 +39,7 @@ async def test_update_collection(app_client, load_test_data, load_test_collectio
     in_coll = load_test_collection
     in_coll.keywords.append("newkeyword")
 
-    resp = await app_client.put("/collections", json=in_coll.dict())
+    resp = await app_client.put(f"/collections/{in_coll.id}", json=in_coll.dict())
     assert resp.status_code == 200
 
     resp = await app_client.get(f"/collections/{in_coll.id}")
