@@ -1,6 +1,5 @@
 """Item crud client."""
 import re
-from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import unquote_plus, urljoin
 
@@ -16,9 +15,10 @@ from pypgstac.hydration import hydrate
 from stac_fastapi.types.core import AsyncBaseCoreClient
 from stac_fastapi.types.errors import InvalidQueryParameter, NotFoundError
 from stac_fastapi.types.requests import get_base_url
+from stac_fastapi.types.rfc3339 import DateTimeType
 from stac_fastapi.types.stac import Collection, Collections, Item, ItemCollection
 from stac_pydantic.links import Relations
-from stac_pydantic.shared import MimeTypes
+from stac_pydantic.shared import BBox, MimeTypes
 
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.models.links import (
@@ -28,7 +28,7 @@ from stac_fastapi.pgstac.models.links import (
     PagingLinks,
 )
 from stac_fastapi.pgstac.types.search import PgstacSearch
-from stac_fastapi.pgstac.utils import filter_fields
+from stac_fastapi.pgstac.utils import filter_fields, format_datetime_range
 
 NumType = Union[float, int]
 
@@ -155,8 +155,12 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         settings: Settings = request.app.state.settings
 
+        if search_request.datetime:
+            search_request.datetime = format_datetime_range(search_request.datetime)
+
         search_request.conf = search_request.conf or {}
         search_request.conf["nohydrate"] = settings.use_api_hydrate
+
         search_request_json = search_request.json(exclude_none=True, by_alias=True)
 
         try:
@@ -248,8 +252,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
         self,
         collection_id: str,
         request: Request,
-        bbox: Optional[List[NumType]] = None,
-        datetime: Optional[Union[str, datetime]] = None,
+        bbox: Optional[BBox] = None,
+        datetime: Optional[DateTimeType] = None,
         limit: Optional[int] = None,
         token: str = None,
         **kwargs,
@@ -341,8 +345,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
         request: Request,
         collections: Optional[List[str]] = None,
         ids: Optional[List[str]] = None,
-        bbox: Optional[List[NumType]] = None,
-        datetime: Optional[Union[str, datetime]] = None,
+        bbox: Optional[BBox] = None,
+        datetime: Optional[DateTimeType] = None,
         limit: Optional[int] = None,
         query: Optional[str] = None,
         token: Optional[str] = None,

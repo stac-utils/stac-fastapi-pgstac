@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Updated stac-fastapi libraries to v2.5.4 ([#101](https://github.com/stac-utils/stac-fastapi-pgstac/pull/101))
+- 
 ### Added
 
 - Ability to configure the database runtime parameters ([#92](https://github.com/stac-utils/stac-fastapi-pgstac/pull/92))
