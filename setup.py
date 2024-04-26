@@ -8,22 +8,26 @@ with open("README.md") as f:
 install_requires = [
     "attrs",
     "orjson",
-    "pydantic[dotenv]>=1.10.8",  # https://github.com/pydantic/pydantic/issues/5821
-    "stac_pydantic==2.0.*",
-    "stac-fastapi.types~=2.5.5.post1",
-    "stac-fastapi.api~=2.5.5.post1",
-    "stac-fastapi.extensions~=2.5.5.post1",
+    "pydantic",
+    "stac_pydantic==3.0.*",
+    # "stac-fastapi.api~=3.0",
+    # "stac-fastapi.extensions~=3.0",
+    # "stac-fastapi.types~=3.0",
+    # For now we use latest commit in master
+    "stac-fastapi.api @ git+https://github.com/stac-utils/stac-fastapi/@e7f82d6996af0f28574329d57f5a5e90431d66bb#egg=stac-fastapi.api&subdirectory=stac_fastapi/api",
+    "stac-fastapi.extensions @ git+https://github.com/stac-utils/stac-fastapi/@e7f82d6996af0f28574329d57f5a5e90431d66bb#egg=stac-fastapi.extensions&subdirectory=stac_fastapi/extensions",
+    "stac-fastapi.types @ git+https://github.com/stac-utils/stac-fastapi/@e7f82d6996af0f28574329d57f5a5e90431d66bb#egg=stac-fastapi.types&subdirectory=stac_fastapi/types",
     "asyncpg",
     "buildpg",
     "brotli_asgi",
     "pygeofilter>=0.2",
-    "pypgstac==0.7.*",
+    "pypgstac==0.8.*",
 ]
 
 extra_reqs = {
     "dev": [
         "pystac[validation]",
-        "pypgstac[psycopg]==0.7.*",
+        "pypgstac[psycopg]==0.8.*",
         "pytest-postgresql",
         "pytest",
         "pytest-cov",
