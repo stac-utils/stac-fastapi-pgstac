@@ -21,9 +21,10 @@ async def test_create_collection(app_client, load_test_data: Callable):
         "/collections",
         json=in_json,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
     post_coll = Collection.parse_obj(resp.json())
     assert in_coll.dict(exclude={"links"}) == post_coll.dict(exclude={"links"})
+
     resp = await app_client.get(f"/collections/{post_coll.id}")
     assert resp.status_code == 200
     get_coll = Collection.parse_obj(resp.json())
@@ -66,6 +67,7 @@ async def test_create_item(app_client, load_test_data: Callable, load_test_colle
     assert resp.status_code == 200
     post_item = Item.parse_obj(resp.json())
     assert in_item.dict(exclude={"links"}) == post_item.dict(exclude={"links"})
+
     resp = await app_client.get(f"/collections/{coll.id}/items/{post_item.id}")
     assert resp.status_code == 200
     get_item = Item.parse_obj(resp.json())
@@ -86,7 +88,7 @@ async def test_create_item_no_collection_id(
         json=item,
     )
 
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     resp = await app_client.get(f"/collections/{coll.id}/items/{item['id']}")
 

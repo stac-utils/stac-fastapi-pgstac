@@ -226,6 +226,10 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
             for feature in collection.get("features") or []:
                 base_item = await base_item_cache.get(feature.get("collection"))
+
+                # Exclude None values
+                base_item = {k: v for k, v in base_item.items() if v is not None}
+
                 feature = hydrate(base_item, feature)
 
                 # Grab ids needed for links that may be removed by the fields extension.

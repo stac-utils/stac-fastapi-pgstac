@@ -186,7 +186,7 @@ async def load_test_collection(app_client, load_test_data):
         "/collections",
         json=data,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
     return Collection.parse_obj(resp.json())
 
 
@@ -198,7 +198,7 @@ async def load_test_item(app_client, load_test_data, load_test_collection):
         f"/collections/{coll.id}/items",
         json=data,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     return Item.parse_obj(resp.json())
 
