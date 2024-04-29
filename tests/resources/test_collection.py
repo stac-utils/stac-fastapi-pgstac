@@ -12,7 +12,7 @@ async def test_create_collection(app_client, load_test_data: Callable):
         "/collections",
         json=in_json,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
     post_coll = Collection.parse_obj(resp.json())
     assert in_coll.dict(exclude={"links"}) == post_coll.dict(exclude={"links"})
     resp = await app_client.get(f"/collections/{post_coll.id}")
@@ -66,7 +66,7 @@ async def test_create_collection_conflict(app_client, load_test_data: Callable):
         "/collections",
         json=in_json,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
     Collection.parse_obj(resp.json())
     resp = await app_client.post(
         "/collections",
@@ -104,7 +104,7 @@ async def test_returns_valid_collection(app_client, load_test_data):
         "/collections",
         json=in_json,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     resp = await app_client.get(f"/collections/{in_json['id']}")
     assert resp.status_code == 200
@@ -127,7 +127,7 @@ async def test_returns_valid_links_in_collections(app_client, load_test_data):
         "/collections",
         json=in_json,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     # Get collection by ID
     resp = await app_client.get(f"/collections/{in_json['id']}")

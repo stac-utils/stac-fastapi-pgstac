@@ -142,14 +142,14 @@ async def test_app_transaction_extension(
     coll = load_test_collection
     item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
 
 async def test_app_query_extension(load_test_data, app_client, load_test_collection):
     coll = load_test_collection
     item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     params = {"query": {"proj:epsg": {"eq": item["properties"]["proj:epsg"]}}}
     resp = await app_client.post("/search", json=params)
@@ -170,7 +170,7 @@ async def test_app_query_extension_limit_1(
     coll = load_test_collection
     item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     params = {"limit": 1}
     resp = await app_client.post("/search", json=params)
@@ -191,7 +191,7 @@ async def test_app_query_extension_limit_lt0(
     coll = load_test_collection
     item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     params = {"limit": -1}
     resp = await app_client.post("/search", json=params)
@@ -204,7 +204,7 @@ async def test_app_query_extension_limit_gt10000(
     coll = load_test_collection
     item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     params = {"limit": 10001}
     resp = await app_client.post("/search", json=params)
@@ -215,7 +215,7 @@ async def test_app_query_extension_gt(load_test_data, app_client, load_test_coll
     coll = load_test_collection
     item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     params = {"query": {"proj:epsg": {"gt": item["properties"]["proj:epsg"]}}}
     resp = await app_client.post("/search", json=params)
@@ -228,7 +228,7 @@ async def test_app_query_extension_gte(load_test_data, app_client, load_test_col
     coll = load_test_collection
     item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     params = {"query": {"proj:epsg": {"gte": item["properties"]["proj:epsg"]}}}
     resp = await app_client.post("/search", json=params)
@@ -244,7 +244,7 @@ async def test_app_sort_extension(load_test_data, app_client, load_test_collecti
         first_item["properties"]["datetime"], "%Y-%m-%dT%H:%M:%SZ"
     )
     resp = await app_client.post(f"/collections/{coll.id}/items", json=first_item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     second_item = load_test_data("test_item.json")
     second_item["id"] = "another-item"
@@ -253,7 +253,7 @@ async def test_app_sort_extension(load_test_data, app_client, load_test_collecti
         "%Y-%m-%dT%H:%M:%SZ"
     )
     resp = await app_client.post(f"/collections/{coll.id}/items", json=second_item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     params = {
         "collections": [coll.id],
@@ -281,7 +281,7 @@ async def test_search_invalid_date(load_test_data, app_client, load_test_collect
     coll = load_test_collection
     first_item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=first_item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     params = {
         "datetime": "2020-XX-01/2020-10-30",
@@ -296,7 +296,7 @@ async def test_bbox_3d(load_test_data, app_client, load_test_collection):
     coll = load_test_collection
     first_item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=first_item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     australia_bbox = [106.343365, -47.199523, 0.1, 168.218365, -19.437288, 0.1]
     params = {
@@ -329,7 +329,7 @@ async def test_search_point_intersects(load_test_data, app_client, load_test_col
     coll = load_test_collection
     item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     new_coordinates = []
     for coordinate in item["geometry"]["coordinates"][0]:
@@ -338,7 +338,7 @@ async def test_search_point_intersects(load_test_data, app_client, load_test_col
     item["geometry"]["coordinates"] = [new_coordinates]
     item["bbox"] = [value * -1 for value in item["bbox"]]
     resp = await app_client.post(f"/collections/{coll.id}/items", json=item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     point = [150.04, -33.14]
     intersects = {"type": "Point", "coordinates": point}
@@ -365,7 +365,7 @@ async def test_search_line_string_intersects(
     coll = load_test_collection
     item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     line = [[150.04, -33.14], [150.22, -33.89]]
     intersects = {"type": "LineString", "coordinates": line}
@@ -498,7 +498,7 @@ async def test_item_collection_filter_bbox(
     coll = load_test_collection
     first_item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=first_item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     bbox = "100,-50,170,-20"
     resp = await app_client.get(f"/collections/{coll.id}/items", params={"bbox": bbox})
@@ -520,7 +520,7 @@ async def test_item_collection_filter_datetime(
     coll = load_test_collection
     first_item = load_test_data("test_item.json")
     resp = await app_client.post(f"/collections/{coll.id}/items", json=first_item)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     datetime_range = "2020-01-01T00:00:00.00Z/.."
     resp = await app_client.get(
@@ -556,13 +556,13 @@ async def test_deleting_items_with_identical_ids(app_client):
         response = await app_client.post(
             "/collections", json=collection.to_dict(include_self_link=False)
         )
-        assert response.status_code == 200
+        assert response.status_code == 201
         item_as_dict = item.to_dict(include_self_link=False)
         item_as_dict["collection"] = collection.id
         response = await app_client.post(
             f"/collections/{collection.id}/items", json=item_as_dict
         )
-        assert response.status_code == 200
+        assert response.status_code == 201
         response = await app_client.get(f"/collections/{collection.id}/items")
         assert response.status_code == 200, response.json()
         assert len(response.json()["features"]) == 1
@@ -595,7 +595,7 @@ async def test_sorting_and_paging(app_client, load_test_collection, direction: s
             f"/collections/{collection_id}/items",
             json=item.to_dict(include_self_link=False, transform_hrefs=False),
         )
-        assert response.status_code == 200
+        assert response.status_code == 201
 
     async def search(query: Dict[str, Any]) -> List[Item]:
         items: List[Item] = []
@@ -685,12 +685,12 @@ async def test_wrapped_function(load_test_data, database) -> None:
                 "http://test/collections",
                 json=load_test_data("test_collection.json"),
             )
-            assert response.status_code == 200
+            assert response.status_code == 201
             response = await client.post(
                 "http://test/collections/test-collection/items",
                 json=load_test_data("test_item.json"),
             )
-            assert response.status_code == 200
+            assert response.status_code == 201
             response = await client.get(
                 "http://test/collections/test-collection/items/test-item"
             )
