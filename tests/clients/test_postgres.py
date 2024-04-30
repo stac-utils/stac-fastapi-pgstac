@@ -35,15 +35,14 @@ async def test_update_collection(app_client, load_test_collection, load_test_dat
     in_coll = load_test_collection
     in_coll["keywords"].append("newkeyword")
 
-    in_coll = in_coll.model_dump(mode="json")
-
     resp = await app_client.put(f"/collections/{in_coll['id']}", json=in_coll)
     assert resp.status_code == 200
 
-    resp = await app_client.get(f"/collections/{in_coll.id}")
+    resp = await app_client.get(f"/collections/{in_coll['id']}")
     assert resp.status_code == 200
 
     get_coll = Collection.parse_obj(resp.json())
+    in_coll = Collection(**in_coll)
     assert in_coll.dict(exclude={"links"}) == get_coll.dict(exclude={"links"})
     assert "newkeyword" in get_coll.keywords
 
@@ -159,6 +158,8 @@ async def test_update_item(app_client, load_test_collection, load_test_item):
     resp = await app_client.get(f"/collections/{coll['id']}/items/{item['id']}")
     assert resp.status_code == 200
     get_item = Item.parse_obj(resp.json())
+
+    item = Item(**item)
     assert item.dict(exclude={"links"}) == get_item.dict(exclude={"links"})
     assert get_item.properties.description == "Update Test"
 
