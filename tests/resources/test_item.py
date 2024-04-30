@@ -619,7 +619,6 @@ async def test_item_search_temporal_window_get(
         "collections": test_item["collection"],
         "datetime": f"{datetime_to_str(item_date_before)}/{datetime_to_str(item_date_after)}",
     }
-    print(params)
     resp = await app_client.get("/search", params=params)
     resp_json = resp.json()
     assert len(resp_json["features"]) == 1

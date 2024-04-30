@@ -371,8 +371,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
         """
         query_params = str(request.query_params)
 
-        print("query_params: ", query_params)
-
         # Kludgy fix because using factory does not allow alias for filter-lang
         if filter_lang is None:
             match = re.search(r"filter-lang=([a-z0-9-]+)", query_params, re.IGNORECASE)
