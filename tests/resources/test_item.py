@@ -43,10 +43,12 @@ async def test_update_collection(app_client, load_test_data, load_test_collectio
     resp = await app_client.put(f"/collections/{in_coll['id']}", json=in_coll)
     assert resp.status_code == 200
 
-    resp = await app_client.get(f"/collections/{in_coll.id}")
+    resp = await app_client.get(f"/collections/{in_coll['id']}")
     assert resp.status_code == 200
 
     get_coll = Collection.parse_obj(resp.json())
+
+    in_coll = Collection(**in_coll)
     assert in_coll.dict(exclude={"links"}) == get_coll.dict(exclude={"links"})
     assert "newkeyword" in get_coll.keywords
 
@@ -285,7 +287,7 @@ async def test_update_new_item(
     new_item["id"] = "test-updatenewitem"
 
     resp = await app_client.put(
-        f"/collections/{coll.id}/items/{new_item['id']}", json=new_item
+        f"/collections/{coll['id']}/items/{new_item['id']}", json=new_item
     )
     assert resp.status_code == 404
 
@@ -295,11 +297,10 @@ async def test_update_item_missing_collection(
 ):
     coll = load_test_collection
     item = load_test_item
-    item.collection = None
-    item = item.model_dump(mode="json")
+    item["collection"] = None
 
     resp = await app_client.put(
-        f"/collections/{coll['id']}/items/{item['id']}", content=json.dumps(item)
+        f"/collections/{coll['id']}/items/{item['id']}", json=item
     )
     assert resp.status_code == 200
 

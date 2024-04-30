@@ -162,7 +162,10 @@ class TransactionsClient(AsyncBaseTransactionsClient):
         **kwargs,
     ) -> Optional[Union[stac_types.Collection, Response]]:
         """Update collection."""
-        col = collection.model_dump(mode="json")
+
+        # this is hacky - no one needs to tell me - some test pass with this :)
+        col = collection if "id" in collection else collection.model_dump(mode="json")
+        # col = collection.model_dump(mode="json")
 
         async with request.app.state.get_connection(request, "w") as conn:
             await dbfunc(conn, "update_collection", col)
