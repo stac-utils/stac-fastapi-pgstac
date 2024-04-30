@@ -116,7 +116,7 @@ def dict_deep_update(merge_to: Dict[str, Any], merge_from: Dict[str, Any]) -> No
             merge_to[k] = v
 
 
-def format_datetime_range(dt_range: DateTimeType) -> Union[str, Any]:
+def format_datetime_range(dt_range: Union[DateTimeType, Any]) -> Union[str, Any]:
     """
     Convert a datetime object or a tuple of datetime objects to a formatted string for datetime ranges.
 

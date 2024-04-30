@@ -1,5 +1,6 @@
 import logging
 import uuid
+import json
 from contextlib import asynccontextmanager
 from copy import deepcopy
 from typing import Callable, Literal
@@ -31,11 +32,13 @@ async def test_create_collection(app_client, load_test_data: Callable):
     assert post_coll.dict(exclude={"links"}) == get_coll.dict(exclude={"links"})
 
 
-async def test_update_collection(app_client, load_test_collection):
+async def test_update_collection(app_client, load_test_collection, load_test_data):
     in_coll = load_test_collection
     in_coll.keywords.append("newkeyword")
 
-    resp = await app_client.put(f"/collections/{in_coll.id}", json=in_coll.dict())
+    in_coll = in_coll.model_dump(mode="json")
+
+    resp = await app_client.put(f"/collections/{in_coll['id']}", json=in_coll)
     assert resp.status_code == 200
 
     resp = await app_client.get(f"/collections/{in_coll.id}")

@@ -119,7 +119,7 @@ class TransactionsClient(AsyncBaseTransactionsClient):
         **kwargs,
     ) -> Optional[Union[stac_types.Item, Response]]:
         """Update item."""
-        item = item.model_dump(mode="json")
+        item = item.model_dump(mode="json")    
 
         self._validate_item(request, item, collection_id, item_id)
         item["collection"] = collection_id

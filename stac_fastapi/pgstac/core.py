@@ -371,6 +371,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
         """
         query_params = str(request.query_params)
 
+        print("query_params: ", query_params)
+
         # Kludgy fix because using factory does not allow alias for filter-lang
         if filter_lang is None:
             match = re.search(r"filter-lang=([a-z0-9-]+)", query_params, re.IGNORECASE)
@@ -394,6 +396,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 base_args["filter-lang"] = "cql2-json"
 
         if datetime:
+            datetime = format_datetime_range(datetime)
             base_args["datetime"] = datetime
 
         if intersects:
