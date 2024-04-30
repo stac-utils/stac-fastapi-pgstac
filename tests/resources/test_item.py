@@ -83,10 +83,14 @@ async def test_create_item(app_client, load_test_data: Callable, load_test_colle
     get_item = Item.parse_obj(resp.json())
     assert in_item.dict(exclude={"links"}) == get_item.dict(exclude={"links"})
 
-    get_item = get_item.model_dump(mode="json")  
-    post_item = post_item.model_dump(mode="json")  
-    post_self_link = next((link for link in post_item["links"] if link["rel"] == "self"), None)
-    get_self_link = next((link for link in get_item["links"] if link["rel"] == "self"), None)
+    get_item = get_item.model_dump(mode="json")
+    post_item = post_item.model_dump(mode="json")
+    post_self_link = next(
+        (link for link in post_item["links"] if link["rel"] == "self"), None
+    )
+    get_self_link = next(
+        (link for link in get_item["links"] if link["rel"] == "self"), None
+    )
     assert post_self_link is not None and get_self_link is not None
     assert post_self_link["href"] == get_self_link["href"]
 
@@ -115,7 +119,7 @@ async def test_fetches_valid_item(
     coll = load_test_collection
 
     in_json = load_test_data("test_item.json")
-    
+
     resp = await app_client.post(
         f"/collections/{coll['id']}/items",
         json=in_json,
@@ -162,8 +166,12 @@ async def test_update_item(
 
     put_item = put_item.model_dump(mode="json")
     get_item = get_item.model_dump(mode="json")
-    post_self_link = next((link for link in put_item["links"] if link["rel"] == "self"), None)
-    get_self_link = next((link for link in get_item["links"] if link["rel"] == "self"), None)
+    post_self_link = next(
+        (link for link in put_item["links"] if link["rel"] == "self"), None
+    )
+    get_self_link = next(
+        (link for link in get_item["links"] if link["rel"] == "self"), None
+    )
     assert post_self_link is not None and get_self_link is not None
     assert post_self_link["href"] == get_self_link["href"]
 
@@ -200,7 +208,9 @@ async def test_delete_item(
     assert resp.status_code == 404
 
 
-async def test_get_collection_items(app_client, load_test_collection, load_test_item, load_test_data):
+async def test_get_collection_items(
+    app_client, load_test_collection, load_test_item, load_test_data
+):
     coll = load_test_collection
     item = load_test_data("test_item.json")
 
@@ -263,7 +273,7 @@ async def test_create_item_missing_collection(
     assert resp.status_code == 201
 
     post_item = resp.json()
-    assert post_item["collection"] == coll['id']
+    assert post_item["collection"] == coll["id"]
 
 
 async def test_update_new_item(
@@ -294,7 +304,7 @@ async def test_update_item_missing_collection(
     assert resp.status_code == 200
 
     put_item = resp.json()
-    assert put_item["collection"] == coll['id']
+    assert put_item["collection"] == coll["id"]
 
 
 async def test_pagination(app_client, load_test_data, load_test_collection):
