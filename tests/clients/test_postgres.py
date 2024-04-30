@@ -33,7 +33,7 @@ async def test_create_collection(app_client, load_test_data: Callable):
 
 async def test_update_collection(app_client, load_test_collection, load_test_data):
     in_coll = load_test_collection
-    in_coll.keywords.append("newkeyword")
+    in_coll["keywords"].append("newkeyword")
 
     in_coll = in_coll.model_dump(mode="json")
 
@@ -51,26 +51,26 @@ async def test_update_collection(app_client, load_test_collection, load_test_dat
 async def test_delete_collection(app_client, load_test_collection):
     in_coll = load_test_collection
 
-    resp = await app_client.delete(f"/collections/{in_coll.id}")
+    resp = await app_client.delete(f"/collections/{in_coll['id']}")
     assert resp.status_code == 200
 
-    resp = await app_client.get(f"/collections/{in_coll.id}")
+    resp = await app_client.get(f"/collections/{in_coll['id']}")
     assert resp.status_code == 404
 
 
 async def test_create_item(app_client, load_test_data: Callable, load_test_collection):
     coll = load_test_collection
     in_json = load_test_data("test_item.json")
-    in_item = Item.parse_obj(in_json)
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=in_json,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
+    in_item = Item.parse_obj(in_json)
     post_item = Item.parse_obj(resp.json())
     assert in_item.dict(exclude={"links"}) == post_item.dict(exclude={"links"})
 
-    resp = await app_client.get(f"/collections/{coll.id}/items/{post_item.id}")
+    resp = await app_client.get(f"/collections/{coll['id']}/items/{post_item.id}")
     assert resp.status_code == 200
     get_item = Item.parse_obj(resp.json())
     assert in_item.dict(exclude={"links"}) == get_item.dict(exclude={"links"})
@@ -86,18 +86,18 @@ async def test_create_item_no_collection_id(
     item["collection"] = None
 
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=item,
     )
 
     assert resp.status_code == 201
 
-    resp = await app_client.get(f"/collections/{coll.id}/items/{item['id']}")
+    resp = await app_client.get(f"/collections/{coll['id']}/items/{item['id']}")
 
     assert resp.status_code == 200
 
     get_item = Item.parse_obj(resp.json())
-    assert get_item.collection == coll.id
+    assert get_item.collection == coll["id"]
 
 
 async def test_create_item_invalid_ids(
@@ -109,7 +109,7 @@ async def test_create_item_invalid_ids(
     item = load_test_data("test_item.json")
     item["id"] = "invalid/id"
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=item,
     )
     assert resp.status_code == 400
@@ -124,7 +124,7 @@ async def test_create_item_invalid_collection_id(
     item = load_test_data("test_item.json")
     item["collection"] = "wrong-collection-id"
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=item,
     )
     assert resp.status_code == 400
@@ -139,7 +139,7 @@ async def test_create_item_bad_body(
     item = load_test_data("test_item.json")
     item["type"] = "not-a-type"
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=item,
     )
     assert resp.status_code == 400
@@ -149,14 +149,14 @@ async def test_update_item(app_client, load_test_collection, load_test_item):
     coll = load_test_collection
     item = load_test_item
 
-    item.properties.description = "Update Test"
+    item["properties"]["description"] = "Update Test"
 
     resp = await app_client.put(
-        f"/collections/{coll.id}/items/{item.id}", content=item.json()
+        f"/collections/{coll['id']}/items/{item['id']}", json=item
     )
     assert resp.status_code == 200
 
-    resp = await app_client.get(f"/collections/{coll.id}/items/{item.id}")
+    resp = await app_client.get(f"/collections/{coll['id']}/items/{item['id']}")
     assert resp.status_code == 200
     get_item = Item.parse_obj(resp.json())
     assert item.dict(exclude={"links"}) == get_item.dict(exclude={"links"})
@@ -167,10 +167,10 @@ async def test_delete_item(app_client, load_test_collection, load_test_item):
     coll = load_test_collection
     item = load_test_item
 
-    resp = await app_client.delete(f"/collections/{coll.id}/items/{item.id}")
+    resp = await app_client.delete(f"/collections/{coll['id']}/items/{item['id']}")
     assert resp.status_code == 200
 
-    resp = await app_client.get(f"/collections/{coll.id}/items/{item.id}")
+    resp = await app_client.get(f"/collections/{coll['id']}/items/{item['id']}")
     assert resp.status_code == 404
 
 
@@ -179,15 +179,15 @@ async def test_get_collection_items(app_client, load_test_collection, load_test_
     item = load_test_item
 
     for _ in range(4):
-        item.id = str(uuid.uuid4())
+        item["id"] = str(uuid.uuid4())
         resp = await app_client.post(
-            f"/collections/{coll.id}/items",
-            content=item.json(),
+            f"/collections/{coll['id']}/items",
+            json=item,
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 201
 
     resp = await app_client.get(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
     )
     assert resp.status_code == 200
     fc = resp.json()
@@ -211,17 +211,17 @@ async def test_create_item_collection(
     item_collection = {"type": "FeatureCollection", "features": items, "links": []}
 
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=item_collection,
     )
 
     assert resp.status_code == 201
 
     resp = await app_client.get(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
     )
     for item in items:
-        resp = await app_client.get(f"/collections/{coll.id}/items/{item['id']}")
+        resp = await app_client.get(f"/collections/{coll['id']}/items/{item['id']}")
         assert resp.status_code == 200
 
 
@@ -242,19 +242,19 @@ async def test_create_item_collection_no_collection_ids(
     item_collection = {"type": "FeatureCollection", "features": items, "links": []}
 
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=item_collection,
     )
 
     assert resp.status_code == 201
 
     resp = await app_client.get(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
     )
     for item in items:
-        resp = await app_client.get(f"/collections/{coll.id}/items/{item['id']}")
+        resp = await app_client.get(f"/collections/{coll['id']}/items/{item['id']}")
         assert resp.status_code == 200
-        assert resp.json()["collection"] == coll.id
+        assert resp.json()["collection"] == coll["id"]
 
 
 async def test_create_item_collection_invalid_collection_ids(
@@ -274,7 +274,7 @@ async def test_create_item_collection_invalid_collection_ids(
     item_collection = {"type": "FeatureCollection", "features": items, "links": []}
 
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=item_collection,
     )
 
@@ -297,7 +297,7 @@ async def test_create_item_collection_invalid_item_ids(
     item_collection = {"type": "FeatureCollection", "features": items, "links": []}
 
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=item_collection,
     )
 
@@ -319,14 +319,14 @@ async def test_create_bulk_items(
     payload = {"items": items}
 
     resp = await app_client.post(
-        f"/collections/{coll.id}/bulk_items",
+        f"/collections/{coll['id']}/bulk_items",
         json=payload,
     )
     assert resp.status_code == 200
     assert resp.text == '"Successfully added 2 items."'
 
     for item_id in items.keys():
-        resp = await app_client.get(f"/collections/{coll.id}/items/{item_id}")
+        resp = await app_client.get(f"/collections/{coll['id']}/items/{item_id}")
         assert resp.status_code == 200
 
 
@@ -345,20 +345,20 @@ async def test_create_bulk_items_already_exist_insert(
     payload = {"items": items, "method": "insert"}
 
     resp = await app_client.post(
-        f"/collections/{coll.id}/bulk_items",
+        f"/collections/{coll['id']}/bulk_items",
         json=payload,
     )
     assert resp.status_code == 200
     assert resp.text == '"Successfully added 2 items."'
 
     for item_id in items.keys():
-        resp = await app_client.get(f"/collections/{coll.id}/items/{item_id}")
+        resp = await app_client.get(f"/collections/{coll['id']}/items/{item_id}")
         assert resp.status_code == 200
 
     # Try creating the same items again.
     # This should fail with the default insert behavior.
     resp = await app_client.post(
-        f"/collections/{coll.id}/bulk_items",
+        f"/collections/{coll['id']}/bulk_items",
         json=payload,
     )
     assert resp.status_code == 409
@@ -379,21 +379,21 @@ async def test_create_bulk_items_already_exist_upsert(
     payload = {"items": items, "method": "insert"}
 
     resp = await app_client.post(
-        f"/collections/{coll.id}/bulk_items",
+        f"/collections/{coll['id']}/bulk_items",
         json=payload,
     )
     assert resp.status_code == 200
     assert resp.text == '"Successfully added 2 items."'
 
     for item_id in items.keys():
-        resp = await app_client.get(f"/collections/{coll.id}/items/{item_id}")
+        resp = await app_client.get(f"/collections/{coll['id']}/items/{item_id}")
         assert resp.status_code == 200
 
     # Try creating the same items again, but using upsert.
     # This should succeed.
     payload["method"] = "upsert"
     resp = await app_client.post(
-        f"/collections/{coll.id}/bulk_items",
+        f"/collections/{coll['id']}/bulk_items",
         json=payload,
     )
     assert resp.status_code == 200
