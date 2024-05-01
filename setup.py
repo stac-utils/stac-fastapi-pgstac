@@ -38,7 +38,6 @@ extra_reqs = {
         "httpx",
         "twine",
         "wheel",
-        "uvicorn",
     ],
     "docs": ["mkdocs", "mkdocs-material", "pdocs"],
     "server": ["uvicorn[standard]==0.19.0"],
