@@ -5,6 +5,7 @@
 ### Changed
 
 - update pgstac version to `0.8.x`
+- Allow to omit `collection` in bulk item insertions. Same identifier checks as with single insertions ([#113](https://github.com/stac-utils/stac-fastapi-pgstac/pull/113))
 
 ## [2.5.0] - 2024-04-25
 
