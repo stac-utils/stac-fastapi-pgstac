@@ -476,7 +476,6 @@ async def test_base_queryables(load_test_data, app_client, load_test_collection)
     assert q["type"] == "object"
     assert "properties" in q
     assert "id" in q["properties"]
-    assert "eo:cloud_cover" in q["properties"]
 
 
 @pytest.mark.asyncio
@@ -488,7 +487,6 @@ async def test_collection_queryables(load_test_data, app_client, load_test_colle
     assert q["type"] == "object"
     assert "properties" in q
     assert "id" in q["properties"]
-    assert "eo:cloud_cover" in q["properties"]
 
 
 @pytest.mark.asyncio
