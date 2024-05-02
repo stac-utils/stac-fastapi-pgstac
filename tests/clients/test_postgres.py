@@ -434,7 +434,6 @@ async def test_create_bulk_items_omit_collection(
     assert resp.text == '"Successfully upserted 2 items."'
 
 
-
 async def test_create_bulk_items_collection_mismatch(
     app_client, load_test_data: Callable, load_test_collection
 ):
