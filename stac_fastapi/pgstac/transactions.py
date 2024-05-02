@@ -24,10 +24,7 @@ logger = logging.getLogger("uvicorn")
 logger.setLevel(logging.INFO)
 
 
-@attr.s
-class TransactionsClient(AsyncBaseTransactionsClient):
-    """Transactions extension specific CRUD operations."""
-
+class ClientValidateMixIn:
     def _validate_id(self, id: str, settings: Settings):
         invalid_chars = settings.invalid_id_chars
         id_regex = "[" + "".join(re.escape(char) for char in invalid_chars) + "]"
@@ -65,6 +62,11 @@ class TransactionsClient(AsyncBaseTransactionsClient):
                 status_code=400,
                 detail=f"Item ID from path parameter ({expected_item_id}) does not match Item ID from Item ({body_item_id})",
             )
+
+
+@attr.s
+class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
+    """Transactions extension specific CRUD operations."""
 
     async def create_item(
         self,
@@ -176,11 +178,15 @@ class TransactionsClient(AsyncBaseTransactionsClient):
 
 
 @attr.s
-class BulkTransactionsClient(AsyncBaseBulkTransactionsClient):
+class BulkTransactionsClient(AsyncBaseBulkTransactionsClient, ClientValidateMixIn):
     """Postgres bulk transactions."""
 
-    async def bulk_item_insert(self, items: Items, request: Request, **kwargs) -> str:
+    async def bulk_item_insert(self, collection_id: str, items: Items, request: Request, **kwargs) -> str:
         """Bulk item insertion using pgstac."""
+        for item_id, item in items.items.items():
+            self._validate_item(request, item, collection_id, item_id)
+            item["collection"] = collection_id
+
         items_to_insert = list(items.items.values())
 
         async with request.app.state.get_connection(request, "w") as conn:
