@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+
+- update pgstac version to `0.8.x`
 
 ## [2.5.0] - 2024-04-25
 
