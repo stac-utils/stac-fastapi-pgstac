@@ -397,8 +397,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 base_args["filter-lang"] = "cql2-json"
 
         if datetime:
-            datetime = format_datetime_range(datetime)
-            base_args["datetime"] = datetime
+            base_args["datetime"] = format_datetime_range(datetime)
 
         if intersects:
             base_args["intersects"] = orjson.loads(unquote_plus(intersects))
