@@ -14,9 +14,9 @@ install_requires = [
     # "stac-fastapi.extensions~=3.0",
     # "stac-fastapi.types~=3.0",
     # For now we use latest commit in master
-    "stac-fastapi.api @ git+https://github.com/stac-utils/stac-fastapi/@e7f82d6996af0f28574329d57f5a5e90431d66bb#egg=stac-fastapi.api&subdirectory=stac_fastapi/api",
-    "stac-fastapi.extensions @ git+https://github.com/stac-utils/stac-fastapi/@e7f82d6996af0f28574329d57f5a5e90431d66bb#egg=stac-fastapi.extensions&subdirectory=stac_fastapi/extensions",
-    "stac-fastapi.types @ git+https://github.com/stac-utils/stac-fastapi/@e7f82d6996af0f28574329d57f5a5e90431d66bb#egg=stac-fastapi.types&subdirectory=stac_fastapi/types",
+    "stac-fastapi.api @ git+https://github.com/stac-utils/stac-fastapi/@e4e4120ae6d1a9fe80910073af5889ae08c418f8#egg=stac-fastapi.api&subdirectory=stac_fastapi/api",
+    "stac-fastapi.extensions @ git+https://github.com/stac-utils/stac-fastapi/@e4e4120ae6d1a9fe80910073af5889ae08c418f8#egg=stac-fastapi.extensions&subdirectory=stac_fastapi/extensions",
+    "stac-fastapi.types @ git+https://github.com/stac-utils/stac-fastapi/@e4e4120ae6d1a9fe80910073af5889ae08c418f8#egg=stac-fastapi.types&subdirectory=stac_fastapi/types",
     "asyncpg",
     "buildpg",
     "brotli_asgi",
