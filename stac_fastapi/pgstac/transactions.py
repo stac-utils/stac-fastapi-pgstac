@@ -162,6 +162,7 @@ class TransactionsClient(AsyncBaseTransactionsClient):
         **kwargs,
     ) -> Optional[Union[stac_types.Collection, Response]]:
         """Update collection."""
+
         col = collection.model_dump(mode="json")
 
         async with request.app.state.get_connection(request, "w") as conn:

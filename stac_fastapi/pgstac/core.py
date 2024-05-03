@@ -277,6 +277,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
         # If collection does not exist, NotFoundError wil be raised
         await self.get_collection(collection_id, request=request)
 
+        if datetime:
+            datetime = format_datetime_range(datetime)
+
         base_args = {
             "collections": [collection_id],
             "bbox": bbox,
@@ -393,7 +396,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 base_args["filter-lang"] = "cql2-json"
 
         if datetime:
-            base_args["datetime"] = datetime
+            base_args["datetime"] = format_datetime_range(datetime)
 
         if intersects:
             base_args["intersects"] = orjson.loads(unquote_plus(intersects))

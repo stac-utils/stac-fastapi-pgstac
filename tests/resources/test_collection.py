@@ -13,6 +13,7 @@ async def test_create_collection(app_client, load_test_data: Callable):
         json=in_json,
     )
     assert resp.status_code == 201
+
     post_coll = Collection.parse_obj(resp.json())
     assert in_coll.dict(exclude={"links"}) == post_coll.dict(exclude={"links"})
     resp = await app_client.get(f"/collections/{post_coll.id}")
@@ -20,31 +21,45 @@ async def test_create_collection(app_client, load_test_data: Callable):
     get_coll = Collection.parse_obj(resp.json())
     assert post_coll.dict(exclude={"links"}) == get_coll.dict(exclude={"links"})
 
-    post_self_link = next((link for link in post_coll.links if link.rel == "self"), None)
-    get_self_link = next((link for link in get_coll.links if link.rel == "self"), None)
+    post_coll = post_coll.model_dump(mode="json")
+    get_coll = get_coll.model_dump(mode="json")
+    post_self_link = next(
+        (link for link in post_coll["links"] if link["rel"] == "self"), None
+    )
+    get_self_link = next(
+        (link for link in get_coll["links"] if link["rel"] == "self"), None
+    )
     assert post_self_link is not None and get_self_link is not None
-    assert post_self_link.href == get_self_link.href
+    assert post_self_link["href"] == get_self_link["href"]
 
 
 async def test_update_collection(app_client, load_test_data, load_test_collection):
     in_coll = load_test_collection
-    in_coll.keywords.append("newkeyword")
+    in_coll["keywords"].append("newkeyword")
 
-    resp = await app_client.put(f"/collections/{in_coll.id}", json=in_coll.dict())
+    resp = await app_client.put(f"/collections/{in_coll['id']}", json=in_coll)
     assert resp.status_code == 200
     put_coll = Collection.parse_obj(resp.json())
 
-    resp = await app_client.get(f"/collections/{in_coll.id}")
+    resp = await app_client.get(f"/collections/{in_coll['id']}")
     assert resp.status_code == 200
 
     get_coll = Collection.parse_obj(resp.json())
+
+    in_coll = Collection(**in_coll)
     assert in_coll.dict(exclude={"links"}) == get_coll.dict(exclude={"links"})
     assert "newkeyword" in get_coll.keywords
 
-    put_self_link = next((link for link in put_coll.links if link.rel == "self"), None)
-    get_self_link = next((link for link in get_coll.links if link.rel == "self"), None)
+    get_coll = get_coll.model_dump(mode="json")
+    put_coll = put_coll.model_dump(mode="json")
+    put_self_link = next(
+        (link for link in put_coll["links"] if link["rel"] == "self"), None
+    )
+    get_self_link = next(
+        (link for link in get_coll["links"] if link["rel"] == "self"), None
+    )
     assert put_self_link is not None and get_self_link is not None
-    assert put_self_link.href == get_self_link.href
+    assert put_self_link["href"] == get_self_link["href"]
 
 
 async def test_delete_collection(
@@ -52,10 +67,10 @@ async def test_delete_collection(
 ):
     in_coll = load_test_collection
 
-    resp = await app_client.delete(f"/collections/{in_coll.id}")
+    resp = await app_client.delete(f"/collections/{in_coll['id']}")
     assert resp.status_code == 200
 
-    resp = await app_client.get(f"/collections/{in_coll.id}")
+    resp = await app_client.get(f"/collections/{in_coll['id']}")
     assert resp.status_code == 404
 
 
@@ -84,9 +99,9 @@ async def test_delete_missing_collection(
 
 async def test_update_new_collection(app_client, load_test_collection):
     in_coll = load_test_collection
-    in_coll.id = "test-updatenew"
+    in_coll["id"] = "test-updatenew"
 
-    resp = await app_client.put(f"/collections/{in_coll.id}", json=in_coll.dict())
+    resp = await app_client.put(f"/collections/{in_coll['id']}", json=in_coll)
     assert resp.status_code == 404
 
 
@@ -172,7 +187,7 @@ async def test_returns_valid_links_in_collections(app_client, load_test_data):
 async def test_returns_license_link(app_client, load_test_collection):
     coll = load_test_collection
 
-    resp = await app_client.get(f"/collections/{coll.id}")
+    resp = await app_client.get(f"/collections/{coll['id']}")
     assert resp.status_code == 200
     resp_json = resp.json()
     link_rel_types = [link["rel"] for link in resp_json["links"]]
@@ -183,7 +198,7 @@ async def test_returns_license_link(app_client, load_test_collection):
 async def test_get_collection_forwarded_header(app_client, load_test_collection):
     coll = load_test_collection
     resp = await app_client.get(
-        f"/collections/{coll.id}",
+        f"/collections/{coll['id']}",
         headers={"Forwarded": "proto=https;host=test:1234"},
     )
     for link in [
@@ -198,7 +213,7 @@ async def test_get_collection_forwarded_header(app_client, load_test_collection)
 async def test_get_collection_x_forwarded_headers(app_client, load_test_collection):
     coll = load_test_collection
     resp = await app_client.get(
-        f"/collections/{coll.id}",
+        f"/collections/{coll['id']}",
         headers={
             "X-Forwarded-Port": "1234",
             "X-Forwarded-Proto": "https",
@@ -218,7 +233,7 @@ async def test_get_collection_duplicate_forwarded_headers(
 ):
     coll = load_test_collection
     resp = await app_client.get(
-        f"/collections/{coll.id}",
+        f"/collections/{coll['id']}",
         headers={
             "Forwarded": "proto=https;host=test:1234",
             "X-Forwarded-Port": "4321",
