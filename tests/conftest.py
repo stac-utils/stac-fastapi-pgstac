@@ -187,7 +187,7 @@ async def load_test_collection(app_client, load_test_data):
         json=data,
     )
     assert resp.status_code == 201
-    collection = Collection.parse_obj(resp.json())
+    collection = Collection.model_validate(resp.json())
 
     return collection.model_dump(mode="json")
 
@@ -202,7 +202,7 @@ async def load_test_item(app_client, load_test_data, load_test_collection):
     )
     assert resp.status_code == 201
 
-    item = Item.parse_obj(resp.json())
+    item = Item.model_validate(resp.json())
     return item.model_dump(mode="json")
 
 
@@ -214,7 +214,7 @@ async def load_test2_collection(app_client, load_test_data):
         json=data,
     )
     assert resp.status_code == 201
-    return Collection.parse_obj(resp.json())
+    return Collection.model_validate(resp.json())
 
 
 @pytest.fixture
@@ -226,4 +226,4 @@ async def load_test2_item(app_client, load_test_data, load_test2_collection):
         json=data,
     )
     assert resp.status_code == 201
-    return Item.parse_obj(resp.json())
+    return Item.model_validate(resp.json())

@@ -7,18 +7,18 @@ from stac_pydantic import Collection
 
 async def test_create_collection(app_client, load_test_data: Callable):
     in_json = load_test_data("test_collection.json")
-    in_coll = Collection.parse_obj(in_json)
+    in_coll = Collection.model_validate(in_json)
     resp = await app_client.post(
         "/collections",
         json=in_json,
     )
     assert resp.status_code == 201
 
-    post_coll = Collection.parse_obj(resp.json())
+    post_coll = Collection.model_validate(resp.json())
     assert in_coll.dict(exclude={"links"}) == post_coll.dict(exclude={"links"})
     resp = await app_client.get(f"/collections/{post_coll.id}")
     assert resp.status_code == 200
-    get_coll = Collection.parse_obj(resp.json())
+    get_coll = Collection.model_validate(resp.json())
     assert post_coll.dict(exclude={"links"}) == get_coll.dict(exclude={"links"})
 
     post_coll = post_coll.model_dump(mode="json")
@@ -39,12 +39,12 @@ async def test_update_collection(app_client, load_test_data, load_test_collectio
 
     resp = await app_client.put(f"/collections/{in_coll['id']}", json=in_coll)
     assert resp.status_code == 200
-    put_coll = Collection.parse_obj(resp.json())
+    put_coll = Collection.model_validate(resp.json())
 
     resp = await app_client.get(f"/collections/{in_coll['id']}")
     assert resp.status_code == 200
 
-    get_coll = Collection.parse_obj(resp.json())
+    get_coll = Collection.model_validate(resp.json())
 
     in_coll = Collection(**in_coll)
     assert in_coll.dict(exclude={"links"}) == get_coll.dict(exclude={"links"})
@@ -76,13 +76,13 @@ async def test_delete_collection(
 
 async def test_create_collection_conflict(app_client, load_test_data: Callable):
     in_json = load_test_data("test_collection.json")
-    Collection.parse_obj(in_json)
+    Collection.model_validate(in_json)
     resp = await app_client.post(
         "/collections",
         json=in_json,
     )
     assert resp.status_code == 201
-    Collection.parse_obj(resp.json())
+    Collection.model_validate(resp.json())
     resp = await app_client.post(
         "/collections",
         json=in_json,

@@ -21,17 +21,17 @@ from stac_fastapi.pgstac.models.links import CollectionLinks
 
 async def test_create_collection(app_client, load_test_data: Callable):
     in_json = load_test_data("test_collection.json")
-    in_coll = Collection.parse_obj(in_json)
+    in_coll = Collection.model_validate(in_json)
     resp = await app_client.post(
         "/collections",
         json=in_json,
     )
     assert resp.status_code == 201
-    post_coll = Collection.parse_obj(resp.json())
+    post_coll = Collection.model_validate(resp.json())
     assert in_coll.dict(exclude={"links"}) == post_coll.dict(exclude={"links"})
     resp = await app_client.get(f"/collections/{post_coll.id}")
     assert resp.status_code == 200
-    get_coll = Collection.parse_obj(resp.json())
+    get_coll = Collection.model_validate(resp.json())
     assert post_coll.dict(exclude={"links"}) == get_coll.dict(exclude={"links"})
 
 
@@ -46,7 +46,7 @@ async def test_update_collection(app_client, load_test_data, load_test_collectio
     resp = await app_client.get(f"/collections/{in_coll['id']}")
     assert resp.status_code == 200
 
-    get_coll = Collection.parse_obj(resp.json())
+    get_coll = Collection.model_validate(resp.json())
 
     in_coll = Collection(**in_coll)
     assert in_coll.dict(exclude={"links"}) == get_coll.dict(exclude={"links"})
@@ -75,14 +75,14 @@ async def test_create_item(app_client, load_test_data: Callable, load_test_colle
     )
     assert resp.status_code == 201
 
-    in_item = Item.parse_obj(in_json)
-    post_item = Item.parse_obj(resp.json())
+    in_item = Item.model_validate(in_json)
+    post_item = Item.model_validate(resp.json())
     assert in_item.dict(exclude={"links"}) == post_item.dict(exclude={"links"})
 
     resp = await app_client.get(f"/collections/{coll['id']}/items/{post_item.id}")
 
     assert resp.status_code == 200
-    get_item = Item.parse_obj(resp.json())
+    get_item = Item.model_validate(resp.json())
     assert in_item.dict(exclude={"links"}) == get_item.dict(exclude={"links"})
 
     get_item = get_item.model_dump(mode="json")
@@ -128,8 +128,8 @@ async def test_fetches_valid_item(
     )
     assert resp.status_code == 201
 
-    in_item = Item.parse_obj(in_json)
-    post_item = Item.parse_obj(resp.json())
+    in_item = Item.model_validate(in_json)
+    post_item = Item.model_validate(resp.json())
     assert in_item.dict(exclude={"links"}) == post_item.dict(exclude={"links"})
 
     resp = await app_client.get(f"/collections/{coll['id']}/items/{post_item.id}")
@@ -156,12 +156,12 @@ async def test_update_item(
         f"/collections/{coll['id']}/items/{item['id']}", json=item
     )
     assert resp.status_code == 200
-    put_item = Item.parse_obj(resp.json())
+    put_item = Item.model_validate(resp.json())
 
     resp = await app_client.get(f"/collections/{coll['id']}/items/{item['id']}")
     assert resp.status_code == 200
 
-    get_item = Item.parse_obj(resp.json())
+    get_item = Item.model_validate(resp.json())
     item = Item(**item)
     assert item.dict(exclude={"links"}) == get_item.dict(exclude={"links"})
     assert get_item.properties.description == "Update Test"
