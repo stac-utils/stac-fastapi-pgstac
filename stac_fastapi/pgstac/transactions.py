@@ -181,7 +181,9 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
 class BulkTransactionsClient(AsyncBaseBulkTransactionsClient, ClientValidateMixIn):
     """Postgres bulk transactions."""
 
-    async def bulk_item_insert(self, collection_id: str, items: Items, request: Request, **kwargs) -> str:
+    async def bulk_item_insert(
+        self, collection_id: str, items: Items, request: Request, **kwargs
+    ) -> str:
         """Bulk item insertion using pgstac."""
         for item_id, item in items.items.items():
             self._validate_item(request, item, collection_id, item_id)
