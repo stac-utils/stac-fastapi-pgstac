@@ -162,7 +162,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
         search_request.conf = search_request.conf or {}
         search_request.conf["nohydrate"] = settings.use_api_hydrate
 
-        search_request_json = search_request.json(exclude_none=True, by_alias=True)
+        search_request_json = search_request.model_dump_json(
+            exclude_none=True, by_alias=True
+        )
 
         try:
             async with request.app.state.get_connection(request, "r") as conn:

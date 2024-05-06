@@ -15,11 +15,15 @@ async def test_create_collection(app_client, load_test_data: Callable):
     assert resp.status_code == 201
 
     post_coll = Collection.model_validate(resp.json())
-    assert in_coll.dict(exclude={"links"}) == post_coll.dict(exclude={"links"})
+    assert in_coll.model_dump(exclude={"links"}) == post_coll.model_dump(
+        exclude={"links"}
+    )
     resp = await app_client.get(f"/collections/{post_coll.id}")
     assert resp.status_code == 200
     get_coll = Collection.model_validate(resp.json())
-    assert post_coll.dict(exclude={"links"}) == get_coll.dict(exclude={"links"})
+    assert post_coll.model_dump(exclude={"links"}) == get_coll.model_dump(
+        exclude={"links"}
+    )
 
     post_coll = post_coll.model_dump(mode="json")
     get_coll = get_coll.model_dump(mode="json")
@@ -47,7 +51,7 @@ async def test_update_collection(app_client, load_test_data, load_test_collectio
     get_coll = Collection.model_validate(resp.json())
 
     in_coll = Collection(**in_coll)
-    assert in_coll.dict(exclude={"links"}) == get_coll.dict(exclude={"links"})
+    assert in_coll.model_dump(exclude={"links"}) == get_coll.model_dump(exclude={"links"})
     assert "newkeyword" in get_coll.keywords
 
     get_coll = get_coll.model_dump(mode="json")

@@ -28,11 +28,15 @@ async def test_create_collection(app_client, load_test_data: Callable):
     )
     assert resp.status_code == 201
     post_coll = Collection.model_validate(resp.json())
-    assert in_coll.dict(exclude={"links"}) == post_coll.dict(exclude={"links"})
+    assert in_coll.model_dump(exclude={"links"}) == post_coll.model_dump(
+        exclude={"links"}
+    )
     resp = await app_client.get(f"/collections/{post_coll.id}")
     assert resp.status_code == 200
     get_coll = Collection.model_validate(resp.json())
-    assert post_coll.dict(exclude={"links"}) == get_coll.dict(exclude={"links"})
+    assert post_coll.model_dump(exclude={"links"}) == get_coll.model_dump(
+        exclude={"links"}
+    )
 
 
 async def test_update_collection(app_client, load_test_data, load_test_collection):
@@ -49,7 +53,7 @@ async def test_update_collection(app_client, load_test_data, load_test_collectio
     get_coll = Collection.model_validate(resp.json())
 
     in_coll = Collection(**in_coll)
-    assert in_coll.dict(exclude={"links"}) == get_coll.dict(exclude={"links"})
+    assert in_coll.model_dump(exclude={"links"}) == get_coll.model_dump(exclude={"links"})
     assert "newkeyword" in get_coll.keywords
 
 
@@ -77,13 +81,15 @@ async def test_create_item(app_client, load_test_data: Callable, load_test_colle
 
     in_item = Item.model_validate(in_json)
     post_item = Item.model_validate(resp.json())
-    assert in_item.dict(exclude={"links"}) == post_item.dict(exclude={"links"})
+    assert in_item.model_dump(exclude={"links"}) == post_item.model_dump(
+        exclude={"links"}
+    )
 
     resp = await app_client.get(f"/collections/{coll['id']}/items/{post_item.id}")
 
     assert resp.status_code == 200
     get_item = Item.model_validate(resp.json())
-    assert in_item.dict(exclude={"links"}) == get_item.dict(exclude={"links"})
+    assert in_item.model_dump(exclude={"links"}) == get_item.model_dump(exclude={"links"})
 
     get_item = get_item.model_dump(mode="json")
     post_item = post_item.model_dump(mode="json")
@@ -130,7 +136,9 @@ async def test_fetches_valid_item(
 
     in_item = Item.model_validate(in_json)
     post_item = Item.model_validate(resp.json())
-    assert in_item.dict(exclude={"links"}) == post_item.dict(exclude={"links"})
+    assert in_item.model_dump(exclude={"links"}) == post_item.model_dump(
+        exclude={"links"}
+    )
 
     resp = await app_client.get(f"/collections/{coll['id']}/items/{post_item.id}")
 
@@ -163,7 +171,7 @@ async def test_update_item(
 
     get_item = Item.model_validate(resp.json())
     item = Item(**item)
-    assert item.dict(exclude={"links"}) == get_item.dict(exclude={"links"})
+    assert item.model_dump(exclude={"links"}) == get_item.model_dump(exclude={"links"})
     assert get_item.properties.description == "Update Test"
 
     put_item = put_item.model_dump(mode="json")

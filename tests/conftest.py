@@ -10,7 +10,7 @@ import asyncpg
 import pytest
 from fastapi import APIRouter
 from fastapi.responses import ORJSONResponse
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from pypgstac.db import PgstacDB
 from pypgstac.migrate import Migrate
 from pytest_postgresql.janitor import DatabaseJanitor
@@ -166,7 +166,7 @@ async def app_client(app):
     if app.state.router_prefix != "":
         base_url = urljoin(base_url, app.state.router_prefix)
 
-    async with AsyncClient(app=app, base_url=base_url) as c:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url=base_url) as c:
         yield c
 
 

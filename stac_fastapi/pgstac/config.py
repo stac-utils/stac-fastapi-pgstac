@@ -3,7 +3,7 @@
 from typing import List, Type
 from urllib.parse import quote
 
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel
 from pydantic_settings import SettingsConfigDict
 from stac_fastapi.types.config import ApiSettings
 
@@ -34,11 +34,13 @@ DEFAULT_INVALID_ID_CHARS = [
 ]
 
 
-class ServerSettings(BaseModel, extra=Extra.allow):
+class ServerSettings(BaseModel):
     """Server runtime parameters."""
 
     search_path: str = "pgstac,public"
     application_name: str = "pgstac"
+
+    model_config = SettingsConfigDict(extra="allow")
 
 
 class Settings(ApiSettings):

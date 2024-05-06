@@ -5,7 +5,7 @@ from urllib.parse import quote_plus
 import orjson
 import pytest
 from fastapi import Request
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from pystac import Collection, Extent, Item, SpatialExtent, TemporalExtent
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.models import create_post_request_model
@@ -678,7 +678,7 @@ async def test_wrapped_function(load_test_data, database) -> None:
     app = api.app
     await connect_to_db(app)
     try:
-        async with AsyncClient(app=app) as client:
+        async with AsyncClient(transport=ASGITransport(app=app)) as client:
             response = await client.post(
                 "http://test/collections",
                 json=load_test_data("test_collection.json"),
