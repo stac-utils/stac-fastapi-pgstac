@@ -17,7 +17,6 @@ from pytest_postgresql.janitor import DatabaseJanitor
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.models import create_get_request_model, create_post_request_model
 from stac_fastapi.extensions.core import (
-    ContextExtension,
     FieldsExtension,
     FilterExtension,
     SortExtension,
@@ -125,7 +124,6 @@ def api_client(request, database):
         SortExtension(),
         FieldsExtension(),
         TokenPaginationExtension(),
-        ContextExtension(),
         FilterExtension(client=FiltersClient()),
         BulkTransactionExtension(client=BulkTransactionsClient()),
     ]

@@ -11,7 +11,6 @@ from fastapi.responses import ORJSONResponse
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.models import create_get_request_model, create_post_request_model
 from stac_fastapi.extensions.core import (
-    ContextExtension,
     FieldsExtension,
     FilterExtension,
     SortExtension,
@@ -39,7 +38,6 @@ extensions_map = {
     "sort": SortExtension(),
     "fields": FieldsExtension(),
     "pagination": TokenPaginationExtension(),
-    "context": ContextExtension(),
     "filter": FilterExtension(client=FiltersClient()),
     "bulk_transactions": BulkTransactionExtension(client=BulkTransactionsClient()),
 }
