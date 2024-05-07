@@ -2,7 +2,7 @@
 
 from typing import Dict, Optional
 
-from pydantic import validator
+from pydantic import ValidationInfo, field_validator
 from stac_fastapi.types.search import BaseSearchPostRequest
 
 
@@ -14,10 +14,11 @@ class PgstacSearch(BaseSearchPostRequest):
 
     conf: Optional[Dict] = None
 
-    @validator("filter_lang", pre=False, check_fields=False, always=True)
-    def validate_query_uses_cql(cls, v, values):
+    @field_validator("filter_lang", check_fields=False)
+    @classmethod
+    def validate_query_uses_cql(cls, v: str, info: ValidationInfo):
         """Use of Query Extension is not allowed with cql2."""
-        if values.get("query", None) is not None and v != "cql-json":
+        if info.data.get("query", None) is not None and v != "cql-json":
             raise ValueError(
                 "Query extension is not available when using pgstac with cql2"
             )

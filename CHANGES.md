@@ -4,7 +4,8 @@
 
 ### Changed
 
-- update pgstac version to `0.8.x`
+- Update stac-fastapi libraries to v3.0.0a0 ([#108](https://github.com/stac-utils/stac-fastapi-pgstac/pull/108))
+- Update pgstac version to `0.8.x`
 
 ## [2.5.0] - 2024-04-25
 

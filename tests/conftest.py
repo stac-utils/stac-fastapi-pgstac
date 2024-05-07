@@ -10,14 +10,13 @@ import asyncpg
 import pytest
 from fastapi import APIRouter
 from fastapi.responses import ORJSONResponse
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from pypgstac.db import PgstacDB
 from pypgstac.migrate import Migrate
 from pytest_postgresql.janitor import DatabaseJanitor
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.models import create_get_request_model, create_post_request_model
 from stac_fastapi.extensions.core import (
-    ContextExtension,
     FieldsExtension,
     FilterExtension,
     SortExtension,
@@ -125,7 +124,6 @@ def api_client(request, database):
         SortExtension(),
         FieldsExtension(),
         TokenPaginationExtension(),
-        ContextExtension(),
         FilterExtension(client=FiltersClient()),
         BulkTransactionExtension(client=BulkTransactionsClient()),
     ]
@@ -166,7 +164,7 @@ async def app_client(app):
     if app.state.router_prefix != "":
         base_url = urljoin(base_url, app.state.router_prefix)
 
-    async with AsyncClient(app=app, base_url=base_url) as c:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url=base_url) as c:
         yield c
 
 
@@ -186,8 +184,10 @@ async def load_test_collection(app_client, load_test_data):
         "/collections",
         json=data,
     )
-    assert resp.status_code == 200
-    return Collection.parse_obj(resp.json())
+    assert resp.status_code == 201
+    collection = Collection.model_validate(resp.json())
+
+    return collection.model_dump(mode="json")
 
 
 @pytest.fixture
@@ -195,12 +195,13 @@ async def load_test_item(app_client, load_test_data, load_test_collection):
     coll = load_test_collection
     data = load_test_data("test_item.json")
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=data,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
-    return Item.parse_obj(resp.json())
+    item = Item.model_validate(resp.json())
+    return item.model_dump(mode="json")
 
 
 @pytest.fixture
@@ -210,8 +211,8 @@ async def load_test2_collection(app_client, load_test_data):
         "/collections",
         json=data,
     )
-    assert resp.status_code == 200
-    return Collection.parse_obj(resp.json())
+    assert resp.status_code == 201
+    return Collection.model_validate(resp.json())
 
 
 @pytest.fixture
@@ -222,5 +223,5 @@ async def load_test2_item(app_client, load_test_data, load_test2_collection):
         f"/collections/{coll.id}/items",
         json=data,
     )
-    assert resp.status_code == 200
-    return Item.parse_obj(resp.json())
+    assert resp.status_code == 201
+    return Item.model_validate(resp.json())
