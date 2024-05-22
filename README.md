@@ -53,7 +53,7 @@ To install:
 ```shell
 git clone https://github.com/stac-utils/stac-fastapi-pgstac
 cd stac-fastapi-pgstac
-pip install -e ".[dev,server,docs]"
+python -m pip install -e ".[dev,server,docs]"
 ```
 
 To test:
