@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [3.0.0a1] - 2024-05-22
+
+- Update stac-fastapi libraries to `~=3.0.0a1`
+- Update stac-pydantic dependency to `==3.1.*`
+
 ## [3.0.0a0] - 2024-05-10
 
 ### Changed
@@ -308,7 +313,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0a0..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0a1..main>
+[3.0.0a1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0a0..3.0.0a1>
 [3.0.0a0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.5.0..3.0.0a0>
 [2.5.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.11..2.5.0>
 [2.4.11]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.10..2.4.11>

@@ -88,15 +88,17 @@ async def pgstac(database):
 @pytest.fixture(
     params=[
         # hydratation, prefix
-        (False, ""),
-        (False, "/router_prefix"),
-        (True, ""),
-        (True, "/router_prefix"),
+        (False, "", False),
+        (False, "/router_prefix", False),
+        (True, "", False),
+        (True, "/router_prefix", False),
+        (False, "", True),
+        (True, "", True),
     ],
     scope="session",
 )
 def api_client(request, database):
-    hydrate, prefix = request.param
+    hydrate, prefix, response_model = request.param
 
     api_settings = Settings(
         postgres_user=database.user,
@@ -106,6 +108,7 @@ def api_client(request, database):
         postgres_port=database.port,
         postgres_dbname=database.dbname,
         use_api_hydrate=hydrate,
+        enable_response_models=response_model,
         testing=True,
     )
 
