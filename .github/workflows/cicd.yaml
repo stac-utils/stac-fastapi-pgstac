@@ -33,7 +33,7 @@ jobs:
           pre-commit run --all-files
 
       - name: install lib postgres
-        uses: nyurik/action-setup-postgis@v1
+        uses: nyurik/action-setup-postgis@v2
 
       - name: Install dependencies
         run: |
