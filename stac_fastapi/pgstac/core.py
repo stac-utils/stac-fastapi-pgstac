@@ -184,11 +184,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
         prev: Optional[str] = items.pop("prev", None)
         collection = ItemCollection(**items)
 
-        include: Set[str] = set()
-        exclude: Set[str] = set()
-        if fields := getattr(search_request, "fields", None):
-            include = fields.include or set()
-            exclude = fields.exclude or set()
+        fields = getattr(search_request, "fields", None)
+        include: Set[str] = fields.include if fields and fields.include else set()
+        exclude: Set[str] = fields.exclude if fields and fields.exclude else set()
 
         async def _add_item_links(
             feature: Item,
