@@ -1,7 +1,7 @@
 """Item crud client."""
 
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Union
 from urllib.parse import unquote_plus, urljoin
 
 import attr
@@ -184,12 +184,11 @@ class CoreCrudClient(AsyncBaseCoreClient):
         prev: Optional[str] = items.pop("prev", None)
         collection = ItemCollection(**items)
 
-        exclude = search_request.fields.exclude
-        if exclude and len(exclude) == 0:
-            exclude = None
-        include = search_request.fields.include
-        if include and len(include) == 0:
-            include = None
+        include: Set[str] = set()
+        exclude: Set[str] = set()
+        if fields := getattr(search_request, "fields", None):
+            include = fields.include or set()
+            exclude = fields.exclude or set()
 
         async def _add_item_links(
             feature: Item,
@@ -204,11 +203,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             collection_id = feature.get("collection") or collection_id
             item_id = feature.get("id") or item_id
 
-            if (
-                search_request.fields.exclude is None
-                or "links" not in search_request.fields.exclude
-                and all([collection_id, item_id])
-            ):
+            if not exclude or "links" not in exclude and all([collection_id, item_id]):
                 feature["links"] = await ItemLinks(
                     collection_id=collection_id,  # type: ignore
                     item_id=item_id,  # type: ignore
@@ -252,6 +247,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             next=next,
             prev=prev,
         ).get_links()
+
         return collection
 
     async def item_collection(
@@ -295,14 +291,14 @@ class CoreCrudClient(AsyncBaseCoreClient):
             if v is not None and v != []:
                 clean[k] = v
 
-        search_request = self.post_request_model(
-            **clean,
-        )
+        search_request = self.post_request_model(**clean)
         item_collection = await self._search_base(search_request, request=request)
+
         links = await ItemCollectionLinks(
             collection_id=collection_id, request=request
         ).get_links(extra_links=item_collection["links"])
         item_collection["links"] = links
+
         return item_collection
 
     async def get_item(
@@ -355,15 +351,16 @@ class CoreCrudClient(AsyncBaseCoreClient):
         collections: Optional[List[str]] = None,
         ids: Optional[List[str]] = None,
         bbox: Optional[BBox] = None,
+        intersects: Optional[str] = None,
         datetime: Optional[DateTimeType] = None,
         limit: Optional[int] = None,
+        # Extensions
         query: Optional[str] = None,
         token: Optional[str] = None,
         fields: Optional[List[str]] = None,
         sortby: Optional[str] = None,
         filter: Optional[str] = None,
         filter_lang: Optional[str] = None,
-        intersects: Optional[str] = None,
         **kwargs,
     ) -> ItemCollection:
         """Cross catalog search (GET).
