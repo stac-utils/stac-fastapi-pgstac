@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Update stac-fastapi libraries to `~=3.0.0a3`
+- make sure the application can work without any extension
+
 ## [3.0.0a1] - 2024-05-22
 
 - Update stac-fastapi libraries to `~=3.0.0a1`
