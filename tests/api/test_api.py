@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from typing import Any, Callable, Coroutine, Dict, List, Optional, TypeVar
 from urllib.parse import quote_plus
@@ -6,9 +7,11 @@ import orjson
 import pytest
 from fastapi import Request
 from httpx import ASGITransport, AsyncClient
+from pypgstac.db import PgstacDB
+from pypgstac.load import Loader
 from pystac import Collection, Extent, Item, SpatialExtent, TemporalExtent
 from stac_fastapi.api.app import StacApi
-from stac_fastapi.api.models import create_post_request_model
+from stac_fastapi.api.models import create_get_request_model, create_post_request_model
 from stac_fastapi.extensions.core import FieldsExtension, TransactionExtension
 from stac_fastapi.types import stac as stac_types
 
@@ -16,6 +19,9 @@ from stac_fastapi.pgstac.core import CoreCrudClient, Settings
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
 from stac_fastapi.pgstac.transactions import TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
+
 
 STAC_CORE_ROUTES = [
     "GET /",
@@ -669,11 +675,13 @@ async def test_wrapped_function(load_test_data, database) -> None:
         FieldsExtension(),
     ]
     post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
+    get_request_model = create_get_request_model(extensions)
     api = StacApi(
         client=Client(post_request_model=post_request_model),
         settings=settings,
         extensions=extensions,
         search_post_request_model=post_request_model,
+        search_get_request_model=get_request_model,
     )
     app = api.app
     await connect_to_db(app)
@@ -693,5 +701,107 @@ async def test_wrapped_function(load_test_data, database) -> None:
                 "http://test/collections/test-collection/items/test-item"
             )
             assert response.status_code == 200
+    finally:
+        await close_db_connection(app)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("validation", [True, False])
+@pytest.mark.parametrize("hydrate", [True, False])
+async def test_no_extension(
+    hydrate, validation, load_test_data, database, pgstac
+) -> None:
+    """test PgSTAC with no extension."""
+    connection = f"postgresql://{database.user}:{database.password}@{database.host}:{database.port}/{database.dbname}"
+    with PgstacDB(dsn=connection) as db:
+        loader = Loader(db=db)
+        loader.load_collections(os.path.join(DATA_DIR, "test_collection.json"))
+        loader.load_items(os.path.join(DATA_DIR, "test_item.json"))
+
+    settings = Settings(
+        postgres_user=database.user,
+        postgres_pass=database.password,
+        postgres_host_reader=database.host,
+        postgres_host_writer=database.host,
+        postgres_port=database.port,
+        postgres_dbname=database.dbname,
+        testing=True,
+        use_api_hydrate=hydrate,
+        enable_response_models=validation,
+    )
+    extensions = []
+    post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
+    api = StacApi(
+        client=CoreCrudClient(post_request_model=post_request_model),
+        settings=settings,
+        extensions=extensions,
+        search_post_request_model=post_request_model,
+    )
+    app = api.app
+    await connect_to_db(app)
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app)) as client:
+            landing = await client.get("http://test/")
+            assert landing.status_code == 200, landing.text
+
+            collection = await client.get("http://test/collections/test-collection")
+            assert collection.status_code == 200, collection.text
+
+            collections = await client.get("http://test/collections")
+            assert collections.status_code == 200, collections.text
+
+            item = await client.get(
+                "http://test/collections/test-collection/items/test-item"
+            )
+            assert item.status_code == 200, item.text
+
+            item_collection = await client.get(
+                "http://test/collections/test-collection/items",
+                params={"limit": 10},
+            )
+            assert item_collection.status_code == 200, item_collection.text
+
+            get_search = await client.get(
+                "http://test/search",
+                params={
+                    "collections": ["test-collection"],
+                },
+            )
+            assert get_search.status_code == 200, get_search.text
+
+            post_search = await client.post(
+                "http://test/search",
+                json={
+                    "collections": ["test-collection"],
+                },
+            )
+            assert post_search.status_code == 200, post_search.text
+
+            get_search = await client.get(
+                "http://test/search",
+                params={
+                    "collections": ["test-collection"],
+                    "fields": "properties.datetime",
+                },
+            )
+            # fields should be ignored
+            assert get_search.status_code == 200, get_search.text
+            props = get_search.json()["features"][0]["properties"]
+            assert len(props) > 1
+
+            post_search = await client.post(
+                "http://test/search",
+                json={
+                    "collections": ["test-collection"],
+                    "fields": {
+                        "include": ["properties.datetime"],
+                    },
+                },
+            )
+            # fields should be ignored
+            assert post_search.status_code == 200, post_search.text
+            props = get_search.json()["features"][0]["properties"]
+            assert len(props) > 1
+
     finally:
         await close_db_connection(app)

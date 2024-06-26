@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 
 from buildpg import render
 from fastapi import Request
-from stac_fastapi.types.core import AsyncBaseFiltersClient
+from stac_fastapi.extensions.core.filter.client import AsyncBaseFiltersClient
 from stac_fastapi.types.errors import NotFoundError
 
 

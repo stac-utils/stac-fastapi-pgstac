@@ -50,13 +50,13 @@ else:
     extensions = list(extensions_map.values())
 
 post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
-
+get_request_model = create_get_request_model(extensions)
 api = StacApi(
     settings=settings,
     extensions=extensions,
     client=CoreCrudClient(post_request_model=post_request_model),  # type: ignore
     response_class=ORJSONResponse,
-    search_get_request_model=create_get_request_model(extensions),
+    search_get_request_model=get_request_model,
     search_post_request_model=post_request_model,
 )
 app = api.app
