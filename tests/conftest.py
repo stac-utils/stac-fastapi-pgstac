@@ -4,6 +4,7 @@ import logging
 import os
 import time
 from typing import Callable, Dict
+from urllib.parse import quote_plus as quote
 from urllib.parse import urljoin
 
 import asyncpg
@@ -55,9 +56,7 @@ def database(postgresql_proc):
         version=postgresql_proc.version,
         password="a2Vw:yk=)CdSis[fek]tW=/o",
     ) as jan:
-        connection = (
-            f"postgresql://{jan.user}:{jan.password}@{jan.host}:{jan.port}/{jan.dbname}"
-        )
+        connection = f"postgresql://{jan.user}:{quote(jan.password)}@{jan.host}:{jan.port}/{jan.dbname}"
         with PgstacDB(dsn=connection) as db:
             migrator = Migrate(db)
             version = migrator.run_migration()
@@ -68,7 +67,7 @@ def database(postgresql_proc):
 
 @pytest.fixture(autouse=True)
 async def pgstac(database):
-    connection = f"postgresql://{database.user}:{database.password}@{database.host}:{database.port}/{database.dbname}"
+    connection = f"postgresql://{database.user}:{quote(database.password)}@{database.host}:{database.port}/{database.dbname}"
     yield
     conn = await asyncpg.connect(dsn=connection)
     await conn.execute(
@@ -99,7 +98,6 @@ async def pgstac(database):
 )
 def api_client(request, database):
     hydrate, prefix, response_model = request.param
-
     api_settings = Settings(
         postgres_user=database.user,
         postgres_pass=database.password,
