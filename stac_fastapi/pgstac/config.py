@@ -1,7 +1,7 @@
 """Postgres API configuration."""
 
 from typing import List, Type
-from urllib.parse import quote
+from urllib.parse import quote_plus as quote
 
 from pydantic import BaseModel
 from pydantic_settings import SettingsConfigDict
