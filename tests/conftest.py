@@ -53,7 +53,7 @@ def database(postgresql_proc):
         port=postgresql_proc.port,
         dbname="pgstactestdb",
         version=postgresql_proc.version,
-        password="secret",
+        password="a2Vw:yk=)CdSis[fek]tW=/o",
     ) as jan:
         connection = (
             f"postgresql://{jan.user}:{jan.password}@{jan.host}:{jan.port}/{jan.dbname}"
