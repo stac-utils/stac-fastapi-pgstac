@@ -712,7 +712,7 @@ async def test_no_extension(
     hydrate, validation, load_test_data, database, pgstac
 ) -> None:
     """test PgSTAC with no extension."""
-    connection = f"postgresql://{database.user}:{database.password}@{database.host}:{database.port}/{database.dbname}"
+    connection = f"postgresql://{database.user}:{quote_plus(database.password)}@{database.host}:{database.port}/{database.dbname}"
     with PgstacDB(dsn=connection) as db:
         loader = Loader(db=db)
         loader.load_collections(os.path.join(DATA_DIR, "test_collection.json"))
