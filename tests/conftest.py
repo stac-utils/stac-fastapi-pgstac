@@ -16,7 +16,12 @@ from pypgstac.db import PgstacDB
 from pypgstac.migrate import Migrate
 from pytest_postgresql.janitor import DatabaseJanitor
 from stac_fastapi.api.app import StacApi
-from stac_fastapi.api.models import create_get_request_model, create_post_request_model
+from stac_fastapi.api.models import (
+    ItemCollectionUri,
+    create_get_request_model,
+    create_post_request_model,
+    create_request_model,
+)
 from stac_fastapi.extensions.core import (
     FieldsExtension,
     FilterExtension,
@@ -86,7 +91,7 @@ async def pgstac(database):
 # Run all the tests that use the api_client in both db hydrate and api hydrate mode
 @pytest.fixture(
     params=[
-        # hydratation, prefix
+        # hydratation, prefix, model_validation
         (False, "", False),
         (False, "/router_prefix", False),
         (True, "", False),
@@ -129,13 +134,23 @@ def api_client(request, database):
         BulkTransactionExtension(client=BulkTransactionsClient()),
     ]
 
-    post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
+    items_get_request_model = create_request_model(
+        model_name="ItemCollectionUri",
+        base_model=ItemCollectionUri,
+        mixins=[TokenPaginationExtension().GET],
+        request_type="GET",
+    )
+    search_get_request_model = create_get_request_model(extensions)
+    search_post_request_model = create_post_request_model(
+        extensions, base_model=PgstacSearch
+    )
     api = StacApi(
         settings=api_settings,
         extensions=extensions,
-        client=CoreCrudClient(post_request_model=post_request_model),
-        search_get_request_model=create_get_request_model(extensions),
-        search_post_request_model=post_request_model,
+        client=CoreCrudClient(post_request_model=search_post_request_model),
+        items_get_request_model=items_get_request_model,
+        search_get_request_model=search_get_request_model,
+        search_post_request_model=search_post_request_model,
         response_class=ORJSONResponse,
         router=APIRouter(prefix=prefix),
     )

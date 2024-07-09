@@ -13,6 +13,7 @@ from pydantic import ValidationError
 from pygeofilter.backends.cql2_json import to_cql2
 from pygeofilter.parsers.cql2_text import parse as parse_cql2_text
 from pypgstac.hydration import hydrate
+from stac_fastapi.api.models import JSONResponse
 from stac_fastapi.types.core import AsyncBaseCoreClient
 from stac_fastapi.types.errors import InvalidQueryParameter, NotFoundError
 from stac_fastapi.types.requests import get_base_url
@@ -341,6 +342,14 @@ class CoreCrudClient(AsyncBaseCoreClient):
             ItemCollection containing items which match the search criteria.
         """
         item_collection = await self._search_base(search_request, request=request)
+
+        # If we have the `fields` extension enabled
+        # we need to avoid Pydantic validation because the
+        # Items might not be a valid STAC Item objects
+        if fields := getattr(search_request, "fields", None):
+            if fields.include or fields.exclude:
+                return JSONResponse(item_collection)  # type: ignore
+
         return ItemCollection(**item_collection)
 
     async def get_search(  # noqa: C901
