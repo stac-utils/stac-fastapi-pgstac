@@ -327,7 +327,9 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0a2..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0a4..main>
+[3.0.0a4]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0a3..3.0.0a4>
+[3.0.0a3]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0a2..3.0.0a3>
 [3.0.0a2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0a1..3.0.0a2>
 [3.0.0a1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0a0..3.0.0a1>
 [3.0.0a0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.5.0..3.0.0a0>
