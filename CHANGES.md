@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [3.0.0a4] - 2024-07-10
+
+- Update stac-fastapi libraries to `~=3.0.0b2`
+
 ## [3.0.0a3] - 2024-07-01
 
 - Use `quote_plus` instead of `quote` to encode database's password ([#122](https://github.com/stac-utils/stac-fastapi-pgstac/pull/122))
