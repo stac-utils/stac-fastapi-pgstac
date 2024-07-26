@@ -39,17 +39,113 @@ NumType = Union[float, int]
 class CoreCrudClient(AsyncBaseCoreClient):
     """Client for core endpoints defined by stac."""
 
-    async def all_collections(self, request: Request, **kwargs) -> Collections:
-        """Read all collections from the database."""
+    async def all_collections(  # noqa: C901
+        self,
+        request: Request,
+        bbox: Optional[BBox] = None,
+        datetime: Optional[DateTimeType] = None,
+        limit: Optional[int] = None,
+        # Extensions
+        query: Optional[str] = None,
+        token: Optional[str] = None,
+        fields: Optional[List[str]] = None,
+        sortby: Optional[str] = None,
+        filter: Optional[str] = None,
+        filter_lang: Optional[str] = None,
+        **kwargs,
+    ) -> Collections:
+        """Cross catalog search (GET).
+
+        Called with `GET /collections`.
+
+        Returns:
+            Collections which match the search criteria, returns all
+            collections by default.
+        """
+        query_params = str(request.query_params)
+
+        # Kludgy fix because using factory does not allow alias for filter-lang
+        if filter_lang is None:
+            match = re.search(r"filter-lang=([a-z0-9-]+)", query_params, re.IGNORECASE)
+            if match:
+                filter_lang = match.group(1)
+
+        # Parse request parameters
+        base_args = {
+            "bbox": bbox,
+            "limit": limit,
+            "token": token,
+            "query": orjson.loads(unquote_plus(query)) if query else query,
+        }
+
+        clean = clean_search_args(
+            base_args=base_args,
+            datetime=datetime,
+            fields=fields,
+            sortby=sortby,
+            filter=filter,
+            filter_lang=filter_lang,
+        )
+
+        # Do the request
+        try:
+            search_request = self.post_request_model(**clean)
+        except ValidationError as e:
+            raise HTTPException(
+                status_code=400, detail=f"Invalid parameters provided {e}"
+            ) from e
+
+        return await self._collection_search_base(search_request, request=request)
+
+    async def _collection_search_base(  # noqa: C901
+        self,
+        search_request: PgstacSearch,
+        request: Request,
+    ) -> Collections:
+        """Cross catalog search (POST).
+
+        Called with `POST /search`.
+
+        Args:
+            search_request: search request parameters.
+
+        Returns:
+            All collections which match the search criteria.
+        """
+
         base_url = get_base_url(request)
 
-        async with request.app.state.get_connection(request, "r") as conn:
-            collections = await conn.fetchval(
-                """
-                SELECT * FROM all_collections();
-                """
-            )
+        settings: Settings = request.app.state.settings
+
+        if search_request.datetime:
+            search_request.datetime = format_datetime_range(search_request.datetime)
+
+        search_request.conf = search_request.conf or {}
+        search_request.conf["nohydrate"] = settings.use_api_hydrate
+
+        search_request_json = search_request.model_dump_json(
+            exclude_none=True, by_alias=True
+        )
+
+        try:
+            async with request.app.state.get_connection(request, "r") as conn:
+                q, p = render(
+                    """
+                    SELECT * FROM collection_search(:req::text::jsonb);
+                    """,
+                    req=search_request_json,
+                )
+                collections_result: Collections = await conn.fetchval(q, *p)
+        except InvalidDatetimeFormatError as e:
+            raise InvalidQueryParameter(
+                f"Datetime parameter {search_request.datetime} is invalid."
+            ) from e
+
+        # next: Optional[str] = collections_result["links"].pop("next")
+        # prev: Optional[str] = collections_result["links"].pop("prev")
+
         linked_collections: List[Collection] = []
+        collections = collections_result["collections"]
         if collections is not None and len(collections) > 0:
             for c in collections:
                 coll = Collection(**c)
@@ -71,6 +167,12 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
                 linked_collections.append(coll)
 
+        # paging_links = await PagingLinks(
+        #     request=request,
+        #     next=next,
+        #     prev=prev,
+        # ).get_links()
+
         links = [
             {
                 "rel": Relations.root.value,
@@ -88,8 +190,10 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 "href": urljoin(base_url, "collections"),
             },
         ]
-        collection_list = Collections(collections=linked_collections or [], links=links)
-        return collection_list
+        return Collections(
+            collections=linked_collections or [],
+            links=links,  # + paging_links
+        )
 
     async def get_collection(
         self, collection_id: str, request: Request, **kwargs
@@ -383,7 +487,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         return ItemCollection(**item_collection)
 
-    async def get_search(  # noqa: C901
+    async def get_search(
         self,
         request: Request,
         collections: Optional[List[str]] = None,
@@ -418,49 +522,15 @@ class CoreCrudClient(AsyncBaseCoreClient):
             "query": orjson.loads(unquote_plus(query)) if query else query,
         }
 
-        if filter:
-            if filter_lang == "cql2-text":
-                ast = parse_cql2_text(filter)
-                base_args["filter"] = orjson.loads(to_cql2(ast))
-                base_args["filter-lang"] = "cql2-json"
-
-        if datetime:
-            base_args["datetime"] = format_datetime_range(datetime)
-
-        if intersects:
-            base_args["intersects"] = orjson.loads(unquote_plus(intersects))
-
-        if sortby:
-            # https://github.com/radiantearth/stac-spec/tree/master/api-spec/extensions/sort#http-get-or-post-form
-            sort_param = []
-            for sort in sortby:
-                sortparts = re.match(r"^([+-]?)(.*)$", sort)
-                if sortparts:
-                    sort_param.append(
-                        {
-                            "field": sortparts.group(2).strip(),
-                            "direction": "desc" if sortparts.group(1) == "-" else "asc",
-                        }
-                    )
-            base_args["sortby"] = sort_param
-
-        if fields:
-            includes = set()
-            excludes = set()
-            for field in fields:
-                if field[0] == "-":
-                    excludes.add(field[1:])
-                elif field[0] == "+":
-                    includes.add(field[1:])
-                else:
-                    includes.add(field)
-            base_args["fields"] = {"include": includes, "exclude": excludes}
-
-        # Remove None values from dict
-        clean = {}
-        for k, v in base_args.items():
-            if v is not None and v != []:
-                clean[k] = v
+        clean = clean_search_args(
+            base_args=base_args,
+            intersects=intersects,
+            datetime=datetime,
+            fields=fields,
+            sortby=sortby,
+            filter=filter,
+            filter_lang=filter_lang,
+        )
 
         # Do the request
         try:
@@ -471,3 +541,60 @@ class CoreCrudClient(AsyncBaseCoreClient):
             ) from e
 
         return await self.post_search(search_request, request=request)
+
+
+def clean_search_args(  # noqa: C901
+    base_args: dict[str, Any],
+    intersects: Optional[str] = None,
+    datetime: Optional[DateTimeType] = None,
+    fields: Optional[List[str]] = None,
+    sortby: Optional[str] = None,
+    filter: Optional[str] = None,
+    filter_lang: Optional[str] = None,
+) -> dict[str, Any]:
+    """Clean up search arguments to match format expected by pgstac"""
+    if filter:
+        if filter_lang == "cql2-text":
+            ast = parse_cql2_text(filter)
+            base_args["filter"] = orjson.loads(to_cql2(ast))
+            base_args["filter-lang"] = "cql2-json"
+
+    if datetime:
+        base_args["datetime"] = format_datetime_range(datetime)
+
+    if intersects:
+        base_args["intersects"] = orjson.loads(unquote_plus(intersects))
+
+    if sortby:
+        # https://github.com/radiantearth/stac-spec/tree/master/api-spec/extensions/sort#http-get-or-post-form
+        sort_param = []
+        for sort in sortby:
+            sortparts = re.match(r"^([+-]?)(.*)$", sort)
+            if sortparts:
+                sort_param.append(
+                    {
+                        "field": sortparts.group(2).strip(),
+                        "direction": "desc" if sortparts.group(1) == "-" else "asc",
+                    }
+                )
+        base_args["sortby"] = sort_param
+
+    if fields:
+        includes = set()
+        excludes = set()
+        for field in fields:
+            if field[0] == "-":
+                excludes.add(field[1:])
+            elif field[0] == "+":
+                includes.add(field[1:])
+            else:
+                includes.add(field)
+        base_args["fields"] = {"include": includes, "exclude": excludes}
+
+    # Remove None values from dict
+    clean = {}
+    for k, v in base_args.items():
+        if v is not None and v != []:
+            clean[k] = v
+
+    return clean

@@ -503,6 +503,33 @@ async def test_collection_queryables(load_test_data, app_client, load_test_colle
 
 
 @pytest.mark.asyncio
+async def test_get_collections_search(
+    app_client, load_test_collection, load_test2_collection
+):
+    # this search should only return a single collection
+    resp = await app_client.get(
+        "/collections",
+        params={"datetime": "2010-01-01T00:00:00Z/2010-01-02T00:00:00Z"},
+    )
+    assert len(resp.json()["collections"]) == 1
+    assert resp.json()["collections"][0]["id"] == load_test2_collection.id
+
+    # same with this one
+    resp = await app_client.get(
+        "/collections",
+        params={"datetime": "2020-01-01T00:00:00Z/.."},
+    )
+    assert len(resp.json()["collections"]) == 1
+    assert resp.json()["collections"][0]["id"] == load_test_collection["id"]
+
+    # no params should return both collections
+    resp = await app_client.get(
+        "/collections",
+    )
+    assert len(resp.json()["collections"]) == 2
+
+
+@pytest.mark.asyncio
 async def test_item_collection_filter_bbox(
     load_test_data, app_client, load_test_collection
 ):
