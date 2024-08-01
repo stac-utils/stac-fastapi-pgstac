@@ -260,3 +260,19 @@ async def test_get_collections_forwarded_header(app_client, load_test_collection
     )
     for link in resp.json()["links"]:
         assert link["href"].startswith("https://test:1234/")
+
+
+@pytest.mark.asyncio
+async def test_get_collections_queryables_links(app_client, load_test_collection):
+    resp = await app_client.get(
+        "/collections",
+    )
+    assert "Queryables" in [
+        link.get("title") for link in resp.json()["collections"][0]["links"]
+    ]
+
+    collection_id = resp.json()["collections"][0]["id"]
+    resp = await app_client.get(
+        f"/collections/{collection_id}",
+    )
+    assert "Queryables" in [link.get("title") for link in resp.json()["links"]]
