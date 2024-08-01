@@ -2,7 +2,16 @@
 
 import json
 from contextlib import asynccontextmanager, contextmanager
-from typing import AsyncIterator, Callable, Dict, Generator, Literal, Union
+from typing import (
+    AsyncIterator,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Literal,
+    Optional,
+    Union,
+)
 
 import attr
 import orjson
@@ -36,7 +45,9 @@ async def con_init(conn):
 ConnectionGetter = Callable[[Request, Literal["r", "w"]], AsyncIterator[Connection]]
 
 
-async def connect_to_db(app: FastAPI, get_conn: ConnectionGetter = None) -> None:
+async def connect_to_db(
+    app: FastAPI, get_conn: Optional[ConnectionGetter] = None
+) -> None:
     """Create connection pools & connection retriever on application."""
     settings = app.state.settings
     if app.state.settings.testing:
@@ -44,6 +55,7 @@ async def connect_to_db(app: FastAPI, get_conn: ConnectionGetter = None) -> None
     else:
         readpool = settings.reader_connection_string
         writepool = settings.writer_connection_string
+
     db = DB()
     app.state.readpool = await db.create_pool(readpool, settings)
     app.state.writepool = await db.create_pool(writepool, settings)
@@ -62,15 +74,13 @@ async def get_connection(
     readwrite: Literal["r", "w"] = "r",
 ) -> AsyncIterator[Connection]:
     """Retrieve connection from database conection pool."""
-    pool = (
-        request.app.state.writepool if readwrite == "w" else request.app.state.readpool
-    )
+    pool = request.app.state.writepool if readwrite == "w" else request.app.state.readpool
     with translate_pgstac_errors():
         async with pool.acquire() as conn:
             yield conn
 
 
-async def dbfunc(conn: Connection, func: str, arg: Union[str, Dict]):
+async def dbfunc(conn: Connection, func: str, arg: Union[str, Dict, List]):
     """Wrap PLPGSQL Functions.
 
     Keyword arguments:
@@ -132,9 +142,6 @@ class DB:
             max_queries=settings.db_max_queries,
             max_inactive_connection_lifetime=settings.db_max_inactive_conn_lifetime,
             init=con_init,
-            server_settings={
-                "search_path": "pgstac,public",
-                "application_name": "pgstac",
-            },
+            server_settings=settings.server_settings.model_dump(),
         )
         return pool

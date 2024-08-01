@@ -1,10 +1,13 @@
 """stac-fastapi utility methods."""
+
+from datetime import datetime
 from typing import Any, Dict, Optional, Set, Union
 
+from stac_fastapi.types.rfc3339 import DateTimeType
 from stac_fastapi.types.stac import Item
 
 
-def filter_fields(
+def filter_fields(  # noqa: C901
     item: Union[Item, Dict[str, Any]],
     include: Optional[Set[str]] = None,
     exclude: Optional[Set[str]] = None,
@@ -36,7 +39,7 @@ def filter_fields(
                     # key path indicates a sub-key to be included. Walk the dict
                     # from the root key and get the full nested value to include.
                     value = include_fields(
-                        source[key_root], fields=set([".".join(key_path_parts[1:])])
+                        source[key_root], fields={".".join(key_path_parts[1:])}
                     )
 
                     if isinstance(clean_item.get(key_root), dict):
@@ -68,9 +71,7 @@ def filter_fields(
             if key_root in source:
                 if isinstance(source[key_root], dict) and len(key_path_part) > 1:
                     # Walk the nested path of this key to remove the leaf-key
-                    exclude_fields(
-                        source[key_root], fields=set([".".join(key_path_part[1:])])
-                    )
+                    exclude_fields(source[key_root], fields={".".join(key_path_part[1:])})
                     # If, after removing the leaf-key, the root is now an empty
                     # dict, remove it entirely
                     if not source[key_root]:
@@ -91,7 +92,7 @@ def filter_fields(
     # If, after including all the specified fields, there are no included properties,
     # return just id and collection.
     if not clean_item:
-        return Item({"id": item.get(id), "collection": item.get("collection")})
+        return Item({"id": item["id"], "collection": item["collection"]})
 
     exclude_fields(clean_item, exclude)
 
@@ -113,3 +114,34 @@ def dict_deep_update(merge_to: Dict[str, Any], merge_from: Dict[str, Any]) -> No
             dict_deep_update(merge_to[k], merge_from[k])
         else:
             merge_to[k] = v
+
+
+def format_datetime_range(dt_range: Union[DateTimeType, str]) -> str:
+    """
+    Convert a datetime object or a tuple of datetime objects to a formatted string for datetime ranges.
+
+    Args:
+        dt_range (DateTimeType): The date interval,
+            which might be a single datetime or a tuple with one or two datetimes.
+
+    Returns:
+        str: A formatted string like 'YYYY-MM-DDTHH:MM:SSZ/..', 'YYYY-MM-DDTHH:MM:SSZ', or the original string input.
+    """
+    # Handle a single datetime object
+    if isinstance(dt_range, datetime):
+        return dt_range.isoformat().replace("+00:00", "Z")
+
+    # Handle a tuple containing datetime objects or None
+    elif isinstance(dt_range, tuple):
+        start, end = dt_range
+
+        # Convert start datetime to string if not None, otherwise use ".."
+        start_str = start.isoformat().replace("+00:00", "Z") if start else ".."
+
+        # Convert end datetime to string if not None, otherwise use ".."
+        end_str = end.isoformat().replace("+00:00", "Z") if end else ".."
+
+        return f"{start_str}/{end_str}"
+
+    # Return input as-is if it's not any expected type (fallback)
+    return dt_range

@@ -21,32 +21,39 @@ from stac_fastapi.pgstac.models.links import CollectionLinks
 
 async def test_create_collection(app_client, load_test_data: Callable):
     in_json = load_test_data("test_collection.json")
-    in_coll = Collection.parse_obj(in_json)
+    in_coll = Collection.model_validate(in_json)
     resp = await app_client.post(
         "/collections",
         json=in_json,
     )
-    assert resp.status_code == 200
-    post_coll = Collection.parse_obj(resp.json())
-    assert in_coll.dict(exclude={"links"}) == post_coll.dict(exclude={"links"})
+    assert resp.status_code == 201
+    post_coll = Collection.model_validate(resp.json())
+    assert in_coll.model_dump(exclude={"links"}) == post_coll.model_dump(
+        exclude={"links"}
+    )
     resp = await app_client.get(f"/collections/{post_coll.id}")
     assert resp.status_code == 200
-    get_coll = Collection.parse_obj(resp.json())
-    assert post_coll.dict(exclude={"links"}) == get_coll.dict(exclude={"links"})
+    get_coll = Collection.model_validate(resp.json())
+    assert post_coll.model_dump(exclude={"links"}) == get_coll.model_dump(
+        exclude={"links"}
+    )
 
 
 async def test_update_collection(app_client, load_test_data, load_test_collection):
     in_coll = load_test_collection
-    in_coll.keywords.append("newkeyword")
+    in_coll = load_test_data("test_collection.json")
+    in_coll["keywords"].append("newkeyword")
 
-    resp = await app_client.put("/collections", json=in_coll.dict())
+    resp = await app_client.put(f"/collections/{in_coll['id']}", json=in_coll)
     assert resp.status_code == 200
 
-    resp = await app_client.get(f"/collections/{in_coll.id}")
+    resp = await app_client.get(f"/collections/{in_coll['id']}")
     assert resp.status_code == 200
 
-    get_coll = Collection.parse_obj(resp.json())
-    assert in_coll.dict(exclude={"links"}) == get_coll.dict(exclude={"links"})
+    get_coll = Collection.model_validate(resp.json())
+
+    in_coll = Collection(**in_coll)
+    assert in_coll.model_dump(exclude={"links"}) == get_coll.model_dump(exclude={"links"})
     assert "newkeyword" in get_coll.keywords
 
 
@@ -55,10 +62,10 @@ async def test_delete_collection(
 ):
     in_coll = load_test_collection
 
-    resp = await app_client.delete(f"/collections/{in_coll.id}")
+    resp = await app_client.delete(f"/collections/{in_coll['id']}")
     assert resp.status_code == 200
 
-    resp = await app_client.get(f"/collections/{in_coll.id}")
+    resp = await app_client.get(f"/collections/{in_coll['id']}")
     assert resp.status_code == 404
 
 
@@ -66,28 +73,34 @@ async def test_create_item(app_client, load_test_data: Callable, load_test_colle
     coll = load_test_collection
 
     in_json = load_test_data("test_item.json")
-    in_item = Item.parse_obj(in_json)
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=in_json,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
-    post_item = Item.parse_obj(resp.json())
-    assert in_item.dict(exclude={"links"}) == post_item.dict(exclude={"links"})
-
-    resp = await app_client.get(f"/collections/{coll.id}/items/{post_item.id}")
-
-    assert resp.status_code == 200
-    get_item = Item.parse_obj(resp.json())
-    assert in_item.dict(exclude={"links"}) == get_item.dict(exclude={"links"})
-
-    post_self_link = next(
-        (link for link in post_item.links if link.rel == "self"), None
+    in_item = Item.model_validate(in_json)
+    post_item = Item.model_validate(resp.json())
+    assert in_item.model_dump(exclude={"links"}) == post_item.model_dump(
+        exclude={"links"}
     )
-    get_self_link = next((link for link in get_item.links if link.rel == "self"), None)
+
+    resp = await app_client.get(f"/collections/{coll['id']}/items/{post_item.id}")
+
+    assert resp.status_code == 200
+    get_item = Item.model_validate(resp.json())
+    assert in_item.model_dump(exclude={"links"}) == get_item.model_dump(exclude={"links"})
+
+    get_item = get_item.model_dump(mode="json")
+    post_item = post_item.model_dump(mode="json")
+    post_self_link = next(
+        (link for link in post_item["links"] if link["rel"] == "self"), None
+    )
+    get_self_link = next(
+        (link for link in get_item["links"] if link["rel"] == "self"), None
+    )
     assert post_self_link is not None and get_self_link is not None
-    assert post_self_link.href == get_self_link.href
+    assert post_self_link["href"] == get_self_link["href"]
 
 
 async def test_create_item_mismatched_collection_id(
@@ -99,10 +112,10 @@ async def test_create_item_mismatched_collection_id(
 
     in_json = load_test_data("test_item.json")
     in_json["collection"] = random.choice(ascii_letters)
-    assert in_json["collection"] != coll.id
+    assert in_json["collection"] != coll["id"]
 
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=in_json,
     )
     assert resp.status_code == 400
@@ -114,17 +127,20 @@ async def test_fetches_valid_item(
     coll = load_test_collection
 
     in_json = load_test_data("test_item.json")
-    in_item = Item.parse_obj(in_json)
+
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=in_json,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
-    post_item = Item.parse_obj(resp.json())
-    assert in_item.dict(exclude={"links"}) == post_item.dict(exclude={"links"})
+    in_item = Item.model_validate(in_json)
+    post_item = Item.model_validate(resp.json())
+    assert in_item.model_dump(exclude={"links"}) == post_item.model_dump(
+        exclude={"links"}
+    )
 
-    resp = await app_client.get(f"/collections/{coll.id}/items/{post_item.id}")
+    resp = await app_client.get(f"/collections/{coll['id']}/items/{post_item.id}")
 
     assert resp.status_code == 200
     item_dict = resp.json()
@@ -142,25 +158,32 @@ async def test_update_item(
     coll = load_test_collection
     item = load_test_item
 
-    item.properties.description = "Update Test"
+    item["properties"]["description"] = "Update Test"
 
     resp = await app_client.put(
-        f"/collections/{coll.id}/items/{item.id}", content=item.json()
+        f"/collections/{coll['id']}/items/{item['id']}", json=item
     )
     assert resp.status_code == 200
-    put_item = Item.parse_obj(resp.json())
+    put_item = Item.model_validate(resp.json())
 
-    resp = await app_client.get(f"/collections/{coll.id}/items/{item.id}")
+    resp = await app_client.get(f"/collections/{coll['id']}/items/{item['id']}")
     assert resp.status_code == 200
 
-    get_item = Item.parse_obj(resp.json())
-    assert item.dict(exclude={"links"}) == get_item.dict(exclude={"links"})
+    get_item = Item.model_validate(resp.json())
+    item = Item(**item)
+    assert item.model_dump(exclude={"links"}) == get_item.model_dump(exclude={"links"})
     assert get_item.properties.description == "Update Test"
 
-    post_self_link = next((link for link in put_item.links if link.rel == "self"), None)
-    get_self_link = next((link for link in get_item.links if link.rel == "self"), None)
+    put_item = put_item.model_dump(mode="json")
+    get_item = get_item.model_dump(mode="json")
+    post_self_link = next(
+        (link for link in put_item["links"] if link["rel"] == "self"), None
+    )
+    get_self_link = next(
+        (link for link in get_item["links"] if link["rel"] == "self"), None
+    )
     assert post_self_link is not None and get_self_link is not None
-    assert post_self_link.href == get_self_link.href
+    assert post_self_link["href"] == get_self_link["href"]
 
 
 async def test_update_item_mismatched_collection_id(
@@ -171,12 +194,12 @@ async def test_update_item_mismatched_collection_id(
     in_json = load_test_data("test_item.json")
 
     in_json["collection"] = random.choice(ascii_letters)
-    assert in_json["collection"] != coll.id
+    assert in_json["collection"] != coll["id"]
 
     item_id = in_json["id"]
 
     resp = await app_client.put(
-        f"/collections/{coll.id}/items/{item_id}",
+        f"/collections/{coll['id']}/items/{item_id}",
         json=in_json,
     )
     assert resp.status_code == 400
@@ -188,27 +211,29 @@ async def test_delete_item(
     coll = load_test_collection
     item = load_test_item
 
-    resp = await app_client.delete(f"/collections/{coll.id}/items/{item.id}")
+    resp = await app_client.delete(f"/collections/{coll['id']}/items/{item['id']}")
     assert resp.status_code == 200
 
-    resp = await app_client.get(f"/collections/{coll.id}/items/{item.id}")
+    resp = await app_client.get(f"/collections/{coll['id']}/items/{item['id']}")
     assert resp.status_code == 404
 
 
-async def test_get_collection_items(app_client, load_test_collection, load_test_item):
+async def test_get_collection_items(
+    app_client, load_test_collection, load_test_item, load_test_data
+):
     coll = load_test_collection
-    item = load_test_item
+    item = load_test_data("test_item.json")
 
     for _ in range(4):
-        item.id = str(uuid.uuid4())
+        item["id"] = str(uuid.uuid4())
         resp = await app_client.post(
-            f"/collections/{coll.id}/items",
-            content=item.json(),
+            f"/collections/{coll['id']}/items",
+            json=item,
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 201
 
     resp = await app_client.get(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
     )
     assert resp.status_code == 200
     fc = resp.json()
@@ -221,15 +246,14 @@ async def test_create_item_conflict(
 ):
     coll = load_test_collection
     in_json = load_test_data("test_item.json")
-    Item.parse_obj(in_json)
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=in_json,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=in_json,
     )
     assert resp.status_code == 409
@@ -241,10 +265,10 @@ async def test_delete_missing_item(
     coll = load_test_collection
     item = load_test_item
 
-    resp = await app_client.delete(f"/collections/{coll.id}/items/{item.id}")
+    resp = await app_client.delete(f"/collections/{coll['id']}/items/{item['id']}")
     assert resp.status_code == 200
 
-    resp = await app_client.delete(f"/collections/{coll.id}/items/{item.id}")
+    resp = await app_client.delete(f"/collections/{coll['id']}/items/{item['id']}")
     assert resp.status_code == 404
 
 
@@ -255,22 +279,23 @@ async def test_create_item_missing_collection(
     item = load_test_data("test_item.json")
     item["collection"] = None
 
-    resp = await app_client.post(f"/collections/{coll.id}/items", json=item)
-    assert resp.status_code == 200
+    resp = await app_client.post(f"/collections/{coll['id']}/items", json=item)
+    assert resp.status_code == 201
 
     post_item = resp.json()
-    assert post_item["collection"] == coll.id
+    assert post_item["collection"] == coll["id"]
 
 
 async def test_update_new_item(
-    app_client, load_test_data: Callable, load_test_collection, load_test_item
+    app_client, load_test_data: Callable, load_test_collection
 ):
     coll = load_test_collection
-    item = load_test_item
-    item.id = "test-updatenewitem"
+
+    new_item = load_test_data("test_item.json")
+    new_item["id"] = "test-updatenewitem"
 
     resp = await app_client.put(
-        f"/collections/{coll.id}/items/{item.id}", content=item.json()
+        f"/collections/{coll['id']}/items/{new_item['id']}", json=new_item
     )
     assert resp.status_code == 404
 
@@ -280,31 +305,30 @@ async def test_update_item_missing_collection(
 ):
     coll = load_test_collection
     item = load_test_item
-    item.collection = None
+    item["collection"] = None
 
     resp = await app_client.put(
-        f"/collections/{coll.id}/items/{item.id}", content=item.json()
+        f"/collections/{coll['id']}/items/{item['id']}", json=item
     )
     assert resp.status_code == 200
 
     put_item = resp.json()
-    assert put_item["collection"] == coll.id
+    assert put_item["collection"] == coll["id"]
 
 
 async def test_pagination(app_client, load_test_data, load_test_collection):
     """Test item collection pagination (paging extension)"""
     coll = load_test_collection
     item_count = 21
-    test_item = load_test_data("test_item.json")
 
     for idx in range(1, item_count):
-        item = Item.parse_obj(test_item)
-        item.id = item.id + str(idx)
-        item.properties.datetime = f"2020-01-{idx:02d}T00:00:00"
-        resp = await app_client.post(f"/collections/{coll.id}/items", json=item.dict())
-        assert resp.status_code == 200
+        item = load_test_data("test_item.json")
+        item["id"] = item["id"] + str(idx)
+        item["properties"]["datetime"] = f"2020-01-{idx:02d}T00:00:00Z"
+        resp = await app_client.post(f"/collections/{coll['id']}/items", json=item)
+        assert resp.status_code == 201
 
-    resp = await app_client.get(f"/collections/{coll.id}/items", params={"limit": 3})
+    resp = await app_client.get(f"/collections/{coll['id']}/items", params={"limit": 3})
     assert resp.status_code == 200
     first_page = resp.json()
     assert len(first_page["features"]) == 3
@@ -364,14 +388,14 @@ async def test_item_search_by_id_post(app_client, load_test_data, load_test_coll
         resp = await app_client.post(
             f"/collections/{test_item['collection']}/items", json=test_item
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 201
 
     params = {"collections": [test_item["collection"]], "ids": ids}
     resp = await app_client.post("/search", json=params)
     assert resp.status_code == 200
     resp_json = resp.json()
     assert len(resp_json["features"]) == len(ids)
-    assert set([feat["id"] for feat in resp_json["features"]]) == set(ids)
+    assert {feat["id"] for feat in resp_json["features"]} == set(ids)
 
 
 async def test_item_search_by_id_no_results_post(
@@ -397,14 +421,14 @@ async def test_item_search_spatial_query_post(
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     # Add second item with a different datetime.
     second_test_item = load_test_data("test_item2.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=second_test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     params = {
         "collections": [test_item["collection"]],
@@ -425,14 +449,14 @@ async def test_item_search_temporal_query_post(
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     # Add second item with a different datetime.
     second_test_item = load_test_data("test_item2.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=second_test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     item_date = rfc3339_str_to_datetime(test_item["properties"]["datetime"])
 
@@ -456,14 +480,14 @@ async def test_item_search_temporal_window_post(
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     # Add second item with a different datetime.
     second_test_item = load_test_data("test_item2.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=second_test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     item_date = rfc3339_str_to_datetime(test_item["properties"]["datetime"])
     item_date_before = item_date - timedelta(seconds=1)
@@ -495,7 +519,7 @@ async def test_item_search_sort_post(app_client, load_test_data, load_test_colle
     resp = await app_client.post(
         f"/collections/{first_item['collection']}/items", json=first_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     second_item = load_test_data("test_item.json")
     second_item["id"] = "another-item"
@@ -504,7 +528,7 @@ async def test_item_search_sort_post(app_client, load_test_data, load_test_colle
     resp = await app_client.post(
         f"/collections/{second_item['collection']}/items", json=second_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     params = {
         "collections": [first_item["collection"]],
@@ -526,14 +550,14 @@ async def test_item_search_by_id_get(app_client, load_test_data, load_test_colle
         resp = await app_client.post(
             f"/collections/{test_item['collection']}/items", json=test_item
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 201
 
     params = {"collections": test_item["collection"], "ids": ",".join(ids)}
     resp = await app_client.get("/search", params=params)
     assert resp.status_code == 200
     resp_json = resp.json()
     assert len(resp_json["features"]) == len(ids)
-    assert set([feat["id"] for feat in resp_json["features"]]) == set(ids)
+    assert {feat["id"] for feat in resp_json["features"]} == set(ids)
 
 
 async def test_item_search_bbox_get(app_client, load_test_data, load_test_collection):
@@ -542,14 +566,14 @@ async def test_item_search_bbox_get(app_client, load_test_data, load_test_collec
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     # Add second item with a different datetime.
     second_test_item = load_test_data("test_item2.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=second_test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     params = {
         "collections": test_item["collection"],
@@ -570,14 +594,14 @@ async def test_item_search_get_without_collections(
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     # Add second item with a different datetime.
     second_test_item = load_test_data("test_item2.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=second_test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     params = {
         "bbox": ",".join([str(coord) for coord in test_item["bbox"]]),
@@ -597,14 +621,14 @@ async def test_item_search_temporal_window_get(
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     # Add second item with a different datetime.
     second_test_item = load_test_data("test_item2.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=second_test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     item_date = rfc3339_str_to_datetime(test_item["properties"]["datetime"])
     item_date_before = item_date - timedelta(seconds=1)
@@ -627,7 +651,7 @@ async def test_item_search_sort_get(app_client, load_test_data, load_test_collec
     resp = await app_client.post(
         f"/collections/{first_item['collection']}/items", json=first_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     second_item = load_test_data("test_item.json")
     second_item["id"] = "another-item"
@@ -636,7 +660,7 @@ async def test_item_search_sort_get(app_client, load_test_data, load_test_collec
     resp = await app_client.post(
         f"/collections/{second_item['collection']}/items", json=second_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
     params = {"collections": [first_item["collection"]], "sortby": "-datetime"}
     resp = await app_client.get("/search", params=params)
     assert resp.status_code == 200
@@ -653,13 +677,13 @@ async def test_item_search_post_without_collection(
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     second_test_item = load_test_data("test_item2.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=second_test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     params = {
         "bbox": test_item["bbox"],
@@ -678,13 +702,13 @@ async def test_item_search_properties_jsonb(
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     second_test_item = load_test_data("test_item2.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=second_test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     # EPSG is a JSONB key
     params = {"query": {"proj:epsg": {"gt": test_item["properties"]["proj:epsg"] - 1}}}
@@ -702,14 +726,14 @@ async def test_item_search_properties_field(
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     second_test_item = load_test_data("test_item2.json")
     second_test_item["properties"]["eo:cloud_cover"] = 5
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=second_test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     params = {"query": {"eo:cloud_cover": {"eq": 0}}}
     resp = await app_client.post("/search", json=params)
@@ -726,13 +750,13 @@ async def test_item_search_get_query_extension(
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     second_test_item = load_test_data("test_item2.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=second_test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     # EPSG is a JSONB key
     params = {
@@ -766,13 +790,13 @@ async def test_item_search_post_filter_extension_cql(
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     second_test_item = load_test_data("test_item2.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=second_test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     # EPSG is a JSONB key
     params = {
@@ -816,13 +840,13 @@ async def test_item_search_post_filter_extension_cql2(
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     second_test_item = load_test_data("test_item2.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=second_test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     # EPSG is a JSONB key
     params = {
@@ -870,13 +894,13 @@ async def test_item_search_post_filter_extension_cql2_with_query_fails(
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     second_test_item = load_test_data("test_item2.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=second_test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     # EPSG is a JSONB key
     params = {
@@ -915,13 +939,13 @@ async def test_pagination_item_collection(
     ids = []
 
     # Ingest 5 items
-    for idx in range(5):
+    for _ in range(5):
         uid = str(uuid.uuid4())
         test_item["id"] = uid
         resp = await app_client.post(
             f"/collections/{test_item['collection']}/items", json=test_item
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 201
         ids.append(uid)
 
     # Paginate through all 5 items with a limit of 1 (expecting 5 requests)
@@ -934,14 +958,13 @@ async def test_pagination_item_collection(
         idx += 1
         page_data = page.json()
         item_ids.append(page_data["features"][0]["id"])
-        nextlink = [
-            link["href"] for link in page_data["links"] if link["rel"] == "next"
-        ]
+        nextlink = [link["href"] for link in page_data["links"] if link["rel"] == "next"]
         if len(nextlink) < 1:
             break
+
         page = await app_client.get(nextlink.pop())
-        if idx >= 10:
-            assert False
+
+        assert idx < 10
 
     # Our limit is 1 so we expect len(ids) number of requests before we run out of pages
     assert idx == len(ids)
@@ -956,13 +979,13 @@ async def test_pagination_post(app_client, load_test_data, load_test_collection)
     ids = []
 
     # Ingest 5 items
-    for idx in range(5):
+    for _ in range(5):
         uid = str(uuid.uuid4())
         test_item["id"] = uid
         resp = await app_client.post(
             f"/collections/{test_item['collection']}/items", json=test_item
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 201
         ids.append(uid)
 
     # Paginate through all 5 items with a limit of 1 (expecting 5 requests)
@@ -981,12 +1004,12 @@ async def test_pagination_post(app_client, load_test_data, load_test_collection)
         next_link = list(filter(lambda link: link["rel"] == "next", page_data["links"]))
         if not next_link:
             break
+
         # Merge request bodies
         request_body.update(next_link[0]["body"])
         page = await app_client.post("/search", json=request_body)
 
-        if idx > 10:
-            assert False
+        assert idx < 10
 
     # Our limit is 1 so we expect len(ids) number of requests before we run out of pages
     assert idx == len(ids)
@@ -1003,13 +1026,13 @@ async def test_pagination_token_idempotent(
     ids = []
 
     # Ingest 5 items
-    for idx in range(5):
+    for _ in range(5):
         uid = str(uuid.uuid4())
         test_item["id"] = uid
         resp = await app_client.post(
             f"/collections/{test_item['collection']}/items", json=test_item
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 201
         ids.append(uid)
 
     page = await app_client.post(
@@ -1045,7 +1068,7 @@ async def test_field_extension_get(app_client, load_test_data, load_test_collect
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     params = {"fields": "+properties.proj:epsg,+properties.gsd,+collection"}
     resp = await app_client.get("/search", params=params)
@@ -1059,7 +1082,7 @@ async def test_field_extension_post(app_client, load_test_data, load_test_collec
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     body = {
         "fields": {
@@ -1091,7 +1114,7 @@ async def test_field_extension_exclude_and_include(
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     body = {
         "fields": {
@@ -1113,7 +1136,7 @@ async def test_field_extension_exclude_default_includes(
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     body = {"fields": {"exclude": ["geometry"]}}
 
@@ -1133,7 +1156,7 @@ async def test_field_extension_include_multiple_subkeys(
     resp_json = resp.json()
 
     resp_prop_keys = resp_json["features"][0]["properties"].keys()
-    assert set(resp_prop_keys) == set(["width", "height"])
+    assert set(resp_prop_keys) == {"width", "height"}
 
 
 async def test_field_extension_include_multiple_deeply_nested_subkeys(
@@ -1147,8 +1170,8 @@ async def test_field_extension_include_multiple_deeply_nested_subkeys(
     resp_json = resp.json()
 
     resp_assets = resp_json["features"][0]["assets"]
-    assert set(resp_assets.keys()) == set(["ANG"])
-    assert set(resp_assets["ANG"].keys()) == set(["type", "href"])
+    assert set(resp_assets.keys()) == {"ANG"}
+    assert set(resp_assets["ANG"].keys()) == {"type", "href"}
 
 
 async def test_field_extension_exclude_multiple_deeply_nested_subkeys(
@@ -1271,11 +1294,11 @@ async def test_preserves_extra_link(
     test_item = load_test_data("test_item.json")
     expected_href = urljoin(str(app_client.base_url), "preview.html")
 
-    resp = await app_client.post(f"/collections/{coll.id}/items", json=test_item)
-    assert resp.status_code == 200
+    resp = await app_client.post(f"/collections/{coll['id']}/items", json=test_item)
+    assert resp.status_code == 201
 
     response_item = await app_client.get(
-        f"/collections/{coll.id}/items/{test_item['id']}",
+        f"/collections/{coll['id']}/items/{test_item['id']}",
         params={"limit": 1},
     )
     assert response_item.status_code == 200
@@ -1293,7 +1316,7 @@ async def test_item_search_post_filter_extension_cql_explicitlang(
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     # EPSG is a JSONB key
     params = {
@@ -1339,7 +1362,7 @@ async def test_item_search_post_filter_extension_cql2_2(
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     # EPSG is a JSONB key
     params = {
@@ -1427,7 +1450,7 @@ async def test_get_filter_cql2text(app_client, load_test_data, load_test_collect
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     epsg = test_item["properties"]["proj:epsg"]
     collection = test_item["collection"]
@@ -1471,7 +1494,7 @@ async def test_get_collection_items_forwarded_header(
 ):
     coll = load_test_collection
     resp = await app_client.get(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         headers={"Forwarded": "proto=https;host=test:1234"},
     )
     for link in resp.json()["features"][0]["links"]:
@@ -1484,7 +1507,7 @@ async def test_get_collection_items_x_forwarded_headers(
 ):
     coll = load_test_collection
     resp = await app_client.get(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         headers={
             "X-Forwarded-Port": "1234",
             "X-Forwarded-Proto": "https",
@@ -1500,7 +1523,7 @@ async def test_get_collection_items_duplicate_forwarded_headers(
 ):
     coll = load_test_collection
     resp = await app_client.get(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         headers={
             "Forwarded": "proto=https;host=test:1234",
             "X-Forwarded-Port": "4321",

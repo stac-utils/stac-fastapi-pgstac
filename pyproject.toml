@@ -1,11 +1,28 @@
-[flake8]
-ignore = "D203"
-exclude = [".git", "__pycache__", "docs/source/conf.py", "build", "dist"]
-max-complexity = 12
-max-line-length = 90
-
 [tool.isort]
 profile = "black"
 known_first_party = "stac_fastapi.pgstac"
 known_third_party = ["rasterio", "stac-pydantic", "sqlalchemy", "geoalchemy2", "fastapi", "stac_fastapi"]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+[tool.mypy]
+ignore_missing_imports = true
+namespace_packages = true
+explicit_package_bases = true
+exclude = ["tests", ".venv"]
+
+[tool.ruff]
+line-length = 90
+
+[tool.ruff.lint]
+select = [
+        "C",
+        "E",
+        "F",
+        "W",
+        "B",
+]
+ignore = [
+    "E203",  # line too long, handled by black
+    "E501",  # do not perform function calls in argument defaults
+    "B028",  # No explicit `stacklevel` keyword argument found
+]

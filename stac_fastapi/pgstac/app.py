@@ -9,9 +9,13 @@ import os
 
 from fastapi.responses import ORJSONResponse
 from stac_fastapi.api.app import StacApi
-from stac_fastapi.api.models import create_get_request_model, create_post_request_model
+from stac_fastapi.api.models import (
+    ItemCollectionUri,
+    create_get_request_model,
+    create_post_request_model,
+    create_request_model,
+)
 from stac_fastapi.extensions.core import (
-    ContextExtension,
     FieldsExtension,
     FilterExtension,
     SortExtension,
@@ -39,27 +43,37 @@ extensions_map = {
     "sort": SortExtension(),
     "fields": FieldsExtension(),
     "pagination": TokenPaginationExtension(),
-    "context": ContextExtension(),
     "filter": FilterExtension(client=FiltersClient()),
     "bulk_transactions": BulkTransactionExtension(client=BulkTransactionsClient()),
 }
 
 if enabled_extensions := os.getenv("ENABLED_EXTENSIONS"):
     extensions = [
-        extensions_map[extension_name]
-        for extension_name in enabled_extensions.split(",")
+        extensions_map[extension_name] for extension_name in enabled_extensions.split(",")
     ]
 else:
     extensions = list(extensions_map.values())
 
+if any(isinstance(ext, TokenPaginationExtension) for ext in extensions):
+    items_get_request_model = create_request_model(
+        model_name="ItemCollectionUri",
+        base_model=ItemCollectionUri,
+        mixins=[TokenPaginationExtension().GET],
+        request_type="GET",
+    )
+else:
+    items_get_request_model = ItemCollectionUri
+
 post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
+get_request_model = create_get_request_model(extensions)
 
 api = StacApi(
     settings=settings,
     extensions=extensions,
-    client=CoreCrudClient(post_request_model=post_request_model),
+    client=CoreCrudClient(post_request_model=post_request_model),  # type: ignore
     response_class=ORJSONResponse,
-    search_get_request_model=create_get_request_model(extensions),
+    items_get_request_model=items_get_request_model,
+    search_get_request_model=get_request_model,
     search_post_request_model=post_request_model,
 )
 app = api.app
@@ -90,8 +104,8 @@ def run():
             reload=settings.reload,
             root_path=os.getenv("UVICORN_ROOT_PATH", ""),
         )
-    except ImportError:
-        raise RuntimeError("Uvicorn must be installed in order to use command")
+    except ImportError as e:
+        raise RuntimeError("Uvicorn must be installed in order to use command") from e
 
 
 if __name__ == "__main__":

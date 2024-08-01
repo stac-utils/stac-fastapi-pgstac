@@ -2,6 +2,42 @@
 
 ## [Unreleased]
 
+## [3.0.0a4] - 2024-07-10
+
+- Update stac-fastapi libraries to `~=3.0.0b2`
+
+## [3.0.0a3] - 2024-07-01
+
+- Use `quote_plus` instead of `quote` to encode database's password ([#122](https://github.com/stac-utils/stac-fastapi-pgstac/pull/122))
+- Update stac-fastapi libraries to `~=3.0.0a4`
+
+## [3.0.0a2] - 2024-06-18
+
+- Update stac-fastapi libraries to `~=3.0.0a3`
+- make sure the application can work without any extension
+
+## [3.0.0a1] - 2024-05-22
+
+- Update stac-fastapi libraries to `~=3.0.0a1`
+- Update stac-pydantic dependency to `==3.1.*`
+
+## [3.0.0a0] - 2024-05-10
+
+### Changed
+
+- Update stac-fastapi libraries to v3.0.0a0 ([#108](https://github.com/stac-utils/stac-fastapi-pgstac/pull/108))
+- Update pgstac version to `0.8.x`
+
+## [2.5.0] - 2024-04-25
+
+### Changed
+
+- Updated stac-fastapi libraries to v2.5.5 ([#101](https://github.com/stac-utils/stac-fastapi-pgstac/pull/101))
+
+### Added
+
+- Ability to configure the database runtime parameters ([#92](https://github.com/stac-utils/stac-fastapi-pgstac/pull/92))
+
 ## [2.4.11] - 2023-12-01
 
 ### Changed
@@ -291,7 +327,14 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.10..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0a4..main>
+[3.0.0a4]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0a3..3.0.0a4>
+[3.0.0a3]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0a2..3.0.0a3>
+[3.0.0a2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0a1..3.0.0a2>
+[3.0.0a1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0a0..3.0.0a1>
+[3.0.0a0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.5.0..3.0.0a0>
+[2.5.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.11..2.5.0>
+[2.4.11]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.10..2.4.11>
 [2.4.10]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.9..2.4.10>
 [2.4.9]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.8..2.4.9>
 [2.4.8]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.7..2.4.8>

@@ -4,19 +4,25 @@ import logging
 import os
 import time
 from typing import Callable, Dict
+from urllib.parse import quote_plus as quote
 from urllib.parse import urljoin
 
 import asyncpg
 import pytest
 from fastapi import APIRouter
 from fastapi.responses import ORJSONResponse
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from pypgstac.db import PgstacDB
 from pypgstac.migrate import Migrate
+from pytest_postgresql.janitor import DatabaseJanitor
 from stac_fastapi.api.app import StacApi
-from stac_fastapi.api.models import create_get_request_model, create_post_request_model
+from stac_fastapi.api.models import (
+    ItemCollectionUri,
+    create_get_request_model,
+    create_post_request_model,
+    create_request_model,
+)
 from stac_fastapi.extensions.core import (
-    ContextExtension,
     FieldsExtension,
     FilterExtension,
     SortExtension,
@@ -36,8 +42,6 @@ from stac_fastapi.pgstac.types.search import PgstacSearch
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
-settings = Settings(testing=True)
-pgstac_api_hydrate_settings = Settings(testing=True, use_api_hydrate=True)
 
 logger = logging.getLogger(__name__)
 
@@ -48,82 +52,68 @@ def event_loop():
 
 
 @pytest.fixture(scope="session")
-async def pg():
-    logger.info(f"Connecting to write database {settings.writer_connection_string}")
-    os.environ["orig_postgres_dbname"] = settings.postgres_dbname
-    conn = await asyncpg.connect(dsn=settings.writer_connection_string)
-    try:
-        await conn.execute("CREATE DATABASE pgstactestdb;")
-        await conn.execute(
-            """
-            ALTER DATABASE pgstactestdb SET search_path to pgstac, public;
-            ALTER DATABASE pgstactestdb SET log_statement to 'all';
-            """
-        )
-    except asyncpg.exceptions.DuplicateDatabaseError:
-        await conn.execute("DROP DATABASE pgstactestdb;")
-        await conn.execute("CREATE DATABASE pgstactestdb;")
-        await conn.execute(
-            "ALTER DATABASE pgstactestdb SET search_path to pgstac, public;"
-        )
-    await conn.close()
-    logger.info("migrating...")
-    os.environ["postgres_dbname"] = "pgstactestdb"
-    conn = await asyncpg.connect(dsn=settings.testing_connection_string)
-    await conn.execute("SELECT true")
-    await conn.close()
-    db = PgstacDB(dsn=settings.testing_connection_string)
-    migrator = Migrate(db)
-    version = migrator.run_migration()
-    db.close()
-    logger.info(f"PGStac Migrated to {version}")
+def database(postgresql_proc):
+    with DatabaseJanitor(
+        user=postgresql_proc.user,
+        host=postgresql_proc.host,
+        port=postgresql_proc.port,
+        dbname="pgstactestdb",
+        version=postgresql_proc.version,
+        password="a2Vw:yk=)CdSis[fek]tW=/o",
+    ) as jan:
+        connection = f"postgresql://{jan.user}:{quote(jan.password)}@{jan.host}:{jan.port}/{jan.dbname}"
+        with PgstacDB(dsn=connection) as db:
+            migrator = Migrate(db)
+            version = migrator.run_migration()
+            assert version
 
-    yield settings.testing_connection_string
-
-    print("Getting rid of test database")
-    os.environ["postgres_dbname"] = os.environ["orig_postgres_dbname"]
-    conn = await asyncpg.connect(dsn=settings.writer_connection_string)
-    try:
-        await conn.execute("DROP DATABASE pgstactestdb;")
-        await conn.close()
-    except Exception:
-        try:
-            await conn.execute("DROP DATABASE pgstactestdb WITH (force);")
-            await conn.close()
-        except Exception:
-            pass
+        yield jan
 
 
 @pytest.fixture(autouse=True)
-async def pgstac(pg):
-    logger.info(f"{os.environ['postgres_dbname']}")
+async def pgstac(database):
+    connection = f"postgresql://{database.user}:{quote(database.password)}@{database.host}:{database.port}/{database.dbname}"
     yield
-    logger.info("Truncating Data")
-    conn = await asyncpg.connect(dsn=settings.testing_connection_string)
+    conn = await asyncpg.connect(dsn=connection)
     await conn.execute(
         """
         DROP SCHEMA IF EXISTS pgstac CASCADE;
         """
     )
     await conn.close()
-    with PgstacDB(dsn=settings.testing_connection_string) as db:
+    with PgstacDB(dsn=connection) as db:
         migrator = Migrate(db)
         version = migrator.run_migration()
+
     logger.info(f"PGStac Migrated to {version}")
 
 
 # Run all the tests that use the api_client in both db hydrate and api hydrate mode
 @pytest.fixture(
     params=[
-        (settings, ""),
-        (settings, "/router_prefix"),
-        (pgstac_api_hydrate_settings, ""),
-        (pgstac_api_hydrate_settings, "/router_prefix"),
+        # hydratation, prefix, model_validation
+        (False, "", False),
+        (False, "/router_prefix", False),
+        (True, "", False),
+        (True, "/router_prefix", False),
+        (False, "", True),
+        (True, "", True),
     ],
     scope="session",
 )
-def api_client(request, pg):
-    api_settings, prefix = request.param
+def api_client(request, database):
+    hydrate, prefix, response_model = request.param
+    api_settings = Settings(
+        postgres_user=database.user,
+        postgres_pass=database.password,
+        postgres_host_reader=database.host,
+        postgres_host_writer=database.host,
+        postgres_port=database.port,
+        postgres_dbname=database.dbname,
+        use_api_hydrate=hydrate,
+        enable_response_models=response_model,
+        testing=True,
+    )
 
     api_settings.openapi_url = prefix + api_settings.openapi_url
     api_settings.docs_url = prefix + api_settings.docs_url
@@ -135,23 +125,32 @@ def api_client(request, pg):
     )
 
     extensions = [
-        TransactionExtension(client=TransactionsClient(), settings=settings),
+        TransactionExtension(client=TransactionsClient(), settings=api_settings),
         QueryExtension(),
         SortExtension(),
         FieldsExtension(),
         TokenPaginationExtension(),
-        ContextExtension(),
         FilterExtension(client=FiltersClient()),
         BulkTransactionExtension(client=BulkTransactionsClient()),
     ]
 
-    post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
+    items_get_request_model = create_request_model(
+        model_name="ItemCollectionUri",
+        base_model=ItemCollectionUri,
+        mixins=[TokenPaginationExtension().GET],
+        request_type="GET",
+    )
+    search_get_request_model = create_get_request_model(extensions)
+    search_post_request_model = create_post_request_model(
+        extensions, base_model=PgstacSearch
+    )
     api = StacApi(
         settings=api_settings,
         extensions=extensions,
-        client=CoreCrudClient(post_request_model=post_request_model),
-        search_get_request_model=create_get_request_model(extensions),
-        search_post_request_model=post_request_model,
+        client=CoreCrudClient(post_request_model=search_post_request_model),
+        items_get_request_model=items_get_request_model,
+        search_get_request_model=search_get_request_model,
+        search_post_request_model=search_post_request_model,
         response_class=ORJSONResponse,
         router=APIRouter(prefix=prefix),
     )
@@ -181,7 +180,7 @@ async def app_client(app):
     if app.state.router_prefix != "":
         base_url = urljoin(base_url, app.state.router_prefix)
 
-    async with AsyncClient(app=app, base_url=base_url) as c:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url=base_url) as c:
         yield c
 
 
@@ -201,8 +200,10 @@ async def load_test_collection(app_client, load_test_data):
         "/collections",
         json=data,
     )
-    assert resp.status_code == 200
-    return Collection.parse_obj(resp.json())
+    assert resp.status_code == 201
+    collection = Collection.model_validate(resp.json())
+
+    return collection.model_dump(mode="json")
 
 
 @pytest.fixture
@@ -210,12 +211,13 @@ async def load_test_item(app_client, load_test_data, load_test_collection):
     coll = load_test_collection
     data = load_test_data("test_item.json")
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=data,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
-    return Item.parse_obj(resp.json())
+    item = Item.model_validate(resp.json())
+    return item.model_dump(mode="json")
 
 
 @pytest.fixture
@@ -225,8 +227,8 @@ async def load_test2_collection(app_client, load_test_data):
         "/collections",
         json=data,
     )
-    assert resp.status_code == 200
-    return Collection.parse_obj(resp.json())
+    assert resp.status_code == 201
+    return Collection.model_validate(resp.json())
 
 
 @pytest.fixture
@@ -237,5 +239,5 @@ async def load_test2_item(app_client, load_test_data, load_test2_collection):
         f"/collections/{coll.id}/items",
         json=data,
     )
-    assert resp.status_code == 200
-    return Item.parse_obj(resp.json())
+    assert resp.status_code == 201
+    return Item.model_validate(resp.json())

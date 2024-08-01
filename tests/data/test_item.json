@@ -504,7 +504,7 @@
     {
       "href": "preview.html",
       "rel": "preview",
-      "type": "application/html"
+      "type": "text/html"
     }
   ]
 }
