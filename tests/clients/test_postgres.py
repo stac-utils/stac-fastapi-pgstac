@@ -427,7 +427,7 @@ async def test_create_bulk_items_omit_collection(
         f"/collections/{coll['id']}/bulk_items",
         json=payload,
     )
-    assert resp.status_code == 400
+    assert resp.status_code == 200
     assert resp.text == '"Successfully added 2 items."'
 
     for item_id in items.keys():
@@ -465,7 +465,10 @@ async def test_create_bulk_items_collection_mismatch(
         json=payload,
     )
     assert resp.status_code == 400
-    assert resp.text == '"Successfully added 2 items."'
+    assert (
+        resp.json()["detail"]
+        == "Collection ID from path parameter (test-collection) does not match Collection ID from Item (wrong-collection)"
+    )
 
 
 async def test_create_bulk_items_id_mismatch(
@@ -488,7 +491,10 @@ async def test_create_bulk_items_id_mismatch(
         json=payload,
     )
     assert resp.status_code == 400
-    assert resp.text == '"Successfully added 2 items."'
+    assert (
+        resp.json()["detail"]
+        == "Collection ID from path parameter (test-collection) does not match Collection ID from Item (wrong-collection)"
+    )
 
 
 # TODO since right now puts implement upsert
