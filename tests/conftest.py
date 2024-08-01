@@ -137,7 +137,10 @@ def api_client(request, database):
     items_get_request_model = create_request_model(
         model_name="ItemCollectionUri",
         base_model=ItemCollectionUri,
-        mixins=[TokenPaginationExtension().GET],
+        mixins=[
+            TokenPaginationExtension().GET,
+            FilterExtension(client=FiltersClient()).GET,
+        ],
         request_type="GET",
     )
     search_get_request_model = create_get_request_model(extensions)

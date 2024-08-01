@@ -1471,6 +1471,14 @@ async def test_get_filter_cql2text(app_client, load_test_data, load_test_collect
     resp_json = resp.json()
     assert len(resp.json()["features"]) == 0
 
+    filter = f"proj:epsg={epsg}"
+    params = {"filter": filter, "filter-lang": "cql2-text"}
+    resp = await app_client.get(
+        f"/collections/{test_item['collection']}/items", params=params
+    )
+    resp_json = resp.json()
+    assert len(resp.json()["features"]) == 1
+
 
 async def test_item_merge_raster_bands(
     app_client, load_test2_item, load_test2_collection

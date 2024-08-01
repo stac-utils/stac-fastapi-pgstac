@@ -18,13 +18,7 @@ from stac_fastapi.types.core import AsyncBaseCoreClient
 from stac_fastapi.types.errors import InvalidQueryParameter, NotFoundError
 from stac_fastapi.types.requests import get_base_url
 from stac_fastapi.types.rfc3339 import DateTimeType
-from stac_fastapi.types.stac import (
-    Collection,
-    Collections,
-    Item,
-    ItemCollection,
-    LandingPage,
-)
+from stac_fastapi.types.stac import Collection, Collections, Item, ItemCollection
 from stac_pydantic.links import Relations
 from stac_pydantic.shared import BBox, MimeTypes
 
@@ -44,30 +38,6 @@ NumType = Union[float, int]
 @attr.s
 class CoreCrudClient(AsyncBaseCoreClient):
     """Client for core endpoints defined by stac."""
-
-    async def landing_page(self, **kwargs) -> LandingPage:
-        """Landing page.
-
-        Called with `GET /`.
-
-        Returns:
-            API landing page, serving as an entry point to the API.
-        """
-        request: Request = kwargs["request"]
-        base_url = get_base_url(request)
-        landing_page = await super().landing_page(**kwargs)
-
-        if self.extension_is_enabled("FilterExtension"):
-            landing_page["links"].append(
-                {
-                    "rel": "http://www.opengis.net/def/rel/ogc/1.0/queryables",
-                    "type": "application/schema+json",
-                    "title": "Queryables",
-                    "href": urljoin(base_url, "queryables"),
-                }
-            )
-
-        return landing_page
 
     async def all_collections(self, request: Request, **kwargs) -> Collections:
         """Read all collections from the database."""
@@ -90,8 +60,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 if self.extension_is_enabled("FilterExtension"):
                     coll["links"].append(
                         {
-                            "rel": "http://www.opengis.net/def/rel/ogc/1.0/queryables",
-                            "type": "application/schema+json",
+                            "rel": Relations.queryables.value,
+                            "type": MimeTypes.jsonschema.value,
                             "title": "Queryables",
                             "href": urljoin(
                                 base_url, f"collections/{coll['id']}/queryables"
@@ -155,8 +125,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
             base_url = get_base_url(request)
             collection["links"].append(
                 {
-                    "rel": "http://www.opengis.net/def/rel/ogc/1.0/queryables",
-                    "type": "application/schema+json",
+                    "rel": Relations.queryables.value,
+                    "type": MimeTypes.jsonschema.value,
                     "title": "Queryables",
                     "href": urljoin(base_url, f"collections/{collection_id}/queryables"),
                 }
@@ -339,8 +309,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
         }
 
         if self.extension_is_enabled("FilterExtension"):
-            filter_lang = request.query_params.get("filter-lang", None)
-            filter = request.query_params.get("filter", "").strip()
+            filter_lang = kwargs.get("filter_lang", None)
+            filter = kwargs.get("filter", "").strip()
 
             if len(filter) > 0 and filter_lang == "cql2-text":
                 ast = parse_cql2_text(filter)
@@ -439,14 +409,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
         Returns:
             ItemCollection containing items which match the search criteria.
         """
-        query_params = str(request.query_params)
-
-        # Kludgy fix because using factory does not allow alias for filter-lang
-        if filter_lang is None:
-            match = re.search(r"filter-lang=([a-z0-9-]+)", query_params, re.IGNORECASE)
-            if match:
-                filter_lang = match.group(1)
-
         # Parse request parameters
         base_args = {
             "collections": collections,
