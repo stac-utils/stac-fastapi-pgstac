@@ -57,6 +57,18 @@ class CoreCrudClient(AsyncBaseCoreClient):
                     collection_id=coll["id"], request=request
                 ).get_links(extra_links=coll.get("links"))
 
+                if self.extension_is_enabled("FilterExtension"):
+                    coll["links"].append(
+                        {
+                            "rel": Relations.queryables.value,
+                            "type": MimeTypes.jsonschema.value,
+                            "title": "Queryables",
+                            "href": urljoin(
+                                base_url, f"collections/{coll['id']}/queryables"
+                            ),
+                        }
+                    )
+
                 linked_collections.append(coll)
 
         links = [
@@ -108,6 +120,17 @@ class CoreCrudClient(AsyncBaseCoreClient):
         collection["links"] = await CollectionLinks(
             collection_id=collection_id, request=request
         ).get_links(extra_links=collection.get("links"))
+
+        if self.extension_is_enabled("FilterExtension"):
+            base_url = get_base_url(request)
+            collection["links"].append(
+                {
+                    "rel": Relations.queryables.value,
+                    "type": MimeTypes.jsonschema.value,
+                    "title": "Queryables",
+                    "href": urljoin(base_url, f"collections/{collection_id}/queryables"),
+                }
+            )
 
         return Collection(**collection)
 
@@ -285,6 +308,14 @@ class CoreCrudClient(AsyncBaseCoreClient):
             "token": token,
         }
 
+        if self.extension_is_enabled("FilterExtension"):
+            filter_lang = kwargs.get("filter_lang", None)
+            filter = kwargs.get("filter", None)
+            if filter is not None and filter_lang == "cql2-text":
+                ast = parse_cql2_text(filter.strip())
+                base_args["filter"] = orjson.loads(to_cql2(ast))
+                base_args["filter-lang"] = "cql2-json"
+
         clean = {}
         for k, v in base_args.items():
             if v is not None and v != []:
@@ -377,14 +408,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
         Returns:
             ItemCollection containing items which match the search criteria.
         """
-        query_params = str(request.query_params)
-
-        # Kludgy fix because using factory does not allow alias for filter-lang
-        if filter_lang is None:
-            match = re.search(r"filter-lang=([a-z0-9-]+)", query_params, re.IGNORECASE)
-            if match:
-                filter_lang = match.group(1)
-
         # Parse request parameters
         base_args = {
             "collections": collections,

@@ -73,6 +73,13 @@ async def test_get_search_content_type(app_client):
     assert resp.headers["content-type"] == "application/geo+json"
 
 
+async def test_landing_links(app_client):
+    """test landing page links."""
+    landing = await app_client.get("/")
+    assert landing.status_code == 200, landing.text
+    assert "Queryables" in [link.get("title") for link in landing.json()["links"]]
+
+
 async def test_get_queryables_content_type(app_client, load_test_collection):
     resp = await app_client.get("queryables")
     assert resp.headers["content-type"] == "application/schema+json"
@@ -743,6 +750,9 @@ async def test_no_extension(
         async with AsyncClient(transport=ASGITransport(app=app)) as client:
             landing = await client.get("http://test/")
             assert landing.status_code == 200, landing.text
+            assert "Queryables" not in [
+                link.get("title") for link in landing.json()["links"]
+            ]
 
             collection = await client.get("http://test/collections/test-collection")
             assert collection.status_code == 200, collection.text
