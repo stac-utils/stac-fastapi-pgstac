@@ -14,6 +14,7 @@ from stac_fastapi.extensions.third_party.bulk_transactions import (
 )
 from stac_fastapi.types import stac as stac_types
 from stac_fastapi.types.core import AsyncBaseTransactionsClient
+from stac_pydantic import Collection, Item, ItemCollection
 from starlette.responses import JSONResponse, Response
 
 from stac_fastapi.pgstac.config import Settings
@@ -71,11 +72,13 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
     async def create_item(
         self,
         collection_id: str,
-        item: Union[stac_types.Item, stac_types.ItemCollection],
+        item: Union[Item, ItemCollection],
         request: Request,
         **kwargs,
     ) -> Optional[Union[stac_types.Item, Response]]:
         """Create item."""
+        item = item.model_dump(mode="json")
+
         if item["type"] == "FeatureCollection":
             valid_items = []
             for item in item["features"]:  # noqa: B020
@@ -102,6 +105,7 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
             ).get_links(extra_links=item.get("links"))
 
             return stac_types.Item(**item)
+
         else:
             raise HTTPException(
                 status_code=400,
@@ -113,10 +117,12 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
         request: Request,
         collection_id: str,
         item_id: str,
-        item: stac_types.Item,
+        item: Item,
         **kwargs,
     ) -> Optional[Union[stac_types.Item, Response]]:
         """Update item."""
+        item = item.model_dump(mode="json")
+
         self._validate_item(request, item, collection_id, item_id)
         item["collection"] = collection_id
 
@@ -132,31 +138,50 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
         return stac_types.Item(**item)
 
     async def create_collection(
-        self, collection: stac_types.Collection, request: Request, **kwargs
+        self,
+        collection: Collection,
+        request: Request,
+        **kwargs,
     ) -> Optional[Union[stac_types.Collection, Response]]:
         """Create collection."""
+        collection = collection.model_dump(mode="json")
+
         self._validate_collection(request, collection)
+
         async with request.app.state.get_connection(request, "w") as conn:
             await dbfunc(conn, "create_collection", collection)
+
         collection["links"] = await CollectionLinks(
             collection_id=collection["id"], request=request
-        ).get_links(extra_links=collection.get("links"))
+        ).get_links(extra_links=collection["links"])
 
         return stac_types.Collection(**collection)
 
     async def update_collection(
-        self, collection: stac_types.Collection, request: Request, **kwargs
+        self,
+        collection: Collection,
+        request: Request,
+        **kwargs,
     ) -> Optional[Union[stac_types.Collection, Response]]:
         """Update collection."""
+
+        col = collection.model_dump(mode="json")
+
         async with request.app.state.get_connection(request, "w") as conn:
-            await dbfunc(conn, "update_collection", collection)
-        collection["links"] = await CollectionLinks(
-            collection_id=collection["id"], request=request
-        ).get_links(extra_links=collection.get("links"))
-        return stac_types.Collection(**collection)
+            await dbfunc(conn, "update_collection", col)
+
+        col["links"] = await CollectionLinks(
+            collection_id=col["id"], request=request
+        ).get_links(extra_links=col.get("links"))
+
+        return stac_types.Collection(**col)
 
     async def delete_item(
-        self, item_id: str, collection_id: str, request: Request, **kwargs
+        self,
+        item_id: str,
+        collection_id: str,
+        request: Request,
+        **kwargs,
     ) -> Optional[Union[stac_types.Item, Response]]:
         """Delete item."""
         q, p = render(
@@ -166,6 +191,7 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
         )
         async with request.app.state.get_connection(request, "w") as conn:
             await conn.fetchval(q, *p)
+
         return JSONResponse({"deleted item": item_id})
 
     async def delete_collection(
@@ -174,6 +200,7 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
         """Delete collection."""
         async with request.app.state.get_connection(request, "w") as conn:
             await dbfunc(conn, "delete_collection", collection_id)
+
         return JSONResponse({"deleted collection": collection_id})
 
 
@@ -181,10 +208,10 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
 class BulkTransactionsClient(AsyncBaseBulkTransactionsClient, ClientValidateMixIn):
     """Postgres bulk transactions."""
 
-    async def bulk_item_insert(
-        self, collection_id: str, items: Items, request: Request, **kwargs
-    ) -> str:
+    async def bulk_item_insert(self, items: Items, request: Request, **kwargs) -> str:
         """Bulk item insertion using pgstac."""
+        collection_id = request.path_params["collection_id"]
+
         for item_id, item in items.items.items():
             self._validate_item(request, item, collection_id, item_id)
             item["collection"] = collection_id

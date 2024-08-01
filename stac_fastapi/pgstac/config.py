@@ -1,9 +1,10 @@
 """Postgres API configuration."""
 
 from typing import List, Type
-from urllib.parse import quote
+from urllib.parse import quote_plus as quote
 
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel
+from pydantic_settings import SettingsConfigDict
 from stac_fastapi.types.config import ApiSettings
 
 from stac_fastapi.pgstac.types.base_item_cache import (
@@ -33,11 +34,13 @@ DEFAULT_INVALID_ID_CHARS = [
 ]
 
 
-class ServerSettings(BaseModel, extra=Extra.allow):
+class ServerSettings(BaseModel):
     """Server runtime parameters."""
 
     search_path: str = "pgstac,public"
     application_name: str = "pgstac"
+
+    model_config = SettingsConfigDict(extra="allow")
 
 
 class Settings(ApiSettings):
@@ -58,7 +61,7 @@ class Settings(ApiSettings):
     postgres_pass: str
     postgres_host_reader: str
     postgres_host_writer: str
-    postgres_port: str
+    postgres_port: int
     postgres_dbname: str
 
     db_min_conn_size: int = 10
@@ -89,7 +92,6 @@ class Settings(ApiSettings):
         """Create testing psql connection string."""
         return f"postgresql://{self.postgres_user}:{quote(self.postgres_pass)}@{self.postgres_host_writer}:{self.postgres_port}/pgstactestdb"
 
-    class Config(ApiSettings.Config):
-        """Model config."""
-
-        env_nested_delimiter = "__"
+    model_config = SettingsConfigDict(
+        **{**ApiSettings.model_config, **{"env_nested_delimiter": "__"}}
+    )

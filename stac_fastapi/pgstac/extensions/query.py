@@ -34,7 +34,7 @@ class Operator(str, AutoValueEnum):
 class QueryExtensionPostRequest(BaseModel):
     """Query Extension POST request model."""
 
-    query: Optional[Dict[str, Dict[Operator, Any]]]
+    query: Optional[Dict[str, Dict[Operator, Any]]] = None
 
 
 class QueryExtension(QueryExtensionBase):

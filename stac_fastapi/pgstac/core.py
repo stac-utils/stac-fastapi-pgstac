@@ -1,7 +1,7 @@
 """Item crud client."""
 
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Set, Union
 from urllib.parse import unquote_plus, urljoin
 
 import attr
@@ -13,6 +13,7 @@ from pydantic import ValidationError
 from pygeofilter.backends.cql2_json import to_cql2
 from pygeofilter.parsers.cql2_text import parse as parse_cql2_text
 from pypgstac.hydration import hydrate
+from stac_fastapi.api.models import JSONResponse
 from stac_fastapi.types.core import AsyncBaseCoreClient
 from stac_fastapi.types.errors import InvalidQueryParameter, NotFoundError
 from stac_fastapi.types.requests import get_base_url
@@ -55,6 +56,18 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 coll["links"] = await CollectionLinks(
                     collection_id=coll["id"], request=request
                 ).get_links(extra_links=coll.get("links"))
+
+                if self.extension_is_enabled("FilterExtension"):
+                    coll["links"].append(
+                        {
+                            "rel": Relations.queryables.value,
+                            "type": MimeTypes.jsonschema.value,
+                            "title": "Queryables",
+                            "href": urljoin(
+                                base_url, f"collections/{coll['id']}/queryables"
+                            ),
+                        }
+                    )
 
                 linked_collections.append(coll)
 
@@ -107,6 +120,17 @@ class CoreCrudClient(AsyncBaseCoreClient):
         collection["links"] = await CollectionLinks(
             collection_id=collection_id, request=request
         ).get_links(extra_links=collection.get("links"))
+
+        if self.extension_is_enabled("FilterExtension"):
+            base_url = get_base_url(request)
+            collection["links"].append(
+                {
+                    "rel": Relations.queryables.value,
+                    "type": MimeTypes.jsonschema.value,
+                    "title": "Queryables",
+                    "href": urljoin(base_url, f"collections/{collection_id}/queryables"),
+                }
+            )
 
         return Collection(**collection)
 
@@ -162,7 +186,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
         search_request.conf = search_request.conf or {}
         search_request.conf["nohydrate"] = settings.use_api_hydrate
 
-        search_request_json = search_request.json(exclude_none=True, by_alias=True)
+        search_request_json = search_request.model_dump_json(
+            exclude_none=True, by_alias=True
+        )
 
         try:
             async with request.app.state.get_connection(request, "r") as conn:
@@ -182,12 +208,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
         prev: Optional[str] = items.pop("prev", None)
         collection = ItemCollection(**items)
 
-        exclude = search_request.fields.exclude
-        if exclude and len(exclude) == 0:
-            exclude = None
-        include = search_request.fields.include
-        if include and len(include) == 0:
-            include = None
+        fields = getattr(search_request, "fields", None)
+        include: Set[str] = fields.include if fields and fields.include else set()
+        exclude: Set[str] = fields.exclude if fields and fields.exclude else set()
 
         async def _add_item_links(
             feature: Item,
@@ -202,11 +225,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             collection_id = feature.get("collection") or collection_id
             item_id = feature.get("id") or item_id
 
-            if (
-                search_request.fields.exclude is None
-                or "links" not in search_request.fields.exclude
-                and all([collection_id, item_id])
-            ):
+            if not exclude or "links" not in exclude and all([collection_id, item_id]):
                 feature["links"] = await ItemLinks(
                     collection_id=collection_id,  # type: ignore
                     item_id=item_id,  # type: ignore
@@ -250,6 +269,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             next=next,
             prev=prev,
         ).get_links()
+
         return collection
 
     async def item_collection(
@@ -277,6 +297,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
         # If collection does not exist, NotFoundError wil be raised
         await self.get_collection(collection_id, request=request)
 
+        if datetime:
+            datetime = format_datetime_range(datetime)
+
         base_args = {
             "collections": [collection_id],
             "bbox": bbox,
@@ -285,19 +308,27 @@ class CoreCrudClient(AsyncBaseCoreClient):
             "token": token,
         }
 
+        if self.extension_is_enabled("FilterExtension"):
+            filter_lang = kwargs.get("filter_lang", None)
+            filter = kwargs.get("filter", None)
+            if filter is not None and filter_lang == "cql2-text":
+                ast = parse_cql2_text(filter.strip())
+                base_args["filter"] = orjson.loads(to_cql2(ast))
+                base_args["filter-lang"] = "cql2-json"
+
         clean = {}
         for k, v in base_args.items():
             if v is not None and v != []:
                 clean[k] = v
 
-        search_request = self.post_request_model(
-            **clean,
-        )
+        search_request = self.post_request_model(**clean)
         item_collection = await self._search_base(search_request, request=request)
+
         links = await ItemCollectionLinks(
             collection_id=collection_id, request=request
         ).get_links(extra_links=item_collection["links"])
         item_collection["links"] = links
+
         return item_collection
 
     async def get_item(
@@ -342,6 +373,14 @@ class CoreCrudClient(AsyncBaseCoreClient):
             ItemCollection containing items which match the search criteria.
         """
         item_collection = await self._search_base(search_request, request=request)
+
+        # If we have the `fields` extension enabled
+        # we need to avoid Pydantic validation because the
+        # Items might not be a valid STAC Item objects
+        if fields := getattr(search_request, "fields", None):
+            if fields.include or fields.exclude:
+                return JSONResponse(item_collection)  # type: ignore
+
         return ItemCollection(**item_collection)
 
     async def get_search(  # noqa: C901
@@ -350,15 +389,16 @@ class CoreCrudClient(AsyncBaseCoreClient):
         collections: Optional[List[str]] = None,
         ids: Optional[List[str]] = None,
         bbox: Optional[BBox] = None,
+        intersects: Optional[str] = None,
         datetime: Optional[DateTimeType] = None,
         limit: Optional[int] = None,
+        # Extensions
         query: Optional[str] = None,
         token: Optional[str] = None,
         fields: Optional[List[str]] = None,
         sortby: Optional[str] = None,
         filter: Optional[str] = None,
         filter_lang: Optional[str] = None,
-        intersects: Optional[str] = None,
         **kwargs,
     ) -> ItemCollection:
         """Cross catalog search (GET).
@@ -368,14 +408,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
         Returns:
             ItemCollection containing items which match the search criteria.
         """
-        query_params = str(request.query_params)
-
-        # Kludgy fix because using factory does not allow alias for filter-lang
-        if filter_lang is None:
-            match = re.search(r"filter-lang=([a-z0-9-]+)", query_params, re.IGNORECASE)
-            if match:
-                filter_lang = match.group(1)
-
         # Parse request parameters
         base_args = {
             "collections": collections,
@@ -393,7 +425,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 base_args["filter-lang"] = "cql2-json"
 
         if datetime:
-            base_args["datetime"] = datetime
+            base_args["datetime"] = format_datetime_range(datetime)
 
         if intersects:
             base_args["intersects"] = orjson.loads(unquote_plus(intersects))

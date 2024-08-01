@@ -116,7 +116,7 @@ def dict_deep_update(merge_to: Dict[str, Any], merge_from: Dict[str, Any]) -> No
             merge_to[k] = v
 
 
-def format_datetime_range(dt_range: DateTimeType) -> Union[str, Any]:
+def format_datetime_range(dt_range: Union[DateTimeType, str]) -> str:
     """
     Convert a datetime object or a tuple of datetime objects to a formatted string for datetime ranges.
 
@@ -132,7 +132,7 @@ def format_datetime_range(dt_range: DateTimeType) -> Union[str, Any]:
         return dt_range.isoformat().replace("+00:00", "Z")
 
     # Handle a tuple containing datetime objects or None
-    if isinstance(dt_range, tuple):
+    elif isinstance(dt_range, tuple):
         start, end = dt_range
 
         # Convert start datetime to string if not None, otherwise use ".."

@@ -4,20 +4,25 @@ import logging
 import os
 import time
 from typing import Callable, Dict
+from urllib.parse import quote_plus as quote
 from urllib.parse import urljoin
 
 import asyncpg
 import pytest
 from fastapi import APIRouter
 from fastapi.responses import ORJSONResponse
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from pypgstac.db import PgstacDB
 from pypgstac.migrate import Migrate
 from pytest_postgresql.janitor import DatabaseJanitor
 from stac_fastapi.api.app import StacApi
-from stac_fastapi.api.models import create_get_request_model, create_post_request_model
+from stac_fastapi.api.models import (
+    ItemCollectionUri,
+    create_get_request_model,
+    create_post_request_model,
+    create_request_model,
+)
 from stac_fastapi.extensions.core import (
-    ContextExtension,
     FieldsExtension,
     FilterExtension,
     SortExtension,
@@ -54,11 +59,9 @@ def database(postgresql_proc):
         port=postgresql_proc.port,
         dbname="pgstactestdb",
         version=postgresql_proc.version,
-        password="secret",
+        password="a2Vw:yk=)CdSis[fek]tW=/o",
     ) as jan:
-        connection = (
-            f"postgresql://{jan.user}:{jan.password}@{jan.host}:{jan.port}/{jan.dbname}"
-        )
+        connection = f"postgresql://{jan.user}:{quote(jan.password)}@{jan.host}:{jan.port}/{jan.dbname}"
         with PgstacDB(dsn=connection) as db:
             migrator = Migrate(db)
             version = migrator.run_migration()
@@ -69,7 +72,7 @@ def database(postgresql_proc):
 
 @pytest.fixture(autouse=True)
 async def pgstac(database):
-    connection = f"postgresql://{database.user}:{database.password}@{database.host}:{database.port}/{database.dbname}"
+    connection = f"postgresql://{database.user}:{quote(database.password)}@{database.host}:{database.port}/{database.dbname}"
     yield
     conn = await asyncpg.connect(dsn=connection)
     await conn.execute(
@@ -88,17 +91,18 @@ async def pgstac(database):
 # Run all the tests that use the api_client in both db hydrate and api hydrate mode
 @pytest.fixture(
     params=[
-        # hydratation, prefix
-        (False, ""),
-        (False, "/router_prefix"),
-        (True, ""),
-        (True, "/router_prefix"),
+        # hydratation, prefix, model_validation
+        (False, "", False),
+        (False, "/router_prefix", False),
+        (True, "", False),
+        (True, "/router_prefix", False),
+        (False, "", True),
+        (True, "", True),
     ],
     scope="session",
 )
 def api_client(request, database):
-    hydrate, prefix = request.param
-
+    hydrate, prefix, response_model = request.param
     api_settings = Settings(
         postgres_user=database.user,
         postgres_pass=database.password,
@@ -107,6 +111,7 @@ def api_client(request, database):
         postgres_port=database.port,
         postgres_dbname=database.dbname,
         use_api_hydrate=hydrate,
+        enable_response_models=response_model,
         testing=True,
     )
 
@@ -125,18 +130,30 @@ def api_client(request, database):
         SortExtension(),
         FieldsExtension(),
         TokenPaginationExtension(),
-        ContextExtension(),
         FilterExtension(client=FiltersClient()),
         BulkTransactionExtension(client=BulkTransactionsClient()),
     ]
 
-    post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
+    items_get_request_model = create_request_model(
+        model_name="ItemCollectionUri",
+        base_model=ItemCollectionUri,
+        mixins=[
+            TokenPaginationExtension().GET,
+            FilterExtension(client=FiltersClient()).GET,
+        ],
+        request_type="GET",
+    )
+    search_get_request_model = create_get_request_model(extensions)
+    search_post_request_model = create_post_request_model(
+        extensions, base_model=PgstacSearch
+    )
     api = StacApi(
         settings=api_settings,
         extensions=extensions,
-        client=CoreCrudClient(post_request_model=post_request_model),
-        search_get_request_model=create_get_request_model(extensions),
-        search_post_request_model=post_request_model,
+        client=CoreCrudClient(post_request_model=search_post_request_model),
+        items_get_request_model=items_get_request_model,
+        search_get_request_model=search_get_request_model,
+        search_post_request_model=search_post_request_model,
         response_class=ORJSONResponse,
         router=APIRouter(prefix=prefix),
     )
@@ -166,7 +183,7 @@ async def app_client(app):
     if app.state.router_prefix != "":
         base_url = urljoin(base_url, app.state.router_prefix)
 
-    async with AsyncClient(app=app, base_url=base_url) as c:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url=base_url) as c:
         yield c
 
 
@@ -186,8 +203,10 @@ async def load_test_collection(app_client, load_test_data):
         "/collections",
         json=data,
     )
-    assert resp.status_code == 200
-    return Collection.parse_obj(resp.json())
+    assert resp.status_code == 201
+    collection = Collection.model_validate(resp.json())
+
+    return collection.model_dump(mode="json")
 
 
 @pytest.fixture
@@ -195,12 +214,13 @@ async def load_test_item(app_client, load_test_data, load_test_collection):
     coll = load_test_collection
     data = load_test_data("test_item.json")
     resp = await app_client.post(
-        f"/collections/{coll.id}/items",
+        f"/collections/{coll['id']}/items",
         json=data,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
-    return Item.parse_obj(resp.json())
+    item = Item.model_validate(resp.json())
+    return item.model_dump(mode="json")
 
 
 @pytest.fixture
@@ -210,8 +230,8 @@ async def load_test2_collection(app_client, load_test_data):
         "/collections",
         json=data,
     )
-    assert resp.status_code == 200
-    return Collection.parse_obj(resp.json())
+    assert resp.status_code == 201
+    return Collection.model_validate(resp.json())
 
 
 @pytest.fixture
@@ -222,5 +242,5 @@ async def load_test2_item(app_client, load_test_data, load_test2_collection):
         f"/collections/{coll.id}/items",
         json=data,
     )
-    assert resp.status_code == 200
-    return Item.parse_obj(resp.json())
+    assert resp.status_code == 201
+    return Item.model_validate(resp.json())
