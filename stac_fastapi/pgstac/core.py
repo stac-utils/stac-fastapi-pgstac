@@ -310,10 +310,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         if self.extension_is_enabled("FilterExtension"):
             filter_lang = kwargs.get("filter_lang", None)
-            filter = kwargs.get("filter", "").strip()
-
-            if len(filter) > 0 and filter_lang == "cql2-text":
-                ast = parse_cql2_text(filter)
+            filter = kwargs.get("filter", None)
+            if filter is not None and filter_lang == "cql2-text":
+                ast = parse_cql2_text(filter.strip())
                 base_args["filter"] = orjson.loads(to_cql2(ast))
                 base_args["filter-lang"] = "cql2-json"
 
