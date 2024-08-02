@@ -10,12 +10,14 @@ import os
 from fastapi.responses import ORJSONResponse
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.models import (
+    EmptyRequest,
     ItemCollectionUri,
     create_get_request_model,
     create_post_request_model,
     create_request_model,
 )
 from stac_fastapi.extensions.core import (
+    CollectionSearchExtension,
     FieldsExtension,
     FilterExtension,
     SortExtension,
@@ -47,12 +49,26 @@ extensions_map = {
     "bulk_transactions": BulkTransactionExtension(client=BulkTransactionsClient()),
 }
 
+collections_extensions_map = {
+    "collection_search": CollectionSearchExtension(),
+}
+
 if enabled_extensions := os.getenv("ENABLED_EXTENSIONS"):
+    _enabled_extensions = enabled_extensions.split(",")
     extensions = [
-        extensions_map[extension_name] for extension_name in enabled_extensions.split(",")
+        extension
+        for key, extension in extensions_map.items()
+        if key in _enabled_extensions
+    ]
+    collection_extensions = [
+        extension
+        for key, extension in collections_extensions_map.items()
+        if key in _enabled_extensions
     ]
 else:
     extensions = list(extensions_map.values())
+    collection_extensions = list(collections_extensions_map.values())
+
 
 if any(isinstance(ext, TokenPaginationExtension) for ext in extensions):
     items_get_request_model = create_request_model(
@@ -64,12 +80,19 @@ if any(isinstance(ext, TokenPaginationExtension) for ext in extensions):
 else:
     items_get_request_model = ItemCollectionUri
 
-post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
-get_request_model = create_get_request_model(extensions)
+if any(isinstance(ext, CollectionSearchExtension) for ext in collection_extensions):
+    collections_get_request_model = CollectionSearchExtension().GET
+else:
+    collections_get_request_model = EmptyRequest
+
+post_request_model = create_post_request_model(
+    extensions + collection_extensions, base_model=PgstacSearch
+)
+get_request_model = create_get_request_model(extensions + collection_extensions)
 
 api = StacApi(
     settings=settings,
-    extensions=extensions,
+    extensions=extensions + collection_extensions,
     client=CoreCrudClient(post_request_model=post_request_model),  # type: ignore
     response_class=ORJSONResponse,
     items_get_request_model=items_get_request_model,
