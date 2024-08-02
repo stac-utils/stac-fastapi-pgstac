@@ -1,5 +1,7 @@
 # Changelog
 
+## [Unreleased]
+
 ## [3.0.0] - 2024-08-02
 
 - Enable filter extension for `GET /items` requests and add `Queryables` links in `/collections` and `/collections/{collection_id}` responses ([#89](https://github.com/stac-utils/stac-fastapi-pgstac/pull/89))
