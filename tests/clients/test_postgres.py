@@ -407,6 +407,96 @@ async def test_create_bulk_items_already_exist_upsert(
     assert resp.text == '"Successfully upserted 2 items."'
 
 
+async def test_create_bulk_items_omit_collection(
+    app_client, load_test_data: Callable, load_test_collection
+):
+    coll = load_test_collection
+    item = load_test_data("test_item.json")
+
+    items = {}
+    for _ in range(2):
+        _item = deepcopy(item)
+        _item["id"] = str(uuid.uuid4())
+        # remove collection ID here
+        del _item["collection"]
+        items[_item["id"]] = _item
+
+    payload = {"items": items, "method": "insert"}
+
+    resp = await app_client.post(
+        f"/collections/{coll['id']}/bulk_items",
+        json=payload,
+    )
+    assert resp.status_code == 200
+    assert resp.text == '"Successfully added 2 items."'
+
+    for item_id in items.keys():
+        resp = await app_client.get(f"/collections/{coll['id']}/items/{item_id}")
+        assert resp.status_code == 200
+
+    # Try creating the same items again, but using upsert.
+    # This should succeed.
+    payload["method"] = "upsert"
+    resp = await app_client.post(
+        f"/collections/{coll['id']}/bulk_items",
+        json=payload,
+    )
+    assert resp.status_code == 200
+    assert resp.text == '"Successfully upserted 2 items."'
+
+
+async def test_create_bulk_items_collection_mismatch(
+    app_client, load_test_data: Callable, load_test_collection
+):
+    coll = load_test_collection
+    item = load_test_data("test_item.json")
+
+    items = {}
+    for _ in range(2):
+        _item = deepcopy(item)
+        _item["id"] = str(uuid.uuid4())
+        _item["collection"] = "wrong-collection"
+        items[_item["id"]] = _item
+
+    payload = {"items": items, "method": "insert"}
+
+    resp = await app_client.post(
+        f"/collections/{coll['id']}/bulk_items",
+        json=payload,
+    )
+    assert resp.status_code == 400
+    assert (
+        resp.json()["detail"]
+        == "Collection ID from path parameter (test-collection) does not match Collection ID from Item (wrong-collection)"
+    )
+
+
+async def test_create_bulk_items_id_mismatch(
+    app_client, load_test_data: Callable, load_test_collection
+):
+    coll = load_test_collection
+    item = load_test_data("test_item.json")
+
+    items = {}
+    for _ in range(2):
+        _item = deepcopy(item)
+        _item["id"] = str(uuid.uuid4())
+        _item["collection"] = "wrong-collection"
+        items[_item["id"] + "wrong"] = _item
+
+    payload = {"items": items, "method": "insert"}
+
+    resp = await app_client.post(
+        f"/collections/{coll['id']}/bulk_items",
+        json=payload,
+    )
+    assert resp.status_code == 400
+    assert (
+        resp.json()["detail"]
+        == "Collection ID from path parameter (test-collection) does not match Collection ID from Item (wrong-collection)"
+    )
+
+
 # TODO since right now puts implement upsert
 # test_create_collection_already_exists
 # test create_item_already_exists
