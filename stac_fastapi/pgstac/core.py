@@ -2,7 +2,7 @@
 
 import re
 from typing import Any, Dict, List, Optional, Set, Union
-from urllib.parse import unquote_plus
+from urllib.parse import unquote_plus, urljoin
 
 import attr
 import orjson
@@ -17,11 +17,12 @@ from stac_fastapi.api.models import JSONResponse
 from stac_fastapi.extensions.core.collection_search.request import (
     BaseCollectionSearchPostRequest,
 )
-from stac_fastapi.types.core import AsyncBaseCoreClient
+from stac_fastapi.types.core import AsyncBaseCoreClient, Relations
 from stac_fastapi.types.errors import InvalidQueryParameter, NotFoundError
+from stac_fastapi.types.requests import get_base_url
 from stac_fastapi.types.rfc3339 import DateTimeType
 from stac_fastapi.types.stac import Collection, Collections, Item, ItemCollection
-from stac_pydantic.shared import BBox
+from stac_pydantic.shared import BBox, MimeTypes
 
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.models.links import (
@@ -111,7 +112,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         Returns:
             All collections which match the search criteria.
         """
-
+        base_url = get_base_url(request)
         search_request_json = search_request.model_dump_json(
             exclude_none=True, by_alias=True
         )
