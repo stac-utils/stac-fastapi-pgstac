@@ -2,7 +2,7 @@
 
 import re
 from typing import Any, Dict, List, Optional, Set, Union
-from urllib.parse import unquote_plus, urljoin
+from urllib.parse import unquote_plus
 
 import attr
 import orjson
@@ -14,13 +14,14 @@ from pygeofilter.backends.cql2_json import to_cql2
 from pygeofilter.parsers.cql2_text import parse as parse_cql2_text
 from pypgstac.hydration import hydrate
 from stac_fastapi.api.models import JSONResponse
+from stac_fastapi.extensions.core.collection_search.request import (
+    BaseCollectionSearchPostRequest,
+)
 from stac_fastapi.types.core import AsyncBaseCoreClient
 from stac_fastapi.types.errors import InvalidQueryParameter, NotFoundError
-from stac_fastapi.types.requests import get_base_url
 from stac_fastapi.types.rfc3339 import DateTimeType
 from stac_fastapi.types.stac import Collection, Collections, Item, ItemCollection
-from stac_pydantic.links import Relations
-from stac_pydantic.shared import BBox, MimeTypes
+from stac_pydantic.shared import BBox
 
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.models.links import (
@@ -39,13 +40,17 @@ NumType = Union[float, int]
 class CoreCrudClient(AsyncBaseCoreClient):
     """Client for core endpoints defined by stac."""
 
+    collections_post_request_model: BaseCollectionSearchPostRequest = attr.ib(
+        default=BaseCollectionSearchPostRequest
+    )
+
     async def all_collections(  # noqa: C901
         self,
         request: Request,
+        # Extensions
         bbox: Optional[BBox] = None,
         datetime: Optional[DateTimeType] = None,
         limit: Optional[int] = None,
-        # Extensions
         query: Optional[str] = None,
         token: Optional[str] = None,
         fields: Optional[List[str]] = None,
@@ -62,13 +67,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
             Collections which match the search criteria, returns all
             collections by default.
         """
-        query_params = str(request.query_params)
-
-        # Kludgy fix because using factory does not allow alias for filter-lang
-        if filter_lang is None:
-            match = re.search(r"filter-lang=([a-z0-9-]+)", query_params, re.IGNORECASE)
-            if match:
-                filter_lang = match.group(1)
 
         # Parse request parameters
         base_args = {
@@ -89,7 +87,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         # Do the request
         try:
-            search_request = self.post_request_model(**clean)
+            search_request = self.collections_post_request_model(**clean)
+            # search_request = self.post_request_model(**clean)
         except ValidationError as e:
             raise HTTPException(
                 status_code=400, detail=f"Invalid parameters provided {e}"
@@ -102,9 +101,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
         search_request: PgstacSearch,
         request: Request,
     ) -> Collections:
-        """Cross catalog search (POST).
+        """Cross catalog search (GET).
 
-        Called with `POST /search`.
+        Called with `GET /search`.
 
         Args:
             search_request: search request parameters.
@@ -112,16 +111,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
         Returns:
             All collections which match the search criteria.
         """
-
-        base_url = get_base_url(request)
-
-        settings: Settings = request.app.state.settings
-
-        if search_request.datetime:
-            search_request.datetime = format_datetime_range(search_request.datetime)
-
-        search_request.conf = search_request.conf or {}
-        search_request.conf["nohydrate"] = settings.use_api_hydrate
 
         search_request_json = search_request.model_dump_json(
             exclude_none=True, by_alias=True
@@ -141,8 +130,12 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 f"Datetime parameter {search_request.datetime} is invalid."
             ) from e
 
-        # next: Optional[str] = collections_result["links"].pop("next")
-        # prev: Optional[str] = collections_result["links"].pop("prev")
+        next: Optional[str] = None
+        prev: Optional[str] = None
+
+        if links := collections_result.get("links"):
+            next = collections_result["links"].pop("next")
+            prev = collections_result["links"].pop("prev")
 
         linked_collections: List[Collection] = []
         collections = collections_result["collections"]
@@ -167,32 +160,15 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
                 linked_collections.append(coll)
 
-        # paging_links = await PagingLinks(
-        #     request=request,
-        #     next=next,
-        #     prev=prev,
-        # ).get_links()
+        links = await PagingLinks(
+            request=request,
+            next=next,
+            prev=prev,
+        ).get_links()
 
-        links = [
-            {
-                "rel": Relations.root.value,
-                "type": MimeTypes.json,
-                "href": base_url,
-            },
-            {
-                "rel": Relations.parent.value,
-                "type": MimeTypes.json,
-                "href": base_url,
-            },
-            {
-                "rel": Relations.self.value,
-                "type": MimeTypes.json,
-                "href": urljoin(base_url, "collections"),
-            },
-        ]
         return Collections(
             collections=linked_collections or [],
-            links=links,  # + paging_links
+            links=links,
         )
 
     async def get_collection(
