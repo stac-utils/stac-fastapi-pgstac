@@ -19,6 +19,15 @@ It validates requests and data sent to a [PgSTAC](https://github.com/stac-utils/
 All other processing and search is provided directly using PgSTAC procedural sql / plpgsql functions on the database.
 PgSTAC stores all collection and item records as jsonb fields exactly as they come in allowing for any custom fields to be stored and retrieved transparently.
 
+## `PgSTAC` version
+
+`stac-fastapi-pgstac` depends on [`pgstac`](https://stac-utils.github.io/pgstac/pgstac/) database schema and [`pypgstac`](https://stac-utils.github.io/pgstac/pypgstac/) python package.
+
+| stac-fastapi-pgstac Version  |     pgstac |
+|                            --|          --|
+|                          2.5 | >=0.7,<0.8 |
+|                          3.0 | >=0.8,<0.9 |
+
 ## Usage
 
 PgSTAC is an external project and may be used by multiple front ends.
