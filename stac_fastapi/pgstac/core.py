@@ -513,14 +513,14 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
 
 def clean_search_args(  # noqa: C901
-    base_args: dict[str, Any],
+    base_args: Dict[str, Any],
     intersects: Optional[str] = None,
     datetime: Optional[DateTimeType] = None,
     fields: Optional[List[str]] = None,
     sortby: Optional[str] = None,
     filter: Optional[str] = None,
     filter_lang: Optional[str] = None,
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """Clean up search arguments to match format expected by pgstac"""
     if filter:
         if filter_lang == "cql2-text":
