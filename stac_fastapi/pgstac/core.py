@@ -14,9 +14,6 @@ from pygeofilter.backends.cql2_json import to_cql2
 from pygeofilter.parsers.cql2_text import parse as parse_cql2_text
 from pypgstac.hydration import hydrate
 from stac_fastapi.api.models import JSONResponse
-from stac_fastapi.extensions.core.collection_search.request import (
-    BaseCollectionSearchPostRequest,
-)
 from stac_fastapi.types.core import AsyncBaseCoreClient, Relations
 from stac_fastapi.types.errors import InvalidQueryParameter, NotFoundError
 from stac_fastapi.types.requests import get_base_url
@@ -40,10 +37,6 @@ NumType = Union[float, int]
 @attr.s
 class CoreCrudClient(AsyncBaseCoreClient):
     """Client for core endpoints defined by stac."""
-
-    collections_post_request_model: BaseCollectionSearchPostRequest = attr.ib(
-        default=BaseCollectionSearchPostRequest
-    )
 
     async def all_collections(  # noqa: C901
         self,
@@ -88,8 +81,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         # Do the request
         try:
-            search_request = self.collections_post_request_model(**clean)
-            # search_request = self.post_request_model(**clean)
+            search_request = self.post_request_model(**clean)
         except ValidationError as e:
             raise HTTPException(
                 status_code=400, detail=f"Invalid parameters provided {e}"

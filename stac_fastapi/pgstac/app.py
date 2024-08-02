@@ -85,7 +85,9 @@ if any(isinstance(ext, CollectionSearchExtension) for ext in collection_extensio
 else:
     collections_get_request_model = EmptyRequest
 
-post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
+post_request_model = create_post_request_model(
+    extensions + collection_extensions, base_model=PgstacSearch
+)
 get_request_model = create_get_request_model(extensions + collection_extensions)
 
 api = StacApi(
@@ -96,7 +98,6 @@ api = StacApi(
     items_get_request_model=items_get_request_model,
     search_get_request_model=get_request_model,
     search_post_request_model=post_request_model,
-    collections_get_request_model=collections_get_request_model,
 )
 app = api.app
 
