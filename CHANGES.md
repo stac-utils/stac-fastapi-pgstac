@@ -4,7 +4,8 @@
 
 - Enable filter extension for `GET /items` requests and add `Queryables` links in `/collections` and `/collections/{collection_id}` responses ([#89](https://github.com/stac-utils/stac-fastapi-pgstac/pull/89))
 - Allow to omit `collection` in bulk item insertions. Same identifier checks as with single insertions ([#113](https://github.com/stac-utils/stac-fastapi-pgstac/pull/113))
-
+- Docker compose file fixed so example data can be loaded into database. 
+- 
 ## [3.0.0a4] - 2024-07-10
 
 - Update stac-fastapi libraries to `~=3.0.0b2`

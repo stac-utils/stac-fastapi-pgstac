@@ -65,15 +65,12 @@ services:
     volumes:
       - ./stac_fastapi:/app/stac_fastapi
       - ./scripts:/app/scripts
-    command:
-      - "./scripts/wait-for-it.sh"
-      - "-t"
-      - "60"
-      - "app:8082"
-      - "--"
-      - "python"
-      - "/app/scripts/ingest_joplin.py"
-      - "http://app:8082"
+    command: >
+      /bin/sh -c "
+        ./scripts/wait-for-it.sh -t 60 app:8082 && 
+        python -m pip install requests && 
+        python /app/scripts/ingest_joplin.py http://app:8082
+        "
     depends_on:
       - database
       - app
