@@ -1,4 +1,5 @@
 """Item crud client."""
+import logging
 
 import re
 from typing import Any, Dict, List, Optional, Set, Union
@@ -204,8 +205,17 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 f"Datetime parameter {search_request.datetime} is invalid."
             ) from e
 
-        next: Optional[str] = items.pop("next", None)
-        prev: Optional[str] = items.pop("prev", None)
+        # Starting in pgstac 0.9.0, the `next` and `prev` tokens are returned in spec-compliant links with method GET
+        next_from_link: Optional[str] = None
+        prev_from_link: Optional[str] = None
+        for link in items.get("links", []):
+            if link.get("rel") == "next":
+                next_from_link = link.get("href").split("token=next:")[1]
+            if link.get("rel") == "prev":
+                prev_from_link = link.get("href").split("token=prev:")[1]
+
+        next: Optional[str] = items.pop("next", next_from_link)
+        prev: Optional[str] = items.pop("prev", prev_from_link)
         collection = ItemCollection(**items)
 
         fields = getattr(search_request, "fields", None)
