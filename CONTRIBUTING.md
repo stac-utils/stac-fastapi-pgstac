@@ -16,6 +16,12 @@ This repo is set to use `pre-commit` to run *isort*, *flake8*, *pydocstring*, *b
 pre-commit install
 ```
 
+To run the service on 0.0.0.0:8082 and ingest example data into the database (the "joplin" collection):
+
+```shell
+make run-joplin
+```
+
 ## Docs
 
 ```bash
