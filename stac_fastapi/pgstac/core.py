@@ -1,5 +1,4 @@
 """Item crud client."""
-import logging
 
 import re
 from typing import Any, Dict, List, Optional, Set, Union
