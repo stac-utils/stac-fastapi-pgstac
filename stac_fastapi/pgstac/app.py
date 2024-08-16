@@ -81,7 +81,9 @@ else:
     items_get_request_model = ItemCollectionUri
 
 if any(isinstance(ext, CollectionSearchExtension) for ext in collection_extensions):
-    collections_get_request_model = CollectionSearchExtension().GET
+    collections_get_request_model = create_get_request_model(
+        extensions + collection_extensions
+    )
 else:
     collections_get_request_model = EmptyRequest
 
@@ -98,6 +100,7 @@ api = StacApi(
     items_get_request_model=items_get_request_model,
     search_get_request_model=get_request_model,
     search_post_request_model=post_request_model,
+    collections_get_request_model=collections_get_request_model,
 )
 app = api.app
 
