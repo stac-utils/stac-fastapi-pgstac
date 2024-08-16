@@ -23,6 +23,7 @@ from stac_fastapi.api.models import (
     create_request_model,
 )
 from stac_fastapi.extensions.core import (
+    CollectionSearchExtension,
     FieldsExtension,
     FilterExtension,
     SortExtension,
@@ -133,6 +134,7 @@ def api_client(request, database):
         FilterExtension(client=FiltersClient()),
         BulkTransactionExtension(client=BulkTransactionsClient()),
     ]
+    collection_extensions = [CollectionSearchExtension()]
 
     items_get_request_model = create_request_model(
         model_name="ItemCollectionUri",
@@ -149,11 +151,12 @@ def api_client(request, database):
     )
     api = StacApi(
         settings=api_settings,
-        extensions=extensions,
+        extensions=extensions + collection_extensions,
         client=CoreCrudClient(post_request_model=search_post_request_model),
         items_get_request_model=items_get_request_model,
         search_get_request_model=search_get_request_model,
         search_post_request_model=search_post_request_model,
+        collections_get_request_model=CollectionSearchExtension().GET,
         response_class=ORJSONResponse,
         router=APIRouter(prefix=prefix),
     )

@@ -2,7 +2,8 @@
 
 ## [Unreleased]
 
-- Fix Docker compose file, so example data can be loaded into database (author @zstatmanweil, https://github.com/stac-utils/stac-fastapi-pgstac/pull/142)
+- Fix Docker compose file, so example data can be loaded into database (author @zstatmanweil, <https://github.com/stac-utils/stac-fastapi-pgstac/pull/142>)
+- Add collection search extension
 
 - Fix `filter` extension implementation in `CoreCrudClient`
 
