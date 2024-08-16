@@ -149,6 +149,11 @@ def api_client(request, database):
     search_post_request_model = create_post_request_model(
         extensions, base_model=PgstacSearch
     )
+
+    collections_get_request_model = create_get_request_model(
+        extensions + collection_extensions
+    )
+
     api = StacApi(
         settings=api_settings,
         extensions=extensions + collection_extensions,
@@ -156,7 +161,7 @@ def api_client(request, database):
         items_get_request_model=items_get_request_model,
         search_get_request_model=search_get_request_model,
         search_post_request_model=search_post_request_model,
-        collections_get_request_model=CollectionSearchExtension().GET,
+        collections_get_request_model=collections_get_request_model,
         response_class=ORJSONResponse,
         router=APIRouter(prefix=prefix),
     )

@@ -528,6 +528,22 @@ async def test_get_collections_search(
     )
     assert len(resp.json()["collections"]) == 2
 
+    # this search should return test collection 1 first
+    resp = await app_client.get(
+        "/collections",
+        params={"sortby": "title"},
+    )
+    assert resp.json()["collections"][0]["id"] == load_test_collection["id"]
+    assert resp.json()["collections"][1]["id"] == load_test2_collection.id
+
+    # this search should return test collection 2 first
+    resp = await app_client.get(
+        "/collections",
+        params={"sortby": "-title"},
+    )
+    assert resp.json()["collections"][1]["id"] == load_test_collection["id"]
+    assert resp.json()["collections"][0]["id"] == load_test2_collection.id
+
 
 @pytest.mark.asyncio
 async def test_item_collection_filter_bbox(
