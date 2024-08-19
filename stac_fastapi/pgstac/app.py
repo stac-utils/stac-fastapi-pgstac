@@ -94,7 +94,7 @@ else:
     collections_get_request_model = EmptyRequest
 
 post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
-get_request_model = create_get_request_model(extensions + collection_extensions)
+get_request_model = create_get_request_model(extensions)
 
 api = StacApi(
     settings=settings,
