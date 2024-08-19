@@ -24,6 +24,9 @@ from stac_fastapi.extensions.core import (
     TokenPaginationExtension,
     TransactionExtension,
 )
+from stac_fastapi.extensions.core.collection_search.request import (
+    BaseCollectionSearchGetRequest,
+)
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
 
 from stac_fastapi.pgstac.config import Settings
@@ -81,8 +84,11 @@ else:
     items_get_request_model = ItemCollectionUri
 
 if any(isinstance(ext, CollectionSearchExtension) for ext in collection_extensions):
-    collections_get_request_model = create_get_request_model(
-        extensions + collection_extensions
+    collections_get_request_model = create_request_model(
+        model_name="CollectionsGetRequest",
+        base_model=BaseCollectionSearchGetRequest,
+        extensions=extensions,
+        request_type="GET",
     )
 else:
     collections_get_request_model = EmptyRequest
