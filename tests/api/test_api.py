@@ -803,6 +803,15 @@ async def test_no_extension(
             collections = await client.get("http://test/collections")
             assert collections.status_code == 200, collections.text
 
+            # datetime should be ignored
+            collection_datetime = await client.get(
+                "http://test/collections/test-collection",
+                params={
+                    "datetime": "2000-01-01T00:00:00Z/2000-12-31T00:00:00Z",
+                },
+            )
+            assert collection_datetime.text == collection.text
+
             item = await client.get(
                 "http://test/collections/test-collection/items/test-item"
             )
