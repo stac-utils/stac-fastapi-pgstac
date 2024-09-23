@@ -72,12 +72,12 @@ else:
     items_get_request_model = ItemCollectionUri
 
 if "collection_search" in _enabled_extensions:
-    collection_extension = CollectionSearchExtension.from_extensions(
+    collection_search_extension = CollectionSearchExtension.from_extensions(
         extensions=extensions
     )
-    collections_get_request_model = collection_extension.GET
-    extensions.append(collection_extension)
+    collections_get_request_model = collection_search_extension.GET
 else:
+    collection_search_extension = None
     collections_get_request_model = EmptyRequest
 
 post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
@@ -85,7 +85,7 @@ get_request_model = create_get_request_model(extensions)
 
 api = StacApi(
     settings=settings,
-    extensions=extensions,
+    extensions=extensions + [collection_search_extension],
     client=CoreCrudClient(post_request_model=post_request_model),  # type: ignore
     response_class=ORJSONResponse,
     items_get_request_model=items_get_request_model,
