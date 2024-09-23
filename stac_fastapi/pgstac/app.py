@@ -72,7 +72,9 @@ else:
     items_get_request_model = ItemCollectionUri
 
 if "collection_search" in _enabled_extensions:
-    collection_extension = CollectionSearchExtension()
+    collection_extension = CollectionSearchExtension.from_extensions(
+        extensions=extensions
+    )
     collections_get_request_model = collection_extension.GET
     extensions.append(collection_extension)
 else:
