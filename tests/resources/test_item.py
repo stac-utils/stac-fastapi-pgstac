@@ -1540,3 +1540,116 @@ async def test_get_collection_items_duplicate_forwarded_headers(
     )
     for link in resp.json()["features"][0]["links"]:
         assert link["href"].startswith("https://test:1234/")
+
+
+async def test_get_filter_extension(app_client, load_test_data, load_test_collection):
+    """Test GET with Filter extension"""
+    test_item = load_test_data("test_item.json")
+    collection_id = test_item["collection"]
+    ids = []
+
+    # Ingest 5 items
+    for _ in range(5):
+        uid = str(uuid.uuid4())
+        test_item["id"] = uid
+        resp = await app_client.post(
+            f"/collections/{collection_id}/items", json=test_item
+        )
+        assert resp.status_code == 201
+        ids.append(uid)
+
+    search_id = ids[2]
+
+    # SEARCH
+    # CQL2-JSON
+    resp = await app_client.get(
+        "/search",
+        params={
+            "filter-lang": "cql2-json",
+            "filter": json.dumps({"op": "in", "args": [{"property": "id"}, [search_id]]}),
+        },
+    )
+    assert resp.status_code == 200
+    fc = resp.json()
+    assert len(fc["features"]) == 1
+    assert fc["features"][0]["id"] == search_id
+
+    # CQL-JSON
+    resp = await app_client.get(
+        "/search",
+        params={
+            "filter-lang": "cql-json",
+            "filter": json.dumps(
+                {
+                    "eq": [
+                        {"property": "id"},
+                        search_id,
+                    ],
+                },
+            ),
+        },
+    )
+    assert resp.status_code == 200
+    fc = resp.json()
+    assert len(fc["features"]) == 1
+    assert fc["features"][0]["id"] == search_id
+
+    # CQL2-TEXT
+    resp = await app_client.get(
+        "/search",
+        params={
+            "filter-lang": "cql2-text",
+            "filter": f"id='{search_id}'",
+        },
+    )
+    assert resp.status_code == 200
+    fc = resp.json()
+    assert len(fc["features"]) == 1
+    assert fc["features"][0]["id"] == search_id
+
+    # ITEM COLLECTION
+    # CQL2-JSON
+    resp = await app_client.get(
+        f"/collections/{collection_id}/items",
+        params={
+            "filter-lang": "cql2-json",
+            "filter": json.dumps({"op": "in", "args": [{"property": "id"}, [search_id]]}),
+        },
+    )
+    assert resp.status_code == 200
+    fc = resp.json()
+    assert len(fc["features"]) == 1
+    assert fc["features"][0]["id"] == search_id
+
+    # CQL-JSON
+    resp = await app_client.get(
+        f"/collections/{collection_id}/items",
+        params={
+            "filter-lang": "cql-json",
+            "filter": json.dumps(
+                {
+                    "eq": [
+                        {"property": "id"},
+                        search_id,
+                    ],
+                },
+            ),
+        },
+    )
+    assert resp.status_code == 200
+    fc = resp.json()
+    assert len(fc["features"]) == 1
+    assert fc["features"][0]["id"] == search_id
+
+    # CQL2-TEXT
+    resp = await app_client.get(
+        f"/collections/{collection_id}/items",
+        params={
+            "filter-lang": "cql2-text",
+            "filter": f"id='{search_id}'",
+        },
+    )
+    assert resp.status_code == 200
+    fc = resp.json()
+    assert len(fc["features"]) == 1
+    assert fc["features"][0]["id"] == search_id
