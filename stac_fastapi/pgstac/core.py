@@ -75,7 +75,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             datetime=datetime,
             fields=fields,
             sortby=sortby,
-            filter=filter,
+            filter_query=filter,
             filter_lang=filter_lang,
         )
 
@@ -500,7 +500,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             datetime=datetime,
             fields=fields,
             sortby=sortby,
-            filter=filter,
+            filter_query=filter,
             filter_lang=filter_lang,
         )
 
@@ -521,13 +521,13 @@ def clean_search_args(  # noqa: C901
     datetime: Optional[DateTimeType] = None,
     fields: Optional[List[str]] = None,
     sortby: Optional[str] = None,
-    filter: Optional[str] = None,
+    filter_query: Optional[str] = None,
     filter_lang: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Clean up search arguments to match format expected by pgstac"""
-    if filter:
+    if filter_query:
         if filter_lang == "cql2-text":
-            filter = to_cql2(parse_cql2_text(filter))
+            filter_query = to_cql2(parse_cql2_text(filter_query))
             filter_lang = "cql2-json"
 
     if datetime:
