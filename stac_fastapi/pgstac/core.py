@@ -38,6 +38,8 @@ NumType = Union[float, int]
 class CoreCrudClient(AsyncBaseCoreClient):
     """Client for core endpoints defined by stac."""
 
+    collection_request_model = attr.ib(default=PgstacSearch)
+
     async def all_collections(  # noqa: C901
         self,
         request: Request,
@@ -81,7 +83,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         # Do the request
         try:
-            search_request = self.post_request_model(**clean)
+            search_request = self.collection_request_model(**clean)
         except ValidationError as e:
             raise HTTPException(
                 status_code=400, detail=f"Invalid parameters provided {e}"
