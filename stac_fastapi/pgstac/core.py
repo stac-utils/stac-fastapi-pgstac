@@ -532,6 +532,9 @@ def clean_search_args(  # noqa: C901
             filter_query = to_cql2(parse_cql2_text(filter_query))
             filter_lang = "cql2-json"
 
+        base_args["filter"] = orjson.loads(filter_query)
+        base_args["filter-lang"] = filter_lang
+
     if datetime:
         base_args["datetime"] = format_datetime_range(datetime)
 
