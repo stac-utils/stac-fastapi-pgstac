@@ -319,11 +319,14 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         if self.extension_is_enabled("FilterExtension"):
             filter_lang = kwargs.get("filter_lang", None)
-            filter = kwargs.get("filter", None)
-            if filter is not None and filter_lang == "cql2-text":
-                ast = parse_cql2_text(filter.strip())
-                base_args["filter"] = orjson.loads(to_cql2(ast))
-                base_args["filter-lang"] = "cql2-json"
+            filter_query = kwargs.get("filter", None)
+            if filter_query:
+                if filter_lang == "cql2-text":
+                    filter_query = to_cql2(parse_cql2_text(filter_query))
+                    filter_lang = "cql2-json"
+
+                base_args["filter"] = orjson.loads(filter_query)
+                base_args["filter-lang"] = filter_lang
 
         clean = {}
         for k, v in base_args.items():
@@ -429,9 +432,11 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         if filter:
             if filter_lang == "cql2-text":
-                ast = parse_cql2_text(filter)
-                base_args["filter"] = orjson.loads(to_cql2(ast))
-                base_args["filter-lang"] = "cql2-json"
+                filter = to_cql2(parse_cql2_text(filter))
+                filter_lang = "cql2-json"
+
+            base_args["filter"] = orjson.loads(filter)
+            base_args["filter-lang"] = filter_lang
 
         if datetime:
             base_args["datetime"] = format_datetime_range(datetime)
