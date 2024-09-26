@@ -17,13 +17,13 @@ install_requires = [
     "buildpg",
     "brotli_asgi",
     "pygeofilter>=0.2",
-    "pypgstac==0.8.*",
+    "pypgstac>=0.8,<0.10",
 ]
 
 extra_reqs = {
     "dev": [
         "pystac[validation]",
-        "pypgstac[psycopg]==0.8.*",
+        "pypgstac[psycopg]==0.9.*",
         "pytest-postgresql",
         "pytest",
         "pytest-cov",
