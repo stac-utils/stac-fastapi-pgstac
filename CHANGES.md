@@ -3,8 +3,7 @@
 ## [Unreleased]
 
 - Fix Docker compose file, so example data can be loaded into database (author @zstatmanweil, https://github.com/stac-utils/stac-fastapi-pgstac/pull/142)
-- Handle `next` and `dev` tokens now returned as links from pgstac>=0.9.0
-
+- Handle `next` and `dev` tokens now returned as links from pgstac>=0.9.0 (author @zstatmanweil, https://github.com/stac-utils/stac-fastapi-pgstac/pull/140)
 - Fix `filter` extension implementation in `CoreCrudClient`
 
 ## [3.0.0] - 2024-08-02

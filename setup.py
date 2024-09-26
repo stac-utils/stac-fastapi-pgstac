@@ -23,7 +23,7 @@ install_requires = [
 extra_reqs = {
     "dev": [
         "pystac[validation]",
-        "pypgstac[psycopg]==0.8.*",
+        "pypgstac[psycopg]==0.9.*",
         "pytest-postgresql",
         "pytest",
         "pytest-cov",
