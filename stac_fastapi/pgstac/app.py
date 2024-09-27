@@ -83,15 +83,12 @@ else:
 post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
 get_request_model = create_get_request_model(extensions)
 
-# will only use parameters defined in collections_get_request_model
-collection_search_model = create_post_request_model(extensions, base_model=PgstacSearch)
-
 api = StacApi(
     settings=settings,
     extensions=extensions + [collection_search_extension],
     client=CoreCrudClient(
         post_request_model=post_request_model,  # type: ignore
-        collection_request_model=collection_search_model,  # type: ignore
+        collections_get_request_model=collections_get_request_model,  # type: ignore
     ),
     response_class=ORJSONResponse,
     items_get_request_model=items_get_request_model,

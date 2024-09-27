@@ -151,16 +151,13 @@ def api_client(request, database):
     )
 
     collections_get_request_model = collection_search_extension.GET
-    collection_search_model = create_post_request_model(
-        extensions, base_model=PgstacSearch
-    )
 
     api = StacApi(
         settings=api_settings,
         extensions=extensions + [collection_search_extension],
         client=CoreCrudClient(
             post_request_model=search_post_request_model,
-            collection_request_model=collection_search_model,
+            collections_get_request_model=collections_get_request_model,
         ),
         items_get_request_model=items_get_request_model,
         search_get_request_model=search_get_request_model,

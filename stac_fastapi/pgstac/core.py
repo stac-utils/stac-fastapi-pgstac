@@ -1,5 +1,6 @@
 """Item crud client."""
 
+import json
 import re
 from typing import Any, Dict, List, Optional, Set, Union
 from urllib.parse import unquote_plus, urljoin
@@ -13,7 +14,7 @@ from pydantic import ValidationError
 from pygeofilter.backends.cql2_json import to_cql2
 from pygeofilter.parsers.cql2_text import parse as parse_cql2_text
 from pypgstac.hydration import hydrate
-from stac_fastapi.api.models import JSONResponse
+from stac_fastapi.api.models import APIRequest, EmptyRequest, JSONResponse
 from stac_fastapi.types.core import AsyncBaseCoreClient, Relations
 from stac_fastapi.types.errors import InvalidQueryParameter, NotFoundError
 from stac_fastapi.types.requests import get_base_url
@@ -38,7 +39,7 @@ NumType = Union[float, int]
 class CoreCrudClient(AsyncBaseCoreClient):
     """Client for core endpoints defined by stac."""
 
-    collection_request_model = attr.ib(default=PgstacSearch)
+    collections_get_request_model: APIRequest = attr.ib(default=EmptyRequest)
 
     async def all_collections(  # noqa: C901
         self,
@@ -83,7 +84,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         # Do the request
         try:
-            search_request = self.collection_request_model(**clean)
+            search_request = self.collections_get_request_model(**clean)
+            print(search_request)
         except ValidationError as e:
             raise HTTPException(
                 status_code=400, detail=f"Invalid parameters provided {e}"
@@ -93,7 +95,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
     async def _collection_search_base(  # noqa: C901
         self,
-        search_request: PgstacSearch,
+        search_request: APIRequest,
         request: Request,
     ) -> Collections:
         """Cross catalog search (GET).
@@ -107,8 +109,12 @@ class CoreCrudClient(AsyncBaseCoreClient):
             All collections which match the search criteria.
         """
         base_url = get_base_url(request)
-        search_request_json = search_request.model_dump_json(
-            exclude_none=True, by_alias=True
+        search_request_json = json.dumps(
+            {
+                key: value
+                for key, value in search_request.__dict__.items()
+                if value is not None
+            }
         )
 
         try:
@@ -533,7 +539,7 @@ def clean_search_args(  # noqa: C901
             filter_lang = "cql2-json"
 
         base_args["filter"] = orjson.loads(filter_query)
-        base_args["filter-lang"] = filter_lang
+        base_args["filter_lang"] = filter_lang
 
     if datetime:
         base_args["datetime"] = format_datetime_range(datetime)

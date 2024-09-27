@@ -730,23 +730,21 @@ async def test_wrapped_function(load_test_data, database) -> None:
     ]
     post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
     get_request_model = create_get_request_model(extensions)
-    collection_search_model = create_post_request_model(
-        extensions, base_model=PgstacSearch
-    )
+
     collection_search_extension = CollectionSearchExtension.from_extensions(
         extensions=extensions
     )
-    collections_get_request_model = collection_search_extension.GET
+
     api = StacApi(
         client=Client(
             post_request_model=post_request_model,
-            collection_request_model=collection_search_model,
+            collections_get_request_model=collection_search_extension.GET,
         ),
         settings=settings,
         extensions=extensions,
         search_post_request_model=post_request_model,
         search_get_request_model=get_request_model,
-        collections_get_request_model=collections_get_request_model,
+        collections_get_request_model=collection_search_extension.GET,
     )
     app = api.app
     await connect_to_db(app)
