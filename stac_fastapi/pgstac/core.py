@@ -85,7 +85,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
         # Do the request
         try:
             search_request = self.collections_get_request_model(**clean)
-            print(search_request)
         except ValidationError as e:
             raise HTTPException(
                 status_code=400, detail=f"Invalid parameters provided {e}"
