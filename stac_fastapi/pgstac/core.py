@@ -14,7 +14,7 @@ from pydantic import ValidationError
 from pygeofilter.backends.cql2_json import to_cql2
 from pygeofilter.parsers.cql2_text import parse as parse_cql2_text
 from pypgstac.hydration import hydrate
-from stac_fastapi.api.models import APIRequest, EmptyRequest, JSONResponse
+from stac_fastapi.api.models import JSONResponse
 from stac_fastapi.types.core import AsyncBaseCoreClient, Relations
 from stac_fastapi.types.errors import InvalidQueryParameter, NotFoundError
 from stac_fastapi.types.requests import get_base_url
@@ -38,8 +38,6 @@ NumType = Union[float, int]
 @attr.s
 class CoreCrudClient(AsyncBaseCoreClient):
     """Client for core endpoints defined by stac."""
-
-    collections_get_request_model: APIRequest = attr.ib(default=EmptyRequest)
 
     async def all_collections(  # noqa: C901
         self,

@@ -88,10 +88,7 @@ api = StacApi(
     extensions=extensions + [collection_search_extension]
     if collection_search_extension
     else extensions,
-    client=CoreCrudClient(
-        post_request_model=post_request_model,  # type: ignore
-        collections_get_request_model=collections_get_request_model,  # type: ignore
-    ),
+    client=CoreCrudClient(post_request_model=post_request_model),  # type: ignore
     response_class=ORJSONResponse,
     items_get_request_model=items_get_request_model,
     search_get_request_model=get_request_model,

@@ -736,10 +736,7 @@ async def test_wrapped_function(load_test_data, database) -> None:
     )
 
     api = StacApi(
-        client=Client(
-            post_request_model=post_request_model,
-            collections_get_request_model=collection_search_extension.GET,
-        ),
+        client=Client(post_request_model=post_request_model),
         settings=settings,
         extensions=extensions,
         search_post_request_model=post_request_model,
