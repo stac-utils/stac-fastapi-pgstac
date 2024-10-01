@@ -85,7 +85,9 @@ get_request_model = create_get_request_model(extensions)
 
 api = StacApi(
     settings=settings,
-    extensions=extensions + [collection_search_extension],
+    extensions=extensions + [collection_search_extension]
+    if collection_search_extension
+    else extensions,
     client=CoreCrudClient(
         post_request_model=post_request_model,  # type: ignore
         collections_get_request_model=collections_get_request_model,  # type: ignore

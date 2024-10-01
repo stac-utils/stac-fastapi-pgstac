@@ -64,6 +64,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             Collections which match the search criteria, returns all
             collections by default.
         """
+        base_url = get_base_url(request)
 
         # Parse request parameters
         base_args = {
@@ -73,7 +74,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             "query": orjson.loads(unquote_plus(query)) if query else query,
         }
 
-        clean = clean_search_args(
+        clean_args = clean_search_args(
             base_args=base_args,
             datetime=datetime,
             fields=fields,
@@ -82,53 +83,14 @@ class CoreCrudClient(AsyncBaseCoreClient):
             filter_lang=filter_lang,
         )
 
-        # Do the request
-        try:
-            search_request = self.collections_get_request_model(**clean)
-        except ValidationError as e:
-            raise HTTPException(
-                status_code=400, detail=f"Invalid parameters provided {e}"
-            ) from e
-
-        return await self._collection_search_base(search_request, request=request)
-
-    async def _collection_search_base(  # noqa: C901
-        self,
-        search_request: APIRequest,
-        request: Request,
-    ) -> Collections:
-        """Cross catalog search (GET).
-
-        Called with `GET /search`.
-
-        Args:
-            search_request: search request parameters.
-
-        Returns:
-            All collections which match the search criteria.
-        """
-        base_url = get_base_url(request)
-        search_request_json = json.dumps(
-            {
-                key: value
-                for key, value in search_request.__dict__.items()
-                if value is not None
-            }
-        )
-
-        try:
-            async with request.app.state.get_connection(request, "r") as conn:
-                q, p = render(
-                    """
-                    SELECT * FROM collection_search(:req::text::jsonb);
-                    """,
-                    req=search_request_json,
-                )
-                collections_result: Collections = await conn.fetchval(q, *p)
-        except InvalidDatetimeFormatError as e:
-            raise InvalidQueryParameter(
-                f"Datetime parameter {search_request.datetime} is invalid."
-            ) from e
+        async with request.app.state.get_connection(request, "r") as conn:
+            q, p = render(
+                """
+                SELECT * FROM collection_search(:req::text::jsonb);
+                """,
+                req=json.dumps(clean_args),
+            )
+            collections_result: Collections = await conn.fetchval(q, *p)
 
         next: Optional[str] = None
         prev: Optional[str] = None
