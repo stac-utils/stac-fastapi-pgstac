@@ -49,36 +49,34 @@ extensions_map = {
     "bulk_transactions": BulkTransactionExtension(client=BulkTransactionsClient()),
 }
 
-if enabled_extensions := os.getenv("ENABLED_EXTENSIONS"):
-    _enabled_extensions = enabled_extensions.split(",")
-    extensions = [
-        extension
-        for key, extension in extensions_map.items()
-        if key in _enabled_extensions
-    ]
-else:
-    _enabled_extensions = list(extensions_map.keys()) + ["collection_search"]
-    extensions = list(extensions_map.values())
+enabled_extensions = (
+    os.environ["ENABLED_EXTENSIONS"].split(",")
+    if "ENABLED_EXTENSIONS" in os.environ
+    else list(extensions_map.keys()) + ["collection_search"]
+)
+extensions = [
+    extension for key, extension in extensions_map.items() if key in enabled_extensions
+]
 
-
-if any(isinstance(ext, TokenPaginationExtension) for ext in extensions):
-    items_get_request_model = create_request_model(
+items_get_request_model = (
+    create_request_model(
         model_name="ItemCollectionUri",
         base_model=ItemCollectionUri,
         mixins=[TokenPaginationExtension().GET],
         request_type="GET",
     )
-else:
-    items_get_request_model = ItemCollectionUri
+    if any(isinstance(ext, TokenPaginationExtension) for ext in extensions)
+    else ItemCollectionUri
+)
 
-if "collection_search" in _enabled_extensions:
-    collection_search_extension = CollectionSearchExtension.from_extensions(
-        extensions=extensions
-    )
-    collections_get_request_model = collection_search_extension.GET
-else:
-    collection_search_extension = None
-    collections_get_request_model = EmptyRequest
+collection_search_extension = (
+    CollectionSearchExtension.from_extensions(extensions)
+    if "collection_search" in enabled_extensions
+    else None
+)
+collections_get_request_model = (
+    collection_search_extension.GET if collection_search_extension else EmptyRequest
+)
 
 post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
 get_request_model = create_get_request_model(extensions)
