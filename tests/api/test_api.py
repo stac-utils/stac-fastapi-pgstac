@@ -12,7 +12,11 @@ from pypgstac.load import Loader
 from pystac import Collection, Extent, Item, SpatialExtent, TemporalExtent
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.models import create_get_request_model, create_post_request_model
-from stac_fastapi.extensions.core import FieldsExtension, TransactionExtension
+from stac_fastapi.extensions.core import (
+    CollectionSearchExtension,
+    FieldsExtension,
+    TransactionExtension,
+)
 from stac_fastapi.types import stac as stac_types
 
 from stac_fastapi.pgstac.core import CoreCrudClient, Settings
@@ -503,6 +507,49 @@ async def test_collection_queryables(load_test_data, app_client, load_test_colle
 
 
 @pytest.mark.asyncio
+async def test_get_collections_search(
+    app_client, load_test_collection, load_test2_collection
+):
+    # this search should only return a single collection
+    resp = await app_client.get(
+        "/collections",
+        params={"datetime": "2010-01-01T00:00:00Z/2010-01-02T00:00:00Z"},
+    )
+    assert len(resp.json()["collections"]) == 1
+    assert resp.json()["collections"][0]["id"] == load_test2_collection.id
+
+    # same with this one
+    resp = await app_client.get(
+        "/collections",
+        params={"datetime": "2020-01-01T00:00:00Z/.."},
+    )
+    assert len(resp.json()["collections"]) == 1
+    assert resp.json()["collections"][0]["id"] == load_test_collection["id"]
+
+    # no params should return both collections
+    resp = await app_client.get(
+        "/collections",
+    )
+    assert len(resp.json()["collections"]) == 2
+
+    # this search should return test collection 1 first
+    resp = await app_client.get(
+        "/collections",
+        params={"sortby": "title"},
+    )
+    assert resp.json()["collections"][0]["id"] == load_test_collection["id"]
+    assert resp.json()["collections"][1]["id"] == load_test2_collection.id
+
+    # this search should return test collection 2 first
+    resp = await app_client.get(
+        "/collections",
+        params={"sortby": "-title"},
+    )
+    assert resp.json()["collections"][1]["id"] == load_test_collection["id"]
+    assert resp.json()["collections"][0]["id"] == load_test2_collection.id
+
+
+@pytest.mark.asyncio
 async def test_item_collection_filter_bbox(
     load_test_data, app_client, load_test_collection
 ):
@@ -683,12 +730,18 @@ async def test_wrapped_function(load_test_data, database) -> None:
     ]
     post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
     get_request_model = create_get_request_model(extensions)
+
+    collection_search_extension = CollectionSearchExtension.from_extensions(
+        extensions=extensions
+    )
+
     api = StacApi(
         client=Client(post_request_model=post_request_model),
         settings=settings,
         extensions=extensions,
         search_post_request_model=post_request_model,
         search_get_request_model=get_request_model,
+        collections_get_request_model=collection_search_extension.GET,
     )
     app = api.app
     await connect_to_db(app)
@@ -759,6 +812,15 @@ async def test_no_extension(
 
             collections = await client.get("http://test/collections")
             assert collections.status_code == 200, collections.text
+
+            # datetime should be ignored
+            collection_datetime = await client.get(
+                "http://test/collections/test-collection",
+                params={
+                    "datetime": "2000-01-01T00:00:00Z/2000-12-31T00:00:00Z",
+                },
+            )
+            assert collection_datetime.text == collection.text
 
             item = await client.get(
                 "http://test/collections/test-collection/items/test-item"
