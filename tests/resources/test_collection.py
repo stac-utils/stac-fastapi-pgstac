@@ -314,4 +314,4 @@ async def test_get_collections_search_limit_offset(
         params={"limit": 1},
     )
     assert len(resp.json()["collections"]) == 1
-    assert resp.json()["collections"][0]["id"] == load_test_collection.id
+    assert resp.json()["collections"][0]["id"] == load_test_collection["id"]
