@@ -313,5 +313,15 @@ async def test_get_collections_search_limit_offset(
         "/collections",
         params={"limit": 1},
     )
-    assert len(resp.json()["collections"]) == 1
-    assert resp.json()["collections"][0]["id"] == load_test_collection["id"]
+    response = resp.json()
+    assert len(response["collections"]) == 1
+    assert response["collections"][0]["id"] == load_test_collection["id"]
+
+    # check next link
+    next_link = [link["href"] for link in response["links"] if link["rel"] == "next"][0]
+    next_url = next_link.replace(str(app_client.base_url), "")
+    next_resp = await app_client.get(next_url)
+    next_response = next_resp.json()
+
+    assert len(next_response["collections"]) == 1
+    assert next_response["collections"][0]["id"] == load_test2_collection.id
