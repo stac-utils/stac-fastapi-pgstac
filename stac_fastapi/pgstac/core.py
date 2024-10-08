@@ -25,6 +25,7 @@ from stac_pydantic.shared import BBox, MimeTypes
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.models.links import (
     CollectionLinks,
+    CollectionSearchPagingLinks,
     ItemCollectionLinks,
     ItemLinks,
     PagingLinks,
@@ -90,12 +91,16 @@ class CoreCrudClient(AsyncBaseCoreClient):
             )
             collections_result: Collections = await conn.fetchval(q, *p)
 
-        next: Optional[str] = None
-        prev: Optional[str] = None
-
+        next: Optional[Dict[str, Any]] = None
+        prev: Optional[Dict[str, Any]] = None
         if links := collections_result.get("links"):
-            next = collections_result["links"].pop("next")
-            prev = collections_result["links"].pop("prev")
+            next = None
+            prev = None
+            for link in links:
+                if link["rel"] == "next":
+                    next = link
+                elif link["rel"] == "prev":
+                    prev = link
 
         linked_collections: List[Collection] = []
         collections = collections_result["collections"]
@@ -120,7 +125,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
                 linked_collections.append(coll)
 
-        links = await PagingLinks(
+        links = await CollectionSearchPagingLinks(
             request=request,
             next=next,
             prev=prev,
