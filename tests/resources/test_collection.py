@@ -391,19 +391,19 @@ async def test_get_collections_search_limit_offset(
     prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
     assert prev_link["href"].endswith("?limit=1&offset=2")
 
-    # ###################
-    # # offset=3,limit=2
-    # resp = await app_client.get(
-    #     "/collections",
-    #     params={"limit": 2,"offset": 3},
-    # )
-    # cols = resp.json()["collections"]
-    # links = resp.json()["links"]
-    # assert len(cols) == 0
-    # assert len(links) == 3
-    # assert {"root", "self", "previous"} == {link["rel"] for link in links}
-    # prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
-    # assert prev_link["href"].endswith("?limit=1&offset=2")
+    ###################
+    # limit=2, offset=3, there should not be a next link
+    resp = await app_client.get(
+        "/collections",
+        params={"limit": 2, "offset": 3},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 0
+    assert len(links) == 3
+    assert {"root", "self", "previous"} == {link["rel"] for link in links}
+    prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
+    assert prev_link["href"].endswith("?limit=2&offset=1")
 
     ###################
     # offset=1, should have a `previous` link
