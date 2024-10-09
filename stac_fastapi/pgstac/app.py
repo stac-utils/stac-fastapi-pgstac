@@ -19,6 +19,7 @@ from stac_fastapi.api.models import (
 from stac_fastapi.extensions.core import (
     FieldsExtension,
     FilterExtension,
+    OffsetPaginationExtension,
     SortExtension,
     TokenPaginationExtension,
     TransactionExtension,
@@ -55,6 +56,9 @@ collection_extensions_map = {
     "sort": SortExtension(),
     "fields": FieldsExtension(),
     "filter": FilterExtension(client=FiltersClient()),
+    # NOTE: there is no conformance class for the Pagination extension
+    # so `CollectionSearchExtension.from_extensions` will raise a warning
+    "pagination": OffsetPaginationExtension(),
 }
 
 enabled_extensions = (
