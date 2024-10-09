@@ -309,19 +309,127 @@ async def test_get_collections_search(
 async def test_get_collections_search_limit_offset(
     app_client, load_test_collection, load_test2_collection
 ):
+    resp = await app_client.get("/collections")
+    cols = resp.json()["collections"]
+    assert len(cols) == 2
+    links = resp.json()["links"]
+    assert len(links) == 2
+    assert {"root", "self"} == {link["rel"] for link in links}
+
+    ###################
+    # limit should be positive
+    resp = await app_client.get("/collections", params={"limit": 0})
+    assert resp.status_code == 400
+
+    ###################
+    # limit=1, should have a `next` link
     resp = await app_client.get(
         "/collections",
         params={"limit": 1},
     )
-    response = resp.json()
-    assert len(response["collections"]) == 1
-    assert response["collections"][0]["id"] == load_test_collection["id"]
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 1
+    assert cols[0]["id"] == load_test_collection["id"]
+    assert len(links) == 3
+    assert {"root", "self", "next"} == {link["rel"] for link in links}
+    next_link = list(filter(lambda link: link["rel"] == "next", links))[0]
+    assert next_link["href"].endswith("?limit=1&offset=1")
 
-    # check next link
-    next_link = [link["href"] for link in response["links"] if link["rel"] == "next"][0]
-    next_url = next_link.replace(str(app_client.base_url), "")
-    next_resp = await app_client.get(next_url)
-    next_response = next_resp.json()
+    ###################
+    # limit=2, there should not be a next link
+    resp = await app_client.get(
+        "/collections",
+        params={"limit": 2},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 2
+    assert cols[0]["id"] == load_test_collection["id"]
+    assert cols[1]["id"] == load_test2_collection.id
+    # TODO: check with pgstac
+    # assert len(links) == 2
+    # assert {"root", "self"} == {link["rel"] for link in links}
 
-    assert len(next_response["collections"]) == 1
-    assert next_response["collections"][0]["id"] == load_test2_collection.id
+    ###################
+    # limit=3, there should not be a next/previous link
+    resp = await app_client.get(
+        "/collections",
+        params={"limit": 3},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 2
+    assert cols[0]["id"] == load_test_collection["id"]
+    assert cols[1]["id"] == load_test2_collection.id
+    assert len(links) == 2
+    assert {"root", "self"} == {link["rel"] for link in links}
+
+    ###################
+    # offset=3, because there are 2 collections, we should not have `next` or `prev` links
+    resp = await app_client.get(
+        "/collections",
+        params={"offset": 3},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 0
+    assert len(links) == 2
+    assert {"root", "self"} == {link["rel"] for link in links}
+
+    ###################
+    # offset=3,limit=1
+    resp = await app_client.get(
+        "/collections",
+        params={"limit": 1, "offset": 3},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 0
+    assert len(links) == 3
+    assert {"root", "self", "previous"} == {link["rel"] for link in links}
+    prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
+    assert prev_link["href"].endswith("?limit=1&offset=2")
+
+    # ###################
+    # # offset=3,limit=2
+    # resp = await app_client.get(
+    #     "/collections",
+    #     params={"limit": 2,"offset": 3},
+    # )
+    # cols = resp.json()["collections"]
+    # links = resp.json()["links"]
+    # assert len(cols) == 0
+    # assert len(links) == 3
+    # assert {"root", "self", "previous"} == {link["rel"] for link in links}
+    # prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
+    # assert prev_link["href"].endswith("?limit=1&offset=2")
+
+    ###################
+    # offset=1, should have a `previous` link
+    resp = await app_client.get(
+        "/collections",
+        params={"offset": 1},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 1
+    assert cols[0]["id"] == load_test2_collection.id
+    # TODO: Check with pgstac
+    # assert len(links) == 3
+    # assert {"root", "self", "previous"} == {link["rel"] for link in links}
+    # prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
+    # assert prev_link["href"].endswith("?offset=0")
+
+    ###################
+    # offset=0, should not have next/previous link
+    resp = await app_client.get(
+        "/collections",
+        params={"offset": 0},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 2
+    # TODO: Check with pgstac
+    # assert len(links) == 2
+    # assert {"root", "self"} == {link["rel"] for link in links}

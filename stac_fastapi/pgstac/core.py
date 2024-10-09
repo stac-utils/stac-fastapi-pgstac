@@ -47,8 +47,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
         bbox: Optional[BBox] = None,
         datetime: Optional[DateTimeType] = None,
         limit: Optional[int] = None,
+        offset: Optional[int] = None,
         query: Optional[str] = None,
-        token: Optional[str] = None,
         fields: Optional[List[str]] = None,
         sortby: Optional[str] = None,
         filter: Optional[str] = None,
@@ -69,7 +69,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         base_args = {
             "bbox": bbox,
             "limit": limit,
-            "token": token,
+            "offset": offset,
             "query": orjson.loads(unquote_plus(query)) if query else query,
         }
 
@@ -91,16 +91,16 @@ class CoreCrudClient(AsyncBaseCoreClient):
             )
             collections_result: Collections = await conn.fetchval(q, *p)
 
-        next: Optional[Dict[str, Any]] = None
-        prev: Optional[Dict[str, Any]] = None
+        next_link: Optional[Dict[str, Any]] = None
+        prev_link: Optional[Dict[str, Any]] = None
         if links := collections_result.get("links"):
-            next = None
-            prev = None
+            next_link = None
+            prev_link = None
             for link in links:
                 if link["rel"] == "next":
-                    next = link
+                    next_link = link
                 elif link["rel"] == "prev":
-                    prev = link
+                    prev_link = link
 
         linked_collections: List[Collection] = []
         collections = collections_result["collections"]
@@ -125,10 +125,13 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
                 linked_collections.append(coll)
 
+        if not collections:
+            next_link = None
+
         links = await CollectionSearchPagingLinks(
             request=request,
-            next=next,
-            prev=prev,
+            next=next_link,
+            prev=prev_link,
         ).get_links()
 
         return Collections(

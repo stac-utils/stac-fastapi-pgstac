@@ -191,16 +191,14 @@ class CollectionSearchPagingLinks(BaseLinks):
 
                 # if next link is equal to this link, skip it
                 if href == self.url:
-                    print(self.request.body())
                     return None
 
-                link = {
+                return {
                     "rel": Relations.next.value,
                     "type": MimeTypes.geojson.value,
                     "method": method,
                     "href": href,
                 }
-                return link
 
         return None
 
@@ -217,6 +215,7 @@ class CollectionSearchPagingLinks(BaseLinks):
                 # if prev link is equal to this link, skip it
                 if href == self.url:
                     return None
+
                 return {
                     "rel": Relations.previous.value,
                     "type": MimeTypes.geojson.value,
