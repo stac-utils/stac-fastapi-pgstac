@@ -27,7 +27,7 @@ extra_reqs = {
         "pytest-postgresql",
         "pytest",
         "pytest-cov",
-        "pytest-asyncio>=0.17,<0.23.0",
+        "pytest-asyncio>=0.17,<0.25.0",
         "pre-commit",
         "requests",
         "shapely",
@@ -36,7 +36,7 @@ extra_reqs = {
         "wheel",
     ],
     "docs": ["mkdocs", "mkdocs-material", "pdocs"],
-    "server": ["uvicorn[standard]==0.19.0"],
+    "server": ["uvicorn[standard]==0.31.1"],
     "awslambda": ["mangum"],
 }
 
