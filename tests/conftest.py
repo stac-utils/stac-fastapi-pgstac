@@ -134,7 +134,6 @@ def api_client(request, database):
         FilterExtension(client=FiltersClient()),
         BulkTransactionExtension(client=BulkTransactionsClient()),
     ]
-    collection_search_extension = CollectionSearchExtension.from_extensions(extensions)
 
     collection_extensions = [
         QueryExtension(),
