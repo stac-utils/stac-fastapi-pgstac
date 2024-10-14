@@ -136,6 +136,16 @@ def api_client(request, database):
     ]
     collection_search_extension = CollectionSearchExtension.from_extensions(extensions)
 
+    collection_extensions = [
+        QueryExtension(),
+        SortExtension(),
+        FieldsExtension(),
+        FilterExtension(client=FiltersClient()),
+    ]
+    collection_search_extension = CollectionSearchExtension.from_extensions(
+        collection_extensions
+    )
+
     items_get_request_model = create_request_model(
         model_name="ItemCollectionUri",
         base_model=ItemCollectionUri,

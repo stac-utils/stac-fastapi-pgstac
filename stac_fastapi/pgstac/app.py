@@ -49,6 +49,14 @@ extensions_map = {
     "bulk_transactions": BulkTransactionExtension(client=BulkTransactionsClient()),
 }
 
+# some extensions are supported in combination with the collection search extension
+collection_extensions_map = {
+    "query": QueryExtension(),
+    "sort": SortExtension(),
+    "fields": FieldsExtension(),
+    "filter": FilterExtension(client=FiltersClient()),
+}
+
 enabled_extensions = (
     os.environ["ENABLED_EXTENSIONS"].split(",")
     if "ENABLED_EXTENSIONS" in os.environ
@@ -70,10 +78,17 @@ items_get_request_model = (
 )
 
 collection_search_extension = (
-    CollectionSearchExtension.from_extensions(extensions)
+    CollectionSearchExtension.from_extensions(
+        [
+            extension
+            for key, extension in collection_extensions_map.items()
+            if key in enabled_extensions
+        ]
+    )
     if "collection_search" in enabled_extensions
     else None
 )
+
 collections_get_request_model = (
     collection_search_extension.GET if collection_search_extension else EmptyRequest
 )

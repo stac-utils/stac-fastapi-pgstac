@@ -732,7 +732,9 @@ async def test_wrapped_function(load_test_data, database) -> None:
     get_request_model = create_get_request_model(extensions)
 
     collection_search_extension = CollectionSearchExtension.from_extensions(
-        extensions=extensions
+        extensions=[
+            FieldsExtension(),
+        ]
     )
 
     api = StacApi(
