@@ -19,6 +19,7 @@ from stac_fastapi.api.models import (
 from stac_fastapi.extensions.core import (
     FieldsExtension,
     FilterExtension,
+    FreeTextExtension,
     SortExtension,
     TokenPaginationExtension,
     TransactionExtension,
@@ -46,6 +47,7 @@ extensions_map = {
     "fields": FieldsExtension(),
     "pagination": TokenPaginationExtension(),
     "filter": FilterExtension(client=FiltersClient()),
+    "free_text": FreeTextExtension(),
     "bulk_transactions": BulkTransactionExtension(client=BulkTransactionsClient()),
 }
 
@@ -55,6 +57,7 @@ collection_extensions_map = {
     "sort": SortExtension(),
     "fields": FieldsExtension(),
     "filter": FilterExtension(client=FiltersClient()),
+    "free_text": FreeTextExtension(),
 }
 
 enabled_extensions = (
