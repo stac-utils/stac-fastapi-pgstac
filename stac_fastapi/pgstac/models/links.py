@@ -129,8 +129,7 @@ class PagingLinks(BaseLinks):
         if self.next is not None:
             method = self.request.method
             if method == "GET":
-                url = self.resolve(f"collections/{self.collection_id}/items")
-                href = merge_params(url, {"token": f"next:{self.next}"})
+                href = merge_params(self.base_url, {"token": f"next:{self.next}"})
                 link = {
                     "rel": Relations.next.value,
                     "type": MimeTypes.geojson.value,
@@ -155,8 +154,7 @@ class PagingLinks(BaseLinks):
         if self.prev is not None:
             method = self.request.method
             if method == "GET":
-                url = self.resolve(f"collections/{self.collection_id}/items")
-                href = merge_params(url, {"token": f"prev:{self.prev}"})
+                href = merge_params(self.base_url, {"token": f"prev:{self.prev}"})
                 return {
                     "rel": Relations.previous.value,
                     "type": MimeTypes.geojson.value,
