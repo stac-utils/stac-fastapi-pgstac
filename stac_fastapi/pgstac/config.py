@@ -3,7 +3,7 @@
 from typing import List, Type
 from urllib.parse import quote_plus as quote
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from pydantic_settings import SettingsConfigDict
 from stac_fastapi.types.config import ApiSettings
 
@@ -75,7 +75,20 @@ class Settings(ApiSettings):
     base_item_cache: Type[BaseItemCache] = DefaultBaseItemCache
     invalid_id_chars: List[str] = DEFAULT_INVALID_ID_CHARS
 
+    cors_origins: str = "*"
+    cors_methods: str = "GET,POST,OPTIONS"
+
     testing: bool = False
+
+    @field_validator("cors_origins")
+    def parse_cors_origin(cls, v):
+        """Parse CORS origins."""
+        return [origin.strip() for origin in v.split(",")]
+
+    @field_validator("cors_methods")
+    def parse_cors_methods(cls, v):
+        """Parse CORS methods."""
+        return [method.strip() for method in v.split(",")]
 
     @property
     def reader_connection_string(self):
