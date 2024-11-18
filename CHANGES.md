@@ -10,6 +10,9 @@
 - update `pypgstac` requirement to `>=0.8,<0.10`
 - set `pypgstac==0.9.*` for test requirements
 
+## [3.0.1] - 2024-11-14
+- Enable runtime `CORS` configuration using environment variables (`CORS_ORIGIN="https://...,https://..."`, `CORS_METHODS="PUT,OPTIONS"`) (https://github.com/stac-utils/stac-fastapi-pgstac/pull/168)
+
 ## [3.0.0] - 2024-08-02
 
 - Enable filter extension for `GET /items` requests and add `Queryables` links in `/collections` and `/collections/{collection_id}` responses ([#89](https://github.com/stac-utils/stac-fastapi-pgstac/pull/89))
@@ -341,7 +344,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.1..main>
+[3.0.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0..3.0.1>
 [3.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.5.0..3.0.0>
 [2.5.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.11..2.5.0>
 [2.4.11]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.10..2.4.11>
