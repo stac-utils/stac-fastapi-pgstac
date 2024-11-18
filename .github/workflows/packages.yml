@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - maint-3.0.x
     tags:
       - "*"
   workflow_dispatch:
