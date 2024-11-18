@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## [3.0.1] - 2024-11-14
+## [3.0.1] - 2024-11-18
 
 - Enable runtime `CORS` configuration using environment variables (`CORS_ORIGIN="https://...,https://..."`, `CORS_METHODS="PUT,OPTIONS"`)
 
