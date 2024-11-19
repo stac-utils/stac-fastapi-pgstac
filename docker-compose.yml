@@ -35,6 +35,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.tests
+    volumes:
+      - .:/app
     environment:
       - ENVIRONMENT=local
       - DB_MIN_CONN_SIZE=1

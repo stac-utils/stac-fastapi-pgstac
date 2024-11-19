@@ -26,6 +26,7 @@ from stac_fastapi.extensions.core import (
     CollectionSearchExtension,
     FieldsExtension,
     FilterExtension,
+    OffsetPaginationExtension,
     SortExtension,
     TokenPaginationExtension,
     TransactionExtension,
@@ -140,10 +141,12 @@ def api_client(request, database):
         SortExtension(),
         FieldsExtension(),
         FilterExtension(client=FiltersClient()),
+        OffsetPaginationExtension(),
     ]
-    collection_search_extension = CollectionSearchExtension.from_extensions(
-        collection_extensions
-    )
+    with pytest.warns(UserWarning):
+        collection_search_extension = CollectionSearchExtension.from_extensions(
+            collection_extensions
+        )
 
     items_get_request_model = create_request_model(
         model_name="ItemCollectionUri",
