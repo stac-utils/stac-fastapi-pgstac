@@ -36,7 +36,7 @@ extra_reqs = {
         "wheel",
     ],
     "docs": ["mkdocs", "mkdocs-material", "pdocs"],
-    "server": ["uvicorn[standard]==0.32.0"],
+    "server": ["uvicorn[standard]==0.32.1"],
     "awslambda": ["mangum"],
 }
 
