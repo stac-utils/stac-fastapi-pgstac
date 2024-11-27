@@ -303,3 +303,11 @@ async def test_get_collections_search(
         "/collections",
     )
     assert len(resp.json()["collections"]) == 2
+
+    # free-text
+    resp = await app_client.get(
+        "/collections",
+        params={"q": "temperature"},
+    )
+    assert len(resp.json()["collections"]) == 1
+    assert resp.json()["collections"][0]["id"] == load_test2_collection.id
