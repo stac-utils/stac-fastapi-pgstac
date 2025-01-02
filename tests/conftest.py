@@ -26,6 +26,7 @@ from stac_fastapi.extensions.core import (
     CollectionSearchExtension,
     FieldsExtension,
     FilterExtension,
+    FreeTextExtension,
     SortExtension,
     TokenPaginationExtension,
     TransactionExtension,
@@ -133,6 +134,7 @@ def api_client(request, database):
         TokenPaginationExtension(),
         FilterExtension(client=FiltersClient()),
         BulkTransactionExtension(client=BulkTransactionsClient()),
+        FreeTextExtension(),
     ]
 
     collection_extensions = [
@@ -140,6 +142,7 @@ def api_client(request, database):
         SortExtension(),
         FieldsExtension(),
         FilterExtension(client=FiltersClient()),
+        FreeTextExtension(),
     ]
     collection_search_extension = CollectionSearchExtension.from_extensions(
         collection_extensions
