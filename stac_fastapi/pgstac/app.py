@@ -7,8 +7,10 @@ If the variable is not set, enables all extensions.
 
 import os
 
+from brotli_asgi import BrotliMiddleware
 from fastapi.responses import ORJSONResponse
 from stac_fastapi.api.app import StacApi
+from stac_fastapi.api.middleware import CORSMiddleware, ProxyHeaderMiddleware
 from stac_fastapi.api.models import (
     EmptyRequest,
     ItemCollectionUri,
@@ -26,6 +28,7 @@ from stac_fastapi.extensions.core import (
 )
 from stac_fastapi.extensions.core.collection_search import CollectionSearchExtension
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
+from starlette.middleware import Middleware
 
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.core import CoreCrudClient
@@ -111,6 +114,15 @@ api = StacApi(
     search_get_request_model=get_request_model,
     search_post_request_model=post_request_model,
     collections_get_request_model=collections_get_request_model,
+    middlewares=[
+        Middleware(BrotliMiddleware),
+        Middleware(ProxyHeaderMiddleware),
+        Middleware(
+            CORSMiddleware,
+            allow_origins=settings.cors_origins,
+            allow_methods=settings.cors_methods,
+        ),
+    ],
 )
 app = api.app
 
