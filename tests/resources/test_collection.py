@@ -347,9 +347,8 @@ async def test_get_collections_search_limit_offset(
     assert len(cols) == 2
     assert cols[0]["id"] == load_test_collection["id"]
     assert cols[1]["id"] == load_test2_collection.id
-    # TODO: check with pgstac
-    # assert len(links) == 2
-    # assert {"root", "self"} == {link["rel"] for link in links}
+    assert len(links) == 2
+    assert {"root", "self"} == {link["rel"] for link in links}
 
     ###################
     # limit=3, there should not be a next/previous link
@@ -406,20 +405,36 @@ async def test_get_collections_search_limit_offset(
     assert prev_link["href"].endswith("?limit=2&offset=1")
 
     ###################
-    # offset=1, should have a `previous` link
+    # offset=1,limit=1 should have a `previous` link
     resp = await app_client.get(
         "/collections",
-        params={"offset": 1},
+        params={"offset": 1, "limit": 1},
     )
     cols = resp.json()["collections"]
     links = resp.json()["links"]
     assert len(cols) == 1
     assert cols[0]["id"] == load_test2_collection.id
-    # TODO: Check with pgstac
+    assert len(links) == 3
+    assert {"root", "self", "previous"} == {link["rel"] for link in links}
+    prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
+    assert "offset" not in prev_link["href"]
+
+    ###################
+    # BUG: pgstac doesn't return a `prev` link when limit is not set
+    # offset=1, should have a `previous` link
+    # resp = await app_client.get(
+    #     "/collections",
+    #     params={"offset": 1},
+    # )
+    # cols = resp.json()["collections"]
+    # links = resp.json()["links"]
+    # assert len(cols) == 1
+    # assert cols[0]["id"] == load_test2_collection.id
     # assert len(links) == 3
     # assert {"root", "self", "previous"} == {link["rel"] for link in links}
     # prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
-    # assert prev_link["href"].endswith("?offset=0")
+    # # offset=0 should not be in the previous link (because it's useless)
+    # assert "offset" not in prev_link["href"]
 
     ###################
     # offset=0, should not have next/previous link
@@ -430,6 +445,5 @@ async def test_get_collections_search_limit_offset(
     cols = resp.json()["collections"]
     links = resp.json()["links"]
     assert len(cols) == 2
-    # TODO: Check with pgstac
-    # assert len(links) == 2
-    # assert {"root", "self"} == {link["rel"] for link in links}
+    assert len(links) == 2
+    assert {"root", "self"} == {link["rel"] for link in links}
