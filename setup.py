@@ -17,7 +17,7 @@ install_requires = [
     "buildpg",
     "brotli_asgi",
     "pygeofilter>=0.2",
-    "pypgstac>=0.9,<0.10",
+    "pypgstac>=0.8,<0.10",
 ]
 
 extra_reqs = {

@@ -4,6 +4,8 @@ import pystac
 import pytest
 from stac_pydantic import Collection
 
+from ..conftest import requires_pgstac_0_9_2
+
 
 async def test_create_collection(app_client, load_test_data: Callable):
     in_json = load_test_data("test_collection.json")
@@ -305,8 +307,9 @@ async def test_get_collections_search(
     assert len(resp.json()["collections"]) == 2
 
 
+@requires_pgstac_0_9_2
 @pytest.mark.asyncio
-async def test_get_collections_search_limit_offset(
+async def test_get_collections_search_pagination(
     app_client, load_test_collection, load_test2_collection
 ):
     resp = await app_client.get("/collections")
@@ -420,23 +423,6 @@ async def test_get_collections_search_limit_offset(
     assert "offset" not in prev_link["href"]
 
     ###################
-    # BUG: pgstac doesn't return a `prev` link when limit is not set
-    # offset=1, should have a `previous` link
-    # resp = await app_client.get(
-    #     "/collections",
-    #     params={"offset": 1},
-    # )
-    # cols = resp.json()["collections"]
-    # links = resp.json()["links"]
-    # assert len(cols) == 1
-    # assert cols[0]["id"] == load_test2_collection.id
-    # assert len(links) == 3
-    # assert {"root", "self", "previous"} == {link["rel"] for link in links}
-    # prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
-    # # offset=0 should not be in the previous link (because it's useless)
-    # assert "offset" not in prev_link["href"]
-
-    ###################
     # offset=0, should not have next/previous link
     resp = await app_client.get(
         "/collections",
@@ -447,3 +433,25 @@ async def test_get_collections_search_limit_offset(
     assert len(cols) == 2
     assert len(links) == 2
     assert {"root", "self"} == {link["rel"] for link in links}
+
+
+@pytest.mark.xfail(strict=False)
+@pytest.mark.asyncio
+async def test_get_collections_search_offset_1(
+    app_client, load_test_collection, load_test2_collection
+):
+    # BUG: pgstac doesn't return a `prev` link when limit is not set
+    # offset=1, should have a `previous` link
+    resp = await app_client.get(
+        "/collections",
+        params={"offset": 1},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 1
+    assert cols[0]["id"] == load_test2_collection.id
+    assert len(links) == 3
+    assert {"root", "self", "previous"} == {link["rel"] for link in links}
+    prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
+    # offset=0 should not be in the previous link (because it's useless)
+    assert "offset" not in prev_link["href"]
