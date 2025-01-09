@@ -435,6 +435,7 @@ async def test_get_collections_search_pagination(
     assert {"root", "self"} == {link["rel"] for link in links}
 
 
+@requires_pgstac_0_9_2
 @pytest.mark.xfail(strict=False)
 @pytest.mark.asyncio
 async def test_get_collections_search_offset_1(
