@@ -59,8 +59,6 @@ collection_extensions_map = {
     "sort": SortExtension(),
     "fields": FieldsExtension(),
     "filter": FilterExtension(client=FiltersClient()),
-    # NOTE: there is no conformance class for the Pagination extension
-    # so `CollectionSearchExtension.from_extensions` will raise a warning
     "pagination": OffsetPaginationExtension(),
 }
 

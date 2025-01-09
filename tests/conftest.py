@@ -150,10 +150,9 @@ def api_client(request, database):
         FilterExtension(client=FiltersClient()),
         OffsetPaginationExtension(),
     ]
-    with pytest.warns(UserWarning):
-        collection_search_extension = CollectionSearchExtension.from_extensions(
-            collection_extensions
-        )
+    collection_search_extension = CollectionSearchExtension.from_extensions(
+        collection_extensions
+    )
 
     items_get_request_model = create_request_model(
         model_name="ItemCollectionUri",
