@@ -309,6 +309,55 @@ async def test_get_collections_search(
 
 @requires_pgstac_0_9_2
 @pytest.mark.asyncio
+async def test_all_collections_with_pagination(app_client, load_test_data):
+    data = load_test_data("test_collection.json")
+    collection_id = data["id"]
+    for ii in range(0, 12):
+        data["id"] = collection_id + f"_{ii}"
+        resp = await app_client.post(
+            "/collections",
+            json=data,
+        )
+        assert resp.status_code == 201
+
+    resp = await app_client.get("/collections")
+    cols = resp.json()["collections"]
+    assert len(cols) == 10
+    links = resp.json()["links"]
+    assert len(links) == 3
+    assert {"root", "self", "next"} == {link["rel"] for link in links}
+
+    resp = await app_client.get("/collections", params={"limit": 12})
+    cols = resp.json()["collections"]
+    assert len(cols) == 12
+    links = resp.json()["links"]
+    assert len(links) == 2
+    assert {"root", "self"} == {link["rel"] for link in links}
+
+
+@requires_pgstac_0_9_2
+@pytest.mark.asyncio
+async def test_all_collections_without_pagination(app_client_no_ext, load_test_data):
+    data = load_test_data("test_collection.json")
+    collection_id = data["id"]
+    for ii in range(0, 12):
+        data["id"] = collection_id + f"_{ii}"
+        resp = await app_client_no_ext.post(
+            "/collections",
+            json=data,
+        )
+        assert resp.status_code == 201
+
+    resp = await app_client_no_ext.get("/collections")
+    cols = resp.json()["collections"]
+    assert len(cols) == 12
+    links = resp.json()["links"]
+    assert len(links) == 2
+    assert {"root", "self"} == {link["rel"] for link in links}
+
+
+@requires_pgstac_0_9_2
+@pytest.mark.asyncio
 async def test_get_collections_search_pagination(
     app_client, load_test_collection, load_test2_collection
 ):

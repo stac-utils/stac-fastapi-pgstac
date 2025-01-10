@@ -65,42 +65,51 @@ class CoreCrudClient(AsyncBaseCoreClient):
         """
         base_url = get_base_url(request)
 
-        # Parse request parameters
-        base_args = {
-            "bbox": bbox,
-            "limit": limit,
-            "offset": offset,
-            "query": orjson.loads(unquote_plus(query)) if query else query,
-        }
-
-        clean_args = clean_search_args(
-            base_args=base_args,
-            datetime=datetime,
-            fields=fields,
-            sortby=sortby,
-            filter_query=filter,
-            filter_lang=filter_lang,
-        )
-
-        async with request.app.state.get_connection(request, "r") as conn:
-            q, p = render(
-                """
-                SELECT * FROM collection_search(:req::text::jsonb);
-                """,
-                req=json.dumps(clean_args),
-            )
-            collections_result: Collections = await conn.fetchval(q, *p)
-
         next_link: Optional[Dict[str, Any]] = None
         prev_link: Optional[Dict[str, Any]] = None
-        if links := collections_result.get("links"):
-            next_link = None
-            prev_link = None
-            for link in links:
-                if link["rel"] == "next":
-                    next_link = link
-                elif link["rel"] == "prev":
-                    prev_link = link
+        collections_result: Collections
+
+        if self.extension_is_enabled("CollectionSearchExtension"):
+            base_args = {
+                "bbox": bbox,
+                "limit": limit,
+                "offset": offset,
+                "query": orjson.loads(unquote_plus(query)) if query else query,
+            }
+
+            clean_args = clean_search_args(
+                base_args=base_args,
+                datetime=datetime,
+                fields=fields,
+                sortby=sortby,
+                filter_query=filter,
+                filter_lang=filter_lang,
+            )
+
+            async with request.app.state.get_connection(request, "r") as conn:
+                q, p = render(
+                    """
+                    SELECT * FROM collection_search(:req::text::jsonb);
+                    """,
+                    req=json.dumps(clean_args),
+                )
+                collections_result = await conn.fetchval(q, *p)
+
+            if links := collections_result.get("links"):
+                for link in links:
+                    if link["rel"] == "next":
+                        next_link = link
+                    elif link["rel"] == "prev":
+                        prev_link = link
+
+        else:
+            async with request.app.state.get_connection(request, "r") as conn:
+                cols = await conn.fetchval(
+                    """
+                    SELECT * FROM all_collections();
+                    """
+                )
+                collections_result = {"collections": cols, "links": []}
 
         linked_collections: List[Collection] = []
         collections = collections_result["collections"]
