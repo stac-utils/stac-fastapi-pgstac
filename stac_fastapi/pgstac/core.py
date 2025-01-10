@@ -134,9 +134,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
                 linked_collections.append(coll)
 
-        if not collections:
-            next_link = None
-
         links = await CollectionSearchPagingLinks(
             request=request,
             next=next_link,

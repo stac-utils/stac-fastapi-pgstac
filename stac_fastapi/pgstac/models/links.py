@@ -206,23 +206,7 @@ class CollectionSearchPagingLinks(BaseLinks):
         if self.prev is not None:
             method = self.request.method
             if method == "GET":
-                u = urlparse(self.url)
-                params = parse_qs(u.query)
-                params.update(self.prev["body"])
-
-                # if offset is equal to default value (0), drop it
-                if params.get("offset", -1) == 0:
-                    _ = params.pop("offset")
-
-                param_string = unquote(urlencode(params, True))
-                href = ParseResult(
-                    scheme=u.scheme,
-                    netloc=u.netloc,
-                    path=u.path,
-                    params=u.params,
-                    query=param_string,
-                    fragment=u.fragment,
-                ).geturl()
+                href = merge_params(self.url, self.prev["body"])
 
                 # if prev link is equal to this link, skip it
                 if href == self.url:

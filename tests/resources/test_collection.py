@@ -469,7 +469,7 @@ async def test_get_collections_search_pagination(
     assert len(links) == 3
     assert {"root", "self", "previous"} == {link["rel"] for link in links}
     prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
-    assert "offset" not in prev_link["href"]
+    assert "offset" in prev_link["href"]
 
     ###################
     # offset=0, should not have next/previous link
