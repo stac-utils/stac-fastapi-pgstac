@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 requires_pgstac_0_9_2 = pytest.mark.skipif(
     tuple(map(int, pgstac_version.split("."))) < (0, 9, 2),
-    reason="at least PgSTAC>0.9.2 required",
+    reason="PgSTAC>=0.9.2 required",
 )
 
 
