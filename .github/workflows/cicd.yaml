@@ -15,6 +15,7 @@ jobs:
           - {python: '3.12', pypgstac: '0.9.*'}
           - {python: '3.12', pypgstac: '0.8.*'}
           - {python: '3.11', pypgstac: '0.8.*'}
+          - {python: '3.10', pypgstac: '0.8.*'}
           - {python: '3.9', pypgstac: '0.8.*'}
           - {python: '3.8', pypgstac: '0.8.*'}
 
