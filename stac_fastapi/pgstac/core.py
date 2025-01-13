@@ -25,6 +25,7 @@ from stac_pydantic.shared import BBox, MimeTypes
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.models.links import (
     CollectionLinks,
+    CollectionSearchPagingLinks,
     ItemCollectionLinks,
     ItemLinks,
     PagingLinks,
@@ -46,8 +47,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
         bbox: Optional[BBox] = None,
         datetime: Optional[DateTimeType] = None,
         limit: Optional[int] = None,
+        offset: Optional[int] = None,
         query: Optional[str] = None,
-        token: Optional[str] = None,
         fields: Optional[List[str]] = None,
         sortby: Optional[str] = None,
         filter: Optional[str] = None,
@@ -64,38 +65,51 @@ class CoreCrudClient(AsyncBaseCoreClient):
         """
         base_url = get_base_url(request)
 
-        # Parse request parameters
-        base_args = {
-            "bbox": bbox,
-            "limit": limit,
-            "token": token,
-            "query": orjson.loads(unquote_plus(query)) if query else query,
-        }
+        next_link: Optional[Dict[str, Any]] = None
+        prev_link: Optional[Dict[str, Any]] = None
+        collections_result: Collections
 
-        clean_args = clean_search_args(
-            base_args=base_args,
-            datetime=datetime,
-            fields=fields,
-            sortby=sortby,
-            filter_query=filter,
-            filter_lang=filter_lang,
-        )
+        if self.extension_is_enabled("CollectionSearchExtension"):
+            base_args = {
+                "bbox": bbox,
+                "limit": limit,
+                "offset": offset,
+                "query": orjson.loads(unquote_plus(query)) if query else query,
+            }
 
-        async with request.app.state.get_connection(request, "r") as conn:
-            q, p = render(
-                """
-                SELECT * FROM collection_search(:req::text::jsonb);
-                """,
-                req=json.dumps(clean_args),
+            clean_args = clean_search_args(
+                base_args=base_args,
+                datetime=datetime,
+                fields=fields,
+                sortby=sortby,
+                filter_query=filter,
+                filter_lang=filter_lang,
             )
-            collections_result: Collections = await conn.fetchval(q, *p)
 
-        next: Optional[str] = None
-        prev: Optional[str] = None
+            async with request.app.state.get_connection(request, "r") as conn:
+                q, p = render(
+                    """
+                    SELECT * FROM collection_search(:req::text::jsonb);
+                    """,
+                    req=json.dumps(clean_args),
+                )
+                collections_result = await conn.fetchval(q, *p)
 
-        if links := collections_result.get("links"):
-            next = collections_result["links"].pop("next")
-            prev = collections_result["links"].pop("prev")
+            if links := collections_result.get("links"):
+                for link in links:
+                    if link["rel"] == "next":
+                        next_link = link
+                    elif link["rel"] == "prev":
+                        prev_link = link
+
+        else:
+            async with request.app.state.get_connection(request, "r") as conn:
+                cols = await conn.fetchval(
+                    """
+                    SELECT * FROM all_collections();
+                    """
+                )
+                collections_result = {"collections": cols, "links": []}
 
         linked_collections: List[Collection] = []
         collections = collections_result["collections"]
@@ -120,10 +134,10 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
                 linked_collections.append(coll)
 
-        links = await PagingLinks(
+        links = await CollectionSearchPagingLinks(
             request=request,
-            next=next,
-            prev=prev,
+            next=next_link,
+            prev=prev_link,
         ).get_links()
 
         return Collections(

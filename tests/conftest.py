@@ -12,6 +12,7 @@ import pytest
 from fastapi import APIRouter
 from fastapi.responses import ORJSONResponse
 from httpx import ASGITransport, AsyncClient
+from pypgstac import __version__ as pgstac_version
 from pypgstac.db import PgstacDB
 from pypgstac.migrate import Migrate
 from pytest_postgresql.janitor import DatabaseJanitor
@@ -26,6 +27,7 @@ from stac_fastapi.extensions.core import (
     CollectionSearchExtension,
     FieldsExtension,
     FilterExtension,
+    OffsetPaginationExtension,
     SortExtension,
     TokenPaginationExtension,
     TransactionExtension,
@@ -45,6 +47,12 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 
 logger = logging.getLogger(__name__)
+
+
+requires_pgstac_0_9_2 = pytest.mark.skipif(
+    tuple(map(int, pgstac_version.split("."))) < (0, 9, 2),
+    reason="PgSTAC>=0.9.2 required",
+)
 
 
 @pytest.fixture(scope="session")
@@ -140,6 +148,7 @@ def api_client(request, database):
         SortExtension(),
         FieldsExtension(),
         FilterExtension(client=FiltersClient()),
+        OffsetPaginationExtension(),
     ]
     collection_search_extension = CollectionSearchExtension.from_extensions(
         collection_extensions
@@ -259,3 +268,48 @@ async def load_test2_item(app_client, load_test_data, load_test2_collection):
     )
     assert resp.status_code == 201
     return Item.model_validate(resp.json())
+
+
+@pytest.fixture(
+    scope="session",
+)
+def api_client_no_ext(database):
+    api_settings = Settings(
+        postgres_user=database.user,
+        postgres_pass=database.password,
+        postgres_host_reader=database.host,
+        postgres_host_writer=database.host,
+        postgres_port=database.port,
+        postgres_dbname=database.dbname,
+        testing=True,
+    )
+    return StacApi(
+        settings=api_settings,
+        extensions=[
+            TransactionExtension(client=TransactionsClient(), settings=api_settings)
+        ],
+        client=CoreCrudClient(),
+    )
+
+
+@pytest.fixture(scope="function")
+async def app_no_ext(api_client_no_ext):
+    logger.info("Creating app Fixture")
+    time.time()
+    app = api_client_no_ext.app
+    await connect_to_db(app)
+
+    yield app
+
+    await close_db_connection(app)
+
+    logger.info("Closed Pools.")
+
+
+@pytest.fixture(scope="function")
+async def app_client_no_ext(app_no_ext):
+    logger.info("creating app_client")
+    async with AsyncClient(
+        transport=ASGITransport(app=app_no_ext), base_url="http://test"
+    ) as c:
+        yield c
