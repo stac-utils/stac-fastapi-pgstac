@@ -77,7 +77,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 "query": orjson.loads(unquote_plus(query)) if query else query,
             }
 
-            clean_args = clean_search_args(
+            clean_args = self._clean_search_args(
                 base_args=base_args,
                 datetime=datetime,
                 fields=fields,
@@ -484,7 +484,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             "query": orjson.loads(unquote_plus(query)) if query else query,
         }
 
-        clean = clean_search_args(
+        clean = self._clean_search_args(
             base_args=base_args,
             intersects=intersects,
             datetime=datetime,
@@ -504,61 +504,61 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         return await self.post_search(search_request, request=request)
 
+    def _clean_search_args(  # noqa: C901
+        self,
+        base_args: Dict[str, Any],
+        intersects: Optional[str] = None,
+        datetime: Optional[DateTimeType] = None,
+        fields: Optional[List[str]] = None,
+        sortby: Optional[str] = None,
+        filter_query: Optional[str] = None,
+        filter_lang: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Clean up search arguments to match format expected by pgstac"""
+        if filter_query:
+            if filter_lang == "cql2-text":
+                filter_query = to_cql2(parse_cql2_text(filter_query))
+                filter_lang = "cql2-json"
 
-def clean_search_args(  # noqa: C901
-    base_args: Dict[str, Any],
-    intersects: Optional[str] = None,
-    datetime: Optional[DateTimeType] = None,
-    fields: Optional[List[str]] = None,
-    sortby: Optional[str] = None,
-    filter_query: Optional[str] = None,
-    filter_lang: Optional[str] = None,
-) -> Dict[str, Any]:
-    """Clean up search arguments to match format expected by pgstac"""
-    if filter_query:
-        if filter_lang == "cql2-text":
-            filter_query = to_cql2(parse_cql2_text(filter_query))
-            filter_lang = "cql2-json"
+            base_args["filter"] = orjson.loads(filter_query)
+            base_args["filter_lang"] = filter_lang
 
-        base_args["filter"] = orjson.loads(filter_query)
-        base_args["filter_lang"] = filter_lang
+        if datetime:
+            base_args["datetime"] = format_datetime_range(datetime)
 
-    if datetime:
-        base_args["datetime"] = format_datetime_range(datetime)
+        if intersects:
+            base_args["intersects"] = orjson.loads(unquote_plus(intersects))
 
-    if intersects:
-        base_args["intersects"] = orjson.loads(unquote_plus(intersects))
+        if sortby:
+            # https://github.com/radiantearth/stac-spec/tree/master/api-spec/extensions/sort#http-get-or-post-form
+            sort_param = []
+            for sort in sortby:
+                sortparts = re.match(r"^([+-]?)(.*)$", sort)
+                if sortparts:
+                    sort_param.append(
+                        {
+                            "field": sortparts.group(2).strip(),
+                            "direction": "desc" if sortparts.group(1) == "-" else "asc",
+                        }
+                    )
+            base_args["sortby"] = sort_param
 
-    if sortby:
-        # https://github.com/radiantearth/stac-spec/tree/master/api-spec/extensions/sort#http-get-or-post-form
-        sort_param = []
-        for sort in sortby:
-            sortparts = re.match(r"^([+-]?)(.*)$", sort)
-            if sortparts:
-                sort_param.append(
-                    {
-                        "field": sortparts.group(2).strip(),
-                        "direction": "desc" if sortparts.group(1) == "-" else "asc",
-                    }
-                )
-        base_args["sortby"] = sort_param
+        if fields:
+            includes = set()
+            excludes = set()
+            for field in fields:
+                if field[0] == "-":
+                    excludes.add(field[1:])
+                elif field[0] == "+":
+                    includes.add(field[1:])
+                else:
+                    includes.add(field)
+            base_args["fields"] = {"include": includes, "exclude": excludes}
 
-    if fields:
-        includes = set()
-        excludes = set()
-        for field in fields:
-            if field[0] == "-":
-                excludes.add(field[1:])
-            elif field[0] == "+":
-                includes.add(field[1:])
-            else:
-                includes.add(field)
-        base_args["fields"] = {"include": includes, "exclude": excludes}
+        # Remove None values from dict
+        clean = {}
+        for k, v in base_args.items():
+            if v is not None and v != []:
+                clean[k] = v
 
-    # Remove None values from dict
-    clean = {}
-    for k, v in base_args.items():
-        if v is not None and v != []:
-            clean[k] = v
-
-    return clean
+        return clean
