@@ -173,7 +173,7 @@ def api_client(request, database):
     api = StacApi(
         settings=api_settings,
         extensions=extensions + [collection_search_extension],
-        client=CoreCrudClient(post_request_model=search_post_request_model),
+        client=CoreCrudClient(pgstac_search_model=search_post_request_model),
         items_get_request_model=items_get_request_model,
         search_get_request_model=search_get_request_model,
         search_post_request_model=search_post_request_model,

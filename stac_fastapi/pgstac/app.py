@@ -117,7 +117,7 @@ fastapp = FastAPI(
     openapi_url=settings.openapi_url,
     docs_url=settings.docs_url,
     redoc_url=None,
-    root_path=getattr(settings, "root_path", None),
+    root_path=settings.root_path,
     lifespan=lifespan,
 )
 
@@ -128,7 +128,7 @@ api = StacApi(
     extensions=extensions + [collection_search_extension]
     if collection_search_extension
     else extensions,
-    client=CoreCrudClient(post_request_model=post_request_model),  # type: ignore
+    client=CoreCrudClient(pgstac_search_model=post_request_model),
     response_class=ORJSONResponse,
     items_get_request_model=items_get_request_model,
     search_get_request_model=get_request_model,

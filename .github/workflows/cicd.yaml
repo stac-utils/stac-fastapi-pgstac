@@ -17,7 +17,6 @@ jobs:
           - {python: '3.11', pypgstac: '0.8.*'}
           - {python: '3.10', pypgstac: '0.8.*'}
           - {python: '3.9', pypgstac: '0.8.*'}
-          - {python: '3.8', pypgstac: '0.8.*'}
 
     timeout-minutes: 20
 
