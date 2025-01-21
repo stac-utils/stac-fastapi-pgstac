@@ -548,20 +548,6 @@ async def test_get_collections_search(
     assert resp.json()["collections"][1]["id"] == load_test_collection["id"]
     assert resp.json()["collections"][0]["id"] == load_test2_collection.id
 
-    # free-text
-    resp = await app_client.get(
-        "/collections",
-        params={"q": "temperature"},
-    )
-    assert len(resp.json()["collections"]) == 1
-    assert resp.json()["collections"][0]["id"] == load_test2_collection.id
-
-    resp = await app_client.get(
-        "/collections",
-        params={"q": "nosuchthing"},
-    )
-    assert len(resp.json()["collections"]) == 0
-
 
 @pytest.mark.asyncio
 async def test_item_collection_filter_bbox(

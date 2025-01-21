@@ -320,6 +320,12 @@ async def test_collection_search_freetext(
     assert len(resp.json()["collections"]) == 1
     assert resp.json()["collections"][0]["id"] == load_test2_collection.id
 
+    resp = await app_client.get(
+        "/collections",
+        params={"q": "nosuchthing"},
+    )
+    assert len(resp.json()["collections"]) == 0
+
 
 @requires_pgstac_0_9_2
 @pytest.mark.asyncio
