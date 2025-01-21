@@ -12,7 +12,7 @@
 - update `stac-fastapi-*` requirement to `~=4.0`
 - remove `python 3.8` support
 - renamed `post_request_model` attribute to `pgstac_search_model` in `CoreCrudClient` class
-- changed `datetime` input type to `sting` in GET endpoint methods
+- changed `datetime` input type to `string` in GET endpoint methods
 - renamed `filter` to `filter_expr` input attributes in GET endpoint methods
 
 ### Fixed
