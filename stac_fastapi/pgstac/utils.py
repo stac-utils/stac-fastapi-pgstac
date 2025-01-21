@@ -1,9 +1,7 @@
 """stac-fastapi utility methods."""
 
-from datetime import datetime
 from typing import Any, Dict, Optional, Set, Union
 
-from stac_fastapi.types.rfc3339 import DateTimeType
 from stac_fastapi.types.stac import Item
 
 
@@ -114,34 +112,3 @@ def dict_deep_update(merge_to: Dict[str, Any], merge_from: Dict[str, Any]) -> No
             dict_deep_update(merge_to[k], merge_from[k])
         else:
             merge_to[k] = v
-
-
-def format_datetime_range(dt_range: Union[DateTimeType, str]) -> str:
-    """
-    Convert a datetime object or a tuple of datetime objects to a formatted string for datetime ranges.
-
-    Args:
-        dt_range (DateTimeType): The date interval,
-            which might be a single datetime or a tuple with one or two datetimes.
-
-    Returns:
-        str: A formatted string like 'YYYY-MM-DDTHH:MM:SSZ/..', 'YYYY-MM-DDTHH:MM:SSZ', or the original string input.
-    """
-    # Handle a single datetime object
-    if isinstance(dt_range, datetime):
-        return dt_range.isoformat().replace("+00:00", "Z")
-
-    # Handle a tuple containing datetime objects or None
-    elif isinstance(dt_range, tuple):
-        start, end = dt_range
-
-        # Convert start datetime to string if not None, otherwise use ".."
-        start_str = start.isoformat().replace("+00:00", "Z") if start else ".."
-
-        # Convert end datetime to string if not None, otherwise use ".."
-        end_str = end.isoformat().replace("+00:00", "Z") if end else ".."
-
-        return f"{start_str}/{end_str}"
-
-    # Return input as-is if it's not any expected type (fallback)
-    return dt_range

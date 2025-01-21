@@ -27,6 +27,7 @@ PgSTAC stores all collection and item records as jsonb fields exactly as they co
 |                            --|          --|
 |                          2.5 | >=0.7,<0.8 |
 |                          3.0 | >=0.8,<0.9 |
+|                          4.0 | >=0.8,<0.10 |
 
 ## Usage
 
