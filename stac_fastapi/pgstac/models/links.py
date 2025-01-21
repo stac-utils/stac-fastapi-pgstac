@@ -174,6 +174,55 @@ class PagingLinks(BaseLinks):
 
 
 @attr.s
+class CollectionSearchPagingLinks(BaseLinks):
+    next: Optional[Dict[str, Any]] = attr.ib(kw_only=True, default=None)
+    prev: Optional[Dict[str, Any]] = attr.ib(kw_only=True, default=None)
+
+    def link_next(self) -> Optional[Dict[str, Any]]:
+        """Create link for next page."""
+        if self.next is not None:
+            method = self.request.method
+            if method == "GET":
+                # if offset is equal to default value (0), drop it
+                if self.next["body"].get("offset", -1) == 0:
+                    _ = self.next["body"].pop("offset")
+
+                href = merge_params(self.url, self.next["body"])
+
+                # if next link is equal to this link, skip it
+                if href == self.url:
+                    return None
+
+                return {
+                    "rel": Relations.next.value,
+                    "type": MimeTypes.geojson.value,
+                    "method": method,
+                    "href": href,
+                }
+
+        return None
+
+    def link_prev(self):
+        if self.prev is not None:
+            method = self.request.method
+            if method == "GET":
+                href = merge_params(self.url, self.prev["body"])
+
+                # if prev link is equal to this link, skip it
+                if href == self.url:
+                    return None
+
+                return {
+                    "rel": Relations.previous.value,
+                    "type": MimeTypes.geojson.value,
+                    "method": method,
+                    "href": href,
+                }
+
+        return None
+
+
+@attr.s
 class CollectionLinksBase(BaseLinks):
     """Create inferred links specific to collections."""
 

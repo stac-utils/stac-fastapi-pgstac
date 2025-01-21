@@ -752,7 +752,7 @@ async def test_wrapped_function(load_test_data, database) -> None:
     )
 
     api = StacApi(
-        client=Client(post_request_model=post_request_model),
+        client=Client(pgstac_search_model=post_request_model),
         settings=settings,
         extensions=extensions,
         search_post_request_model=post_request_model,
@@ -808,7 +808,7 @@ async def test_no_extension(
     extensions = []
     post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
     api = StacApi(
-        client=CoreCrudClient(post_request_model=post_request_model),
+        client=CoreCrudClient(pgstac_search_model=post_request_model),
         settings=settings,
         extensions=extensions,
         search_post_request_model=post_request_model,

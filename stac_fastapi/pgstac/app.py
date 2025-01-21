@@ -6,8 +6,10 @@ If the variable is not set, enables all extensions.
 """
 
 import os
+from contextlib import asynccontextmanager
 
 from brotli_asgi import BrotliMiddleware
+from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.middleware import CORSMiddleware, ProxyHeaderMiddleware
@@ -18,10 +20,12 @@ from stac_fastapi.api.models import (
     create_post_request_model,
     create_request_model,
 )
+from stac_fastapi.api.openapi import update_openapi
 from stac_fastapi.extensions.core import (
     FieldsExtension,
     FilterExtension,
     FreeTextExtension,
+    OffsetPaginationExtension,
     SortExtension,
     TokenPaginationExtension,
     TransactionExtension,
@@ -61,6 +65,7 @@ collection_extensions_map = {
     "fields": FieldsExtension(),
     "filter": FilterExtension(client=FiltersClient()),
     "free_text": FreeTextExtension(),
+    "pagination": OffsetPaginationExtension(),
 }
 
 enabled_extensions = (
@@ -102,12 +107,31 @@ collections_get_request_model = (
 post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
 get_request_model = create_get_request_model(extensions)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """FastAPI Lifespan."""
+    await connect_to_db(app)
+    yield
+    await close_db_connection(app)
+
+
+fastapp = FastAPI(
+    openapi_url=settings.openapi_url,
+    docs_url=settings.docs_url,
+    redoc_url=None,
+    root_path=settings.root_path,
+    lifespan=lifespan,
+)
+
+
 api = StacApi(
+    app=update_openapi(fastapp),
     settings=settings,
     extensions=extensions + [collection_search_extension]
     if collection_search_extension
     else extensions,
-    client=CoreCrudClient(post_request_model=post_request_model),  # type: ignore
+    client=CoreCrudClient(pgstac_search_model=post_request_model),
     response_class=ORJSONResponse,
     items_get_request_model=items_get_request_model,
     search_get_request_model=get_request_model,
@@ -124,18 +148,6 @@ api = StacApi(
     ],
 )
 app = api.app
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Connect to database on startup."""
-    await connect_to_db(app)
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Close database connection."""
-    await close_db_connection(app)
 
 
 def run():

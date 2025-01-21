@@ -4,6 +4,8 @@ import pystac
 import pytest
 from stac_pydantic import Collection
 
+from ..conftest import requires_pgstac_0_9_2
+
 
 async def test_create_collection(app_client, load_test_data: Callable):
     in_json = load_test_data("test_collection.json")
@@ -304,6 +306,12 @@ async def test_get_collections_search(
     )
     assert len(resp.json()["collections"]) == 2
 
+
+@requires_pgstac_0_9_2
+@pytest.mark.asyncio
+async def test_collection_search_freetext(
+    app_client, load_test_collection, load_test2_collection
+):
     # free-text
     resp = await app_client.get(
         "/collections",
@@ -311,3 +319,203 @@ async def test_get_collections_search(
     )
     assert len(resp.json()["collections"]) == 1
     assert resp.json()["collections"][0]["id"] == load_test2_collection.id
+
+
+@requires_pgstac_0_9_2
+@pytest.mark.asyncio
+async def test_all_collections_with_pagination(app_client, load_test_data):
+    data = load_test_data("test_collection.json")
+    collection_id = data["id"]
+    for ii in range(0, 12):
+        data["id"] = collection_id + f"_{ii}"
+        resp = await app_client.post(
+            "/collections",
+            json=data,
+        )
+        assert resp.status_code == 201
+
+    resp = await app_client.get("/collections")
+    cols = resp.json()["collections"]
+    assert len(cols) == 10
+    links = resp.json()["links"]
+    assert len(links) == 3
+    assert {"root", "self", "next"} == {link["rel"] for link in links}
+
+    resp = await app_client.get("/collections", params={"limit": 12})
+    cols = resp.json()["collections"]
+    assert len(cols) == 12
+    links = resp.json()["links"]
+    assert len(links) == 2
+    assert {"root", "self"} == {link["rel"] for link in links}
+
+
+@requires_pgstac_0_9_2
+@pytest.mark.asyncio
+async def test_all_collections_without_pagination(app_client_no_ext, load_test_data):
+    data = load_test_data("test_collection.json")
+    collection_id = data["id"]
+    for ii in range(0, 12):
+        data["id"] = collection_id + f"_{ii}"
+        resp = await app_client_no_ext.post(
+            "/collections",
+            json=data,
+        )
+        assert resp.status_code == 201
+
+    resp = await app_client_no_ext.get("/collections")
+    cols = resp.json()["collections"]
+    assert len(cols) == 12
+    links = resp.json()["links"]
+    assert len(links) == 2
+    assert {"root", "self"} == {link["rel"] for link in links}
+
+
+@requires_pgstac_0_9_2
+@pytest.mark.asyncio
+async def test_get_collections_search_pagination(
+    app_client, load_test_collection, load_test2_collection
+):
+    resp = await app_client.get("/collections")
+    cols = resp.json()["collections"]
+    assert len(cols) == 2
+    links = resp.json()["links"]
+    assert len(links) == 2
+    assert {"root", "self"} == {link["rel"] for link in links}
+
+    ###################
+    # limit should be positive
+    resp = await app_client.get("/collections", params={"limit": 0})
+    assert resp.status_code == 400
+
+    ###################
+    # limit=1, should have a `next` link
+    resp = await app_client.get(
+        "/collections",
+        params={"limit": 1},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 1
+    assert cols[0]["id"] == load_test_collection["id"]
+    assert len(links) == 3
+    assert {"root", "self", "next"} == {link["rel"] for link in links}
+    next_link = list(filter(lambda link: link["rel"] == "next", links))[0]
+    assert next_link["href"].endswith("?limit=1&offset=1")
+
+    ###################
+    # limit=2, there should not be a next link
+    resp = await app_client.get(
+        "/collections",
+        params={"limit": 2},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 2
+    assert cols[0]["id"] == load_test_collection["id"]
+    assert cols[1]["id"] == load_test2_collection.id
+    assert len(links) == 2
+    assert {"root", "self"} == {link["rel"] for link in links}
+
+    ###################
+    # limit=3, there should not be a next/previous link
+    resp = await app_client.get(
+        "/collections",
+        params={"limit": 3},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 2
+    assert cols[0]["id"] == load_test_collection["id"]
+    assert cols[1]["id"] == load_test2_collection.id
+    assert len(links) == 2
+    assert {"root", "self"} == {link["rel"] for link in links}
+
+    ###################
+    # offset=3, because there are 2 collections, we should not have `next` or `prev` links
+    resp = await app_client.get(
+        "/collections",
+        params={"offset": 3},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 0
+    assert len(links) == 2
+    assert {"root", "self"} == {link["rel"] for link in links}
+
+    ###################
+    # offset=3,limit=1
+    resp = await app_client.get(
+        "/collections",
+        params={"limit": 1, "offset": 3},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 0
+    assert len(links) == 3
+    assert {"root", "self", "previous"} == {link["rel"] for link in links}
+    prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
+    assert prev_link["href"].endswith("?limit=1&offset=2")
+
+    ###################
+    # limit=2, offset=3, there should not be a next link
+    resp = await app_client.get(
+        "/collections",
+        params={"limit": 2, "offset": 3},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 0
+    assert len(links) == 3
+    assert {"root", "self", "previous"} == {link["rel"] for link in links}
+    prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
+    assert prev_link["href"].endswith("?limit=2&offset=1")
+
+    ###################
+    # offset=1,limit=1 should have a `previous` link
+    resp = await app_client.get(
+        "/collections",
+        params={"offset": 1, "limit": 1},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 1
+    assert cols[0]["id"] == load_test2_collection.id
+    assert len(links) == 3
+    assert {"root", "self", "previous"} == {link["rel"] for link in links}
+    prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
+    assert "offset" in prev_link["href"]
+
+    ###################
+    # offset=0, should not have next/previous link
+    resp = await app_client.get(
+        "/collections",
+        params={"offset": 0},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 2
+    assert len(links) == 2
+    assert {"root", "self"} == {link["rel"] for link in links}
+
+
+@requires_pgstac_0_9_2
+@pytest.mark.xfail(strict=False)
+@pytest.mark.asyncio
+async def test_get_collections_search_offset_1(
+    app_client, load_test_collection, load_test2_collection
+):
+    # BUG: pgstac doesn't return a `prev` link when limit is not set
+    # offset=1, should have a `previous` link
+    resp = await app_client.get(
+        "/collections",
+        params={"offset": 1},
+    )
+    cols = resp.json()["collections"]
+    links = resp.json()["links"]
+    assert len(cols) == 1
+    assert cols[0]["id"] == load_test2_collection.id
+    assert len(links) == 3
+    assert {"root", "self", "previous"} == {link["rel"] for link in links}
+    prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
+    # offset=0 should not be in the previous link (because it's useless)
+    assert "offset" not in prev_link["href"]
