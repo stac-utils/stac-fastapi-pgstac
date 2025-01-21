@@ -14,6 +14,7 @@
 - renamed `post_request_model` attribute to `pgstac_search_model` in `CoreCrudClient` class
 - changed `datetime` input type to `string` in GET endpoint methods
 - renamed `filter` to `filter_expr` input attributes in GET endpoint methods
+- delete `utils.format_datetime_range` function
 
 ### Fixed
 
