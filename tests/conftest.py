@@ -142,7 +142,6 @@ def api_client(request, database):
         TokenPaginationExtension(),
         FilterExtension(client=FiltersClient()),
         BulkTransactionExtension(client=BulkTransactionsClient()),
-        FreeTextExtension(),
     ]
 
     collection_extensions = [
