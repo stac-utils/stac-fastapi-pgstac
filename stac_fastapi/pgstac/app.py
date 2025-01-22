@@ -43,22 +43,28 @@ from stac_fastapi.pgstac.transactions import BulkTransactionsClient, Transaction
 from stac_fastapi.pgstac.types.search import PgstacSearch
 
 settings = Settings()
-extensions_map = {
+
+# application extensions
+application_extensions_map = {
     "transaction": TransactionExtension(
         client=TransactionsClient(),
         settings=settings,
         response_class=ORJSONResponse,
     ),
-    "query": QueryExtension(),
-    "sort": SortExtension(),
-    "fields": FieldsExtension(),
-    "pagination": TokenPaginationExtension(),
-    "filter": FilterExtension(client=FiltersClient()),
     "bulk_transactions": BulkTransactionExtension(client=BulkTransactionsClient()),
 }
 
-# some extensions are supported in combination with the collection search extension
-collection_extensions_map = {
+# search extensions
+search_extensions_map = {
+    "query": QueryExtension(),
+    "sort": SortExtension(),
+    "fields": FieldsExtension(),
+    "filter": FilterExtension(client=FiltersClient()),
+    "pagination": TokenPaginationExtension(),
+}
+
+# collection_search extensions
+cs_extensions_map = {
     "query": QueryExtension(),
     "sort": SortExtension(),
     "fields": FieldsExtension(),
@@ -67,44 +73,68 @@ collection_extensions_map = {
     "pagination": OffsetPaginationExtension(),
 }
 
+# item_collection extensions
+itm_col_extensions_map = {
+    "filter": FilterExtension(client=FiltersClient()),
+    "pagination": TokenPaginationExtension(),
+}
+
+known_extensions = {
+    *application_extensions_map.keys(),
+    *search_extensions_map.keys(),
+    *cs_extensions_map.keys(),
+    *itm_col_extensions_map.keys(),
+    "collection_search",
+}
+
 enabled_extensions = (
     os.environ["ENABLED_EXTENSIONS"].split(",")
     if "ENABLED_EXTENSIONS" in os.environ
-    else list(extensions_map.keys()) + ["collection_search"]
+    else known_extensions
 )
-extensions = [
-    extension for key, extension in extensions_map.items() if key in enabled_extensions
+
+application_extensions = [
+    extension
+    for key, extension in application_extensions_map.items()
+    if key in enabled_extensions
 ]
 
-items_get_request_model = (
-    create_request_model(
+# /search models
+search_extensions = [
+    extension
+    for key, extension in search_extensions_map.items()
+    if key in enabled_extensions
+]
+post_request_model = create_post_request_model(search_extensions, base_model=PgstacSearch)
+get_request_model = create_get_request_model(search_extensions)
+application_extensions.extend(search_extensions)
+
+# /collections/{collectionId}/items model
+items_get_request_model = ItemCollectionUri
+itm_col_extensions = [
+    extension
+    for key, extension in itm_col_extensions_map.items()
+    if key in enabled_extensions
+]
+if itm_col_extensions:
+    items_get_request_model = create_request_model(
         model_name="ItemCollectionUri",
         base_model=ItemCollectionUri,
-        mixins=[TokenPaginationExtension().GET],
+        extensions=itm_col_extensions,
         request_type="GET",
     )
-    if any(isinstance(ext, TokenPaginationExtension) for ext in extensions)
-    else ItemCollectionUri
-)
 
-collection_search_extension = (
-    CollectionSearchExtension.from_extensions(
-        [
-            extension
-            for key, extension in collection_extensions_map.items()
-            if key in enabled_extensions
-        ]
-    )
-    if "collection_search" in enabled_extensions
-    else None
-)
-
-collections_get_request_model = (
-    collection_search_extension.GET if collection_search_extension else EmptyRequest
-)
-
-post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
-get_request_model = create_get_request_model(extensions)
+# /collections model
+collections_get_request_model = EmptyRequest
+if "collection_search" in enabled_extensions:
+    cs_extensions = [
+        extension
+        for key, extension in cs_extensions_map.items()
+        if key in enabled_extensions
+    ]
+    collection_search_extension = CollectionSearchExtension.from_extensions(cs_extensions)
+    collections_get_request_model = collection_search_extension.GET
+    application_extensions.append(collection_search_extension)
 
 
 @asynccontextmanager
@@ -127,9 +157,7 @@ fastapp = FastAPI(
 api = StacApi(
     app=update_openapi(fastapp),
     settings=settings,
-    extensions=extensions + [collection_search_extension]
-    if collection_search_extension
-    else extensions,
+    extensions=application_extensions,
     client=CoreCrudClient(pgstac_search_model=post_request_model),
     response_class=ORJSONResponse,
     items_get_request_model=items_get_request_model,

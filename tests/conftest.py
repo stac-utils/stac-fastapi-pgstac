@@ -134,15 +134,19 @@ def api_client(request, database):
         )
     )
 
-    extensions = [
+    application_extensions = [
         TransactionExtension(client=TransactionsClient(), settings=api_settings),
+        BulkTransactionExtension(client=BulkTransactionsClient()),
+    ]
+
+    search_extensions = [
         QueryExtension(),
         SortExtension(),
         FieldsExtension(),
-        TokenPaginationExtension(),
         FilterExtension(client=FiltersClient()),
-        BulkTransactionExtension(client=BulkTransactionsClient()),
+        TokenPaginationExtension(),
     ]
+    application_extensions.extend(search_extensions)
 
     collection_extensions = [
         QueryExtension(),
@@ -155,26 +159,31 @@ def api_client(request, database):
     collection_search_extension = CollectionSearchExtension.from_extensions(
         collection_extensions
     )
+    application_extensions.append(collection_search_extension)
+
+    item_collection_extensions = [
+        FilterExtension(client=FiltersClient()),
+        TokenPaginationExtension(),
+    ]
+    # NOTE: we don't need to add the extensions to application_extensions
+    # because they are already in it
 
     items_get_request_model = create_request_model(
         model_name="ItemCollectionUri",
         base_model=ItemCollectionUri,
-        mixins=[
-            TokenPaginationExtension().GET,
-            FilterExtension(client=FiltersClient()).GET,
-        ],
+        extensions=item_collection_extensions,
         request_type="GET",
     )
-    search_get_request_model = create_get_request_model(extensions)
+    search_get_request_model = create_get_request_model(search_extensions)
     search_post_request_model = create_post_request_model(
-        extensions, base_model=PgstacSearch
+        search_extensions, base_model=PgstacSearch
     )
 
     collections_get_request_model = collection_search_extension.GET
 
     api = StacApi(
         settings=api_settings,
-        extensions=extensions + [collection_search_extension],
+        extensions=application_extensions,
         client=CoreCrudClient(pgstac_search_model=search_post_request_model),
         items_get_request_model=items_get_request_model,
         search_get_request_model=search_get_request_model,
