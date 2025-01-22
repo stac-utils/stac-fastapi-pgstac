@@ -54,7 +54,6 @@ extensions_map = {
     "fields": FieldsExtension(),
     "pagination": TokenPaginationExtension(),
     "filter": FilterExtension(client=FiltersClient()),
-    "free_text": FreeTextExtension(),
     "bulk_transactions": BulkTransactionExtension(client=BulkTransactionsClient()),
 }
 
