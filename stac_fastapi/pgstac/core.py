@@ -342,7 +342,10 @@ class CoreCrudClient(AsyncBaseCoreClient):
         bbox: Optional[BBox] = None,
         datetime: Optional[str] = None,
         limit: Optional[int] = None,
+        # Extensions
         token: Optional[str] = None,
+        filter_expr: Optional[str] = None,
+        filter_lang: Optional[str] = None,
         **kwargs,
     ) -> ItemCollection:
         """Get all items from a specific collection.
@@ -368,21 +371,11 @@ class CoreCrudClient(AsyncBaseCoreClient):
             "token": token,
         }
 
-        if self.extension_is_enabled("FilterExtension"):
-            filter_lang = kwargs.get("filter_lang", None)
-            filter_query = kwargs.get("filter_expr", None)
-            if filter_query:
-                if filter_lang == "cql2-text":
-                    filter_query = to_cql2(parse_cql2_text(filter_query))
-                    filter_lang = "cql2-json"
-
-                base_args["filter"] = orjson.loads(filter_query)
-                base_args["filter-lang"] = filter_lang
-
-        clean = {}
-        for k, v in base_args.items():
-            if v is not None and v != []:
-                clean[k] = v
+        clean = self._clean_search_args(
+            base_args=base_args,
+            filter_query=filter_expr,
+            filter_lang=filter_lang,
+        )
 
         search_request = self.pgstac_search_model(**clean)
         item_collection = await self._search_base(search_request, request=request)
