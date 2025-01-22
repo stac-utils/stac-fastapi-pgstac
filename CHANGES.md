@@ -4,7 +4,7 @@
 
 ### Changed
 
-- Handle `next` and `dev` tokens now returned as links from pgstac>=0.9.0 (author @zstatmanweil, https://github.com/stac-utils/stac-fastapi-pgstac/pull/140)
+- Handle `next` and `dev` tokens now returned as links from pgstac>=0.9.0 (author @zstatmanweil, <https://github.com/stac-utils/stac-fastapi-pgstac/pull/140>)
 - Add collection search extension ([#139](https://github.com/stac-utils/stac-fastapi-pgstac/pull/139))
 - keep `/search` and `/collections` extensions separate ([#158](https://github.com/stac-utils/stac-fastapi-pgstac/pull/158))
 - update `pypgstac` requirement to `>=0.8,<0.10`
@@ -15,6 +15,7 @@
 - changed `datetime` input type to `string` in GET endpoint methods
 - renamed `filter` to `filter_expr` input attributes in GET endpoint methods
 - delete `utils.format_datetime_range` function
+- add [free-text extension](https://github.com/stac-api-extensions/freetext-search) to collection search extensions ([#162](https://github.com/stac-utils/stac-fastapi-pgstac/pull/162))
 
 ### Fixed
 
@@ -23,7 +24,7 @@
 
 ## [3.0.1] - 2024-11-14
 
-- Enable runtime `CORS` configuration using environment variables (`CORS_ORIGIN="https://...,https://..."`, `CORS_METHODS="PUT,OPTIONS"`) (https://github.com/stac-utils/stac-fastapi-pgstac/pull/168)
+- Enable runtime `CORS` configuration using environment variables (`CORS_ORIGIN="https://...,https://..."`, `CORS_METHODS="PUT,OPTIONS"`) (<https://github.com/stac-utils/stac-fastapi-pgstac/pull/168>)
 
 ## [3.0.0] - 2024-08-02
 

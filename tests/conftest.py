@@ -27,6 +27,7 @@ from stac_fastapi.extensions.core import (
     CollectionSearchExtension,
     FieldsExtension,
     FilterExtension,
+    FreeTextExtension,
     OffsetPaginationExtension,
     SortExtension,
     TokenPaginationExtension,
@@ -148,6 +149,7 @@ def api_client(request, database):
         SortExtension(),
         FieldsExtension(),
         FilterExtension(client=FiltersClient()),
+        FreeTextExtension(),
         OffsetPaginationExtension(),
     ]
     collection_search_extension = CollectionSearchExtension.from_extensions(

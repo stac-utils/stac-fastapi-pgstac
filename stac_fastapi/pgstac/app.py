@@ -24,6 +24,7 @@ from stac_fastapi.api.openapi import update_openapi
 from stac_fastapi.extensions.core import (
     FieldsExtension,
     FilterExtension,
+    FreeTextExtension,
     OffsetPaginationExtension,
     SortExtension,
     TokenPaginationExtension,
@@ -62,6 +63,7 @@ collection_extensions_map = {
     "sort": SortExtension(),
     "fields": FieldsExtension(),
     "filter": FilterExtension(client=FiltersClient()),
+    "free_text": FreeTextExtension(),
     "pagination": OffsetPaginationExtension(),
 }
 

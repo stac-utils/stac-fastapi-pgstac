@@ -309,6 +309,26 @@ async def test_get_collections_search(
 
 @requires_pgstac_0_9_2
 @pytest.mark.asyncio
+async def test_collection_search_freetext(
+    app_client, load_test_collection, load_test2_collection
+):
+    # free-text
+    resp = await app_client.get(
+        "/collections",
+        params={"q": "temperature"},
+    )
+    assert len(resp.json()["collections"]) == 1
+    assert resp.json()["collections"][0]["id"] == load_test2_collection.id
+
+    resp = await app_client.get(
+        "/collections",
+        params={"q": "nosuchthing"},
+    )
+    assert len(resp.json()["collections"]) == 0
+
+
+@requires_pgstac_0_9_2
+@pytest.mark.asyncio
 async def test_all_collections_with_pagination(app_client, load_test_data):
     data = load_test_data("test_collection.json")
     collection_id = data["id"]
