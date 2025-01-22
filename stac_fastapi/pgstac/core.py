@@ -462,7 +462,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
         sortby: Optional[str] = None,
         filter_expr: Optional[str] = None,
         filter_lang: Optional[str] = None,
-        q: Optional[List[str]] = None,
         **kwargs,
     ) -> ItemCollection:
         """Cross catalog search (GET).
@@ -490,7 +489,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
             sortby=sortby,
             filter_query=filter_expr,
             filter_lang=filter_lang,
-            q=q,
         )
 
         # Do the request
