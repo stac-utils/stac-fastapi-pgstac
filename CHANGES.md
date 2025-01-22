@@ -4,8 +4,7 @@
 
 ### Changed
 
-- Handle `next` and `dev` tokens now returned as links from pgstac>=0.9.0 (author @zstatmanweil, <https://github.com/stac-utils/stac-fastapi-pgstac/pull/140>)
-- Add collection search extension ([#139](https://github.com/stac-utils/stac-fastapi-pgstac/pull/139))
+- handle `next` and `dev` tokens now returned as links from pgstac>=0.9.0 (author @zstatmanweil, <https://github.com/stac-utils/stac-fastapi-pgstac/pull/140>)
 - keep `/search` and `/collections` extensions separate ([#158](https://github.com/stac-utils/stac-fastapi-pgstac/pull/158))
 - update `pypgstac` requirement to `>=0.8,<0.10`
 - set `pypgstac==0.9.*` for test requirements
@@ -15,12 +14,17 @@
 - changed `datetime` input type to `string` in GET endpoint methods
 - renamed `filter` to `filter_expr` input attributes in GET endpoint methods
 - delete `utils.format_datetime_range` function
+
+### Added
+
+- add [collection search extension](https://github.com/stac-api-extensions/collection-search) support ([#139](https://github.com/stac-utils/stac-fastapi-pgstac/pull/139))
 - add [free-text extension](https://github.com/stac-api-extensions/freetext-search) to collection search extensions ([#162](https://github.com/stac-utils/stac-fastapi-pgstac/pull/162))
+- add [filter extension](https://github.com/stac-api-extensions/filter) support to Item Collection endpoint
 
 ### Fixed
 
-- Fix Docker compose file, so example data can be loaded into database (author @zstatmanweil, <https://github.com/stac-utils/stac-fastapi-pgstac/pull/142>)
-- Fix `filter` extension implementation in `CoreCrudClient`
+- fix Docker compose file, so example data can be loaded into database (author @zstatmanweil, <https://github.com/stac-utils/stac-fastapi-pgstac/pull/142>)
+- fix `filter` extension implementation in `CoreCrudClient`
 
 ## [3.0.1] - 2024-11-14
 
