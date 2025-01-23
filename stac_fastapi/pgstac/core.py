@@ -343,9 +343,12 @@ class CoreCrudClient(AsyncBaseCoreClient):
         datetime: Optional[str] = None,
         limit: Optional[int] = None,
         # Extensions
-        token: Optional[str] = None,
+        query: Optional[str] = None,
+        fields: Optional[List[str]] = None,
+        sortby: Optional[str] = None,
         filter_expr: Optional[str] = None,
         filter_lang: Optional[str] = None,
+        token: Optional[str] = None,
         **kwargs,
     ) -> ItemCollection:
         """Get all items from a specific collection.
@@ -369,12 +372,15 @@ class CoreCrudClient(AsyncBaseCoreClient):
             "datetime": datetime,
             "limit": limit,
             "token": token,
+            "query": orjson.loads(unquote_plus(query)) if query else query,
         }
 
         clean = self._clean_search_args(
             base_args=base_args,
             filter_query=filter_expr,
             filter_lang=filter_lang,
+            fields=fields,
+            sortby=sortby,
         )
 
         search_request = self.pgstac_search_model(**clean)
@@ -450,11 +456,11 @@ class CoreCrudClient(AsyncBaseCoreClient):
         limit: Optional[int] = None,
         # Extensions
         query: Optional[str] = None,
-        token: Optional[str] = None,
         fields: Optional[List[str]] = None,
         sortby: Optional[str] = None,
         filter_expr: Optional[str] = None,
         filter_lang: Optional[str] = None,
+        token: Optional[str] = None,
         **kwargs,
     ) -> ItemCollection:
         """Cross catalog search (GET).
