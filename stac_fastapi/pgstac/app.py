@@ -20,19 +20,22 @@ from stac_fastapi.api.models import (
     create_post_request_model,
     create_request_model,
 )
-from stac_fastapi.api.openapi import update_openapi
 from stac_fastapi.extensions.core import (
+    CollectionSearchExtension,
+    CollectionSearchFilterExtension,
     FieldsExtension,
     FreeTextExtension,
+    ItemCollectionFilterExtension,
     OffsetPaginationExtension,
+    SearchFilterExtension,
     SortExtension,
     TokenPaginationExtension,
     TransactionExtension,
 )
-from stac_fastapi.extensions.core.collection_search import CollectionSearchExtension
-from stac_fastapi.extensions.core.collection_search.request import (
-    BaseCollectionSearchGetRequest,
-)
+from stac_fastapi.extensions.core.fields import FieldsConformanceClasses
+from stac_fastapi.extensions.core.free_text import FreeTextConformanceClasses
+from stac_fastapi.extensions.core.query import QueryConformanceClasses
+from stac_fastapi.extensions.core.sort import SortConformanceClasses
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
 from starlette.middleware import Middleware
 
@@ -40,12 +43,7 @@ from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.core import CoreCrudClient
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
 from stac_fastapi.pgstac.extensions import QueryExtension
-from stac_fastapi.pgstac.extensions.filter import (
-    CollectionSearchFilterExtension,
-    FiltersClient,
-    ItemCollectionFilterExtension,
-    SearchFilterExtension,
-)
+from stac_fastapi.pgstac.extensions.filter import FiltersClient
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
 
@@ -72,26 +70,12 @@ search_extensions_map = {
 
 # collection_search extensions
 cs_extensions_map = {
-    "query": QueryExtension(
-        conformance_classes=[
-            "https://api.stacspec.org/v1.0.0-rc.1/collection-search#query"
-        ]
-    ),
-    "sort": SortExtension(
-        conformance_classes=[
-            "https://api.stacspec.org/v1.0.0-rc.1/collection-search#sort"
-        ]
-    ),
-    "fields": FieldsExtension(
-        conformance_classes=[
-            "https://api.stacspec.org/v1.0.0-rc.1/collection-search#fields"
-        ]
-    ),
+    "query": QueryExtension(conformance_classes=[QueryConformanceClasses.COLLECTIONS]),
+    "sort": SortExtension(conformance_classes=[SortConformanceClasses.COLLECTIONS]),
+    "fields": FieldsExtension(conformance_classes=[FieldsConformanceClasses.COLLECTIONS]),
     "filter": CollectionSearchFilterExtension(client=FiltersClient()),
     "free_text": FreeTextExtension(
-        conformance_classes=[
-            "https://api.stacspec.org/v1.0.0-rc.1/collection-search#free-text",
-        ],
+        conformance_classes=[FreeTextConformanceClasses.COLLECTIONS],
     ),
     "pagination": OffsetPaginationExtension(),
 }
@@ -99,14 +83,12 @@ cs_extensions_map = {
 # item_collection extensions
 itm_col_extensions_map = {
     "query": QueryExtension(
-        conformance_classes=["https://api.stacspec.org/v1.0.0/ogcapi-features#query"],
+        conformance_classes=[QueryConformanceClasses.ITEMS],
     ),
     "sort": SortExtension(
-        conformance_classes=["https://api.stacspec.org/v1.0.0/ogcapi-features#sort"],
+        conformance_classes=[SortConformanceClasses.ITEMS],
     ),
-    "fields": FieldsExtension(
-        conformance_classes=["https://api.stacspec.org/v1.0.0/ogcapi-features#fields"],
-    ),
+    "fields": FieldsExtension(conformance_classes=[FieldsConformanceClasses.ITEMS]),
     "filter": ItemCollectionFilterExtension(client=FiltersClient()),
     "pagination": TokenPaginationExtension(),
 }
@@ -160,26 +142,13 @@ if itm_col_extensions:
 # /collections model
 collections_get_request_model = EmptyRequest
 if "collection_search" in enabled_extensions:
-    mixins = []
-    mixing_conformances = [
-        "https://api.stacspec.org/v1.0.0-rc.1/collection-search",
-        "http://www.opengis.net/spec/ogcapi-common-2/1.0/conf/simple-query",
+    cs_extensions = [
+        extension
+        for key, extension in cs_extensions_map.items()
+        if key in enabled_extensions
     ]
-    for key, extension in cs_extensions_map.items():
-        if key not in enabled_extensions:
-            continue
-        mixins.append(extension.GET)
-        mixing_conformances.extend(extension.conformance_classes)
-
-    collections_get_request_model = create_request_model(
-        model_name="CollectionsGetRequest",
-        base_model=BaseCollectionSearchGetRequest,
-        mixins=mixins,
-        request_type="GET",
-    )
-    collection_search_extension = CollectionSearchExtension(
-        GET=collections_get_request_model, conformance_classes=mixing_conformances
-    )
+    collection_search_extension = CollectionSearchExtension.from_extensions(cs_extensions)
+    collections_get_request_model = collection_search_extension.GET
     application_extensions.append(collection_search_extension)
 
 
@@ -191,17 +160,17 @@ async def lifespan(app: FastAPI):
     await close_db_connection(app)
 
 
-fastapp = FastAPI(
-    openapi_url=settings.openapi_url,
-    docs_url=settings.docs_url,
-    redoc_url=None,
-    root_path=settings.root_path,
-    lifespan=lifespan,
-)
-
-
 api = StacApi(
-    app=update_openapi(fastapp),
+    app=FastAPI(
+        openapi_url=settings.openapi_url,
+        docs_url=settings.docs_url,
+        redoc_url=None,
+        root_path=settings.root_path,
+        title=settings.stac_fastapi_title,
+        version=settings.stac_fastapi_version,
+        description=settings.stac_fastapi_description,
+        lifespan=lifespan,
+    ),
     settings=settings,
     extensions=application_extensions,
     client=CoreCrudClient(pgstac_search_model=post_request_model),

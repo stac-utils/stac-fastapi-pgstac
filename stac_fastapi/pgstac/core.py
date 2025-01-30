@@ -123,7 +123,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
                     collection_id=coll["id"], request=request
                 ).get_links(extra_links=coll.get("links"))
 
-                if self.extension_is_enabled("FilterExtension"):
+                if self.extension_is_enabled(
+                    "FilterExtension"
+                ) or self.extension_is_enabled("ItemCollectionFilterExtension"):
                     coll["links"].append(
                         {
                             "rel": Relations.queryables.value,
@@ -178,7 +180,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
             collection_id=collection_id, request=request
         ).get_links(extra_links=collection.get("links"))
 
-        if self.extension_is_enabled("FilterExtension"):
+        if self.extension_is_enabled("FilterExtension") or self.extension_is_enabled(
+            "ItemCollectionFilterExtension"
+        ):
             base_url = get_base_url(request)
             collection["links"].append(
                 {

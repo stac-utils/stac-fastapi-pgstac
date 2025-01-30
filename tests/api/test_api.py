@@ -17,6 +17,7 @@ from stac_fastapi.extensions.core import (
     FieldsExtension,
     TransactionExtension,
 )
+from stac_fastapi.extensions.core.fields import FieldsConformanceClasses
 from stac_fastapi.types import stac as stac_types
 
 from stac_fastapi.pgstac.core import CoreCrudClient, Settings
@@ -733,7 +734,7 @@ async def test_wrapped_function(load_test_data, database) -> None:
 
     collection_search_extension = CollectionSearchExtension.from_extensions(
         extensions=[
-            FieldsExtension(),
+            FieldsExtension(conformance_classes=[FieldsConformanceClasses.COLLECTIONS]),
         ]
     )
 
