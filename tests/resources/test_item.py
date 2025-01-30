@@ -148,7 +148,9 @@ async def test_fetches_valid_item(
     mock_root = pystac.Catalog(
         id="test", description="test desc", href="https://example.com"
     )
-    item = pystac.Item.from_dict(item_dict, preserve_dict=False, root=mock_root)
+    item = pystac.Item.from_dict(
+        item_dict, preserve_dict=False, root=mock_root, migrate=False
+    )
     item.validate()
 
 
