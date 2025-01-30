@@ -4,22 +4,28 @@
 
 ### Changed
 
-- handle `next` and `dev` tokens now returned as links from pgstac>=0.9.0 (author @zstatmanweil, <https://github.com/stac-utils/stac-fastapi-pgstac/pull/140>)
+- remove `python 3.8` support
+- update `stac-fastapi-*` requirement to `~=5.0`
 - keep `/search` and `/collections` extensions separate ([#158](https://github.com/stac-utils/stac-fastapi-pgstac/pull/158))
 - update `pypgstac` requirement to `>=0.8,<0.10`
 - set `pypgstac==0.9.*` for test requirements
-- update `stac-fastapi-*` requirement to `~=4.0`
-- remove `python 3.8` support
 - renamed `post_request_model` attribute to `pgstac_search_model` in `CoreCrudClient` class
 - changed `datetime` input type to `string` in GET endpoint methods
 - renamed `filter` to `filter_expr` input attributes in GET endpoint methods
 - delete `utils.format_datetime_range` function
+
+### Fixed
+
+- handle `next` and `dev` tokens now returned as links from pgstac>=0.9.0 (author @zstatmanweil, <https://github.com/stac-utils/stac-fastapi-pgstac/pull/140>)
 
 ### Added
 
 - add [collection search extension](https://github.com/stac-api-extensions/collection-search) support ([#139](https://github.com/stac-utils/stac-fastapi-pgstac/pull/139))
 - add [free-text extension](https://github.com/stac-api-extensions/freetext-search) to collection search extensions ([#162](https://github.com/stac-utils/stac-fastapi-pgstac/pull/162))
 - add [filter extension](https://github.com/stac-api-extensions/filter) support to Item Collection endpoint
+- add [sort extension](https://github.com/stac-api-extensions/sort) support to Item Collection endpoint ([#192](https://github.com/stac-utils/stac-fastapi-pgstac/pull/192))
+- add [query extension](https://github.com/stac-api-extensions/query) support to Item Collection endpoint ([#162](https://github.com/stac-utils/stac-fastapi-pgstac/pull/192))
+- add [fields extension](https://github.com/stac-api-extensions/fields) support to Item Collection endpoint ([#162](https://github.com/stac-utils/stac-fastapi-pgstac/pull/192))
 
 ### Fixed
 
