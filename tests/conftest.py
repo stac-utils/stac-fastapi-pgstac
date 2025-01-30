@@ -25,14 +25,20 @@ from stac_fastapi.api.models import (
 )
 from stac_fastapi.extensions.core import (
     CollectionSearchExtension,
+    CollectionSearchFilterExtension,
     FieldsExtension,
-    FilterExtension,
     FreeTextExtension,
+    ItemCollectionFilterExtension,
     OffsetPaginationExtension,
+    SearchFilterExtension,
     SortExtension,
     TokenPaginationExtension,
     TransactionExtension,
 )
+from stac_fastapi.extensions.core.fields import FieldsConformanceClasses
+from stac_fastapi.extensions.core.free_text import FreeTextConformanceClasses
+from stac_fastapi.extensions.core.query import QueryConformanceClasses
+from stac_fastapi.extensions.core.sort import SortConformanceClasses
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
 from stac_pydantic import Collection, Item
 
@@ -143,17 +149,19 @@ def api_client(request, database):
         QueryExtension(),
         SortExtension(),
         FieldsExtension(),
-        FilterExtension(client=FiltersClient()),
+        SearchFilterExtension(client=FiltersClient()),
         TokenPaginationExtension(),
     ]
     application_extensions.extend(search_extensions)
 
     collection_extensions = [
-        QueryExtension(),
-        SortExtension(),
-        FieldsExtension(),
-        FilterExtension(client=FiltersClient()),
-        FreeTextExtension(),
+        QueryExtension(conformance_classes=[QueryConformanceClasses.COLLECTIONS]),
+        SortExtension(conformance_classes=[SortConformanceClasses.COLLECTIONS]),
+        FieldsExtension(conformance_classes=[FieldsConformanceClasses.COLLECTIONS]),
+        CollectionSearchFilterExtension(client=FiltersClient()),
+        FreeTextExtension(
+            conformance_classes=[FreeTextConformanceClasses.COLLECTIONS],
+        ),
         OffsetPaginationExtension(),
     ]
     collection_search_extension = CollectionSearchExtension.from_extensions(
@@ -162,11 +170,17 @@ def api_client(request, database):
     application_extensions.append(collection_search_extension)
 
     item_collection_extensions = [
-        FilterExtension(client=FiltersClient()),
+        QueryExtension(
+            conformance_classes=[QueryConformanceClasses.ITEMS],
+        ),
+        SortExtension(
+            conformance_classes=[SortConformanceClasses.ITEMS],
+        ),
+        FieldsExtension(conformance_classes=[FieldsConformanceClasses.ITEMS]),
+        ItemCollectionFilterExtension(client=FiltersClient()),
         TokenPaginationExtension(),
     ]
-    # NOTE: we don't need to add the extensions to application_extensions
-    # because they are already in it
+    application_extensions.extend(item_collection_extensions)
 
     items_get_request_model = create_request_model(
         model_name="ItemCollectionUri",
@@ -179,8 +193,6 @@ def api_client(request, database):
         search_extensions, base_model=PgstacSearch
     )
 
-    collections_get_request_model = collection_search_extension.GET
-
     api = StacApi(
         settings=api_settings,
         extensions=application_extensions,
@@ -188,7 +200,7 @@ def api_client(request, database):
         items_get_request_model=items_get_request_model,
         search_get_request_model=search_get_request_model,
         search_post_request_model=search_post_request_model,
-        collections_get_request_model=collections_get_request_model,
+        collections_get_request_model=collection_search_extension.GET,
         response_class=ORJSONResponse,
         router=APIRouter(prefix=prefix),
     )

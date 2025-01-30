@@ -17,6 +17,7 @@ from stac_fastapi.extensions.core import (
     FieldsExtension,
     TransactionExtension,
 )
+from stac_fastapi.extensions.core.fields import FieldsConformanceClasses
 from stac_fastapi.types import stac as stac_types
 
 from stac_fastapi.pgstac.core import CoreCrudClient, Settings
@@ -86,10 +87,12 @@ async def test_landing_links(app_client):
 
 async def test_get_queryables_content_type(app_client, load_test_collection):
     resp = await app_client.get("queryables")
+    assert resp.status_code == 200
     assert resp.headers["content-type"] == "application/schema+json"
 
     coll = load_test_collection
     resp = await app_client.get(f"collections/{coll['id']}/queryables")
+    assert resp.status_code == 200
     assert resp.headers["content-type"] == "application/schema+json"
 
 
@@ -487,6 +490,7 @@ async def test_search_duplicate_forward_headers(
 @pytest.mark.asyncio
 async def test_base_queryables(load_test_data, app_client, load_test_collection):
     resp = await app_client.get("/queryables")
+    assert resp.status_code == 200
     assert resp.headers["Content-Type"] == "application/schema+json"
     q = resp.json()
     assert q["$id"].endswith("/queryables")
@@ -498,6 +502,7 @@ async def test_base_queryables(load_test_data, app_client, load_test_collection)
 @pytest.mark.asyncio
 async def test_collection_queryables(load_test_data, app_client, load_test_collection):
     resp = await app_client.get("/collections/test-collection/queryables")
+    assert resp.status_code == 200
     assert resp.headers["Content-Type"] == "application/schema+json"
     q = resp.json()
     assert q["$id"].endswith("/collections/test-collection/queryables")
@@ -733,7 +738,7 @@ async def test_wrapped_function(load_test_data, database) -> None:
 
     collection_search_extension = CollectionSearchExtension.from_extensions(
         extensions=[
-            FieldsExtension(),
+            FieldsExtension(conformance_classes=[FieldsConformanceClasses.COLLECTIONS]),
         ]
     )
 
