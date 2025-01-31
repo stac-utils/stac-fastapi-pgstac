@@ -143,7 +143,7 @@ class PagingLinks(BaseLinks):
                     "rel": Relations.next,
                     "type": MimeTypes.geojson,
                     "method": method,
-                    "href": f"{self.request.url}",
+                    "href": str(self.request.url),
                     "body": {**self.request.postbody, "token": f"next:{self.next}"},
                 }
 
@@ -167,7 +167,7 @@ class PagingLinks(BaseLinks):
                     "rel": Relations.previous,
                     "type": MimeTypes.geojson,
                     "method": method,
-                    "href": f"{self.request.url}",
+                    "href": str(self.request.url),
                     "body": {**self.request.postbody, "token": f"prev:{self.prev}"},
                 }
         return None
