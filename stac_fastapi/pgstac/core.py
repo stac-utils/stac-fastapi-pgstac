@@ -148,6 +148,12 @@ class CoreCrudClient(AsyncBaseCoreClient):
         return Collections(
             collections=linked_collections or [],
             links=links,
+            numberMatched=collections_result.get(
+                "numberMatched", len(linked_collections)
+            ),
+            numberReturned=collections_result.get(
+                "numberReturned", len(linked_collections)
+            ),
         )
 
     async def get_collection(

@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [4.0.1] - 2025-02-06
+
+### Added
+
+- add `numberReturned` and `numberMatched` in `/collections` response
+
 ## [4.0.0] - 2025-02-03
 
 ### Changed
@@ -366,7 +372,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.0..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.1..main>
+[4.0.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.0..4.0.1>
 [4.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.1..4.0.0>
 [3.0.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0..3.0.1>
 [3.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.5.0..3.0.0>

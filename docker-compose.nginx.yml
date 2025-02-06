@@ -10,4 +10,4 @@ services:
     command: [ "nginx-debug", "-g", "daemon off;" ]
   app:
     environment:
-      - UVICORN_ROOT_PATH=/api/v1/pgstac
+      - ROOT_PATH=/api/v1/pgstac
