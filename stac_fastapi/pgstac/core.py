@@ -9,7 +9,8 @@ import attr
 import orjson
 from asyncpg.exceptions import InvalidDatetimeFormatError
 from buildpg import render
-from fastapi import Request
+from fastapi import HTTPException, Request
+from pydantic import ValidationError
 from pygeofilter.backends.cql2_json import to_cql2
 from pygeofilter.parsers.cql2_text import parse as parse_cql2_text
 from pypgstac.hydration import hydrate
@@ -392,7 +393,13 @@ class CoreCrudClient(AsyncBaseCoreClient):
             sortby=sortby,
         )
 
-        search_request = self.pgstac_search_model(**clean)
+        try:
+            search_request = self.pgstac_search_model(**clean)
+        except ValidationError as e:
+            raise HTTPException(
+                status_code=400, detail=f"Invalid parameters provided {e}"
+            ) from e
+
         item_collection = await self._search_base(search_request, request=request)
 
         links = await ItemCollectionLinks(
@@ -506,7 +513,13 @@ class CoreCrudClient(AsyncBaseCoreClient):
             filter_lang=filter_lang,
         )
 
-        search_request = self.pgstac_search_model(**clean)
+        try:
+            search_request = self.pgstac_search_model(**clean)
+        except ValidationError as e:
+            raise HTTPException(
+                status_code=400, detail=f"Invalid parameters provided {e}"
+            ) from e
+
         item_collection = await self._search_base(search_request, request=request)
 
         # If we have the `fields` extension enabled
