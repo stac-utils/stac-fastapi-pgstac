@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- use Relation's `value` for `POST` prev/next links
+- return `JSONResponse` directly from `/items` endpoint when `fields` parameter is pass and avoid Pydantic validation
+
+### Changed
+
+- avoid re-use of internal `CoreCrudClient.post_search` in `CoreCrudClient.get_search` method to allow customization
+
 ## [4.0.1] - 2025-02-06
 
 ### Added
