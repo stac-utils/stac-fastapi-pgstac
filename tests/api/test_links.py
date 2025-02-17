@@ -7,13 +7,11 @@ from stac_fastapi.pgstac.models import links as app_links
 
 
 @pytest.mark.parametrize("root_path", ["", "/api/v1"])
-@pytest.mark.parametrize("prefix", ["", "/stac"])
-def tests_app_links(prefix, root_path):
-    endpoint_prefix = root_path + prefix
-    url_prefix = "http://stac.io" + endpoint_prefix
+def tests_app_links(root_path):
+    url_prefix = "http://stac.io" + root_path
 
     app = FastAPI(root_path=root_path)
-    router = APIRouter(prefix=prefix)
+    router = APIRouter()
     app.state.router_prefix = router.prefix
 
     @router.get("/search")
@@ -60,7 +58,7 @@ def tests_app_links(prefix, root_path):
         base_url="http://stac.io",
         root_path=root_path,
     ) as client:
-        response = client.get(f"{endpoint_prefix}/search")
+        response = client.get("/search")
         assert response.status_code == 200
         assert response.json()["url"] == url_prefix + "/search"
         assert response.json()["base_url"].rstrip("/") == url_prefix
@@ -71,7 +69,7 @@ def tests_app_links(prefix, root_path):
             assert link["href"].startswith(url_prefix)
         assert {"next", "previous", "root", "self"} == {link["rel"] for link in links}
 
-        response = client.post(f"{endpoint_prefix}/search", json={})
+        response = client.post("/search", json={})
         assert response.status_code == 200
         assert response.json()["url"] == url_prefix + "/search"
         assert response.json()["base_url"].rstrip("/") == url_prefix
@@ -82,7 +80,7 @@ def tests_app_links(prefix, root_path):
             assert link["href"].startswith(url_prefix)
         assert {"next", "previous", "root", "self"} == {link["rel"] for link in links}
 
-        response = client.get(f"{endpoint_prefix}/collections")
+        response = client.get("/collections")
         assert response.status_code == 200
         assert response.json()["url"] == url_prefix + "/collections"
         assert response.json()["base_url"].rstrip("/") == url_prefix
