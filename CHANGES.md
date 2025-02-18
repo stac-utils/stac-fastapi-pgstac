@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [4.0.2] - 2025-02-18
+
 ### Fixed
 
 - use Relation's `value` for `POST` prev/next links
@@ -381,7 +383,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.1..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.2..main>
+[4.0.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.1..4.0.2>
 [4.0.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.0..4.0.1>
 [4.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.1..4.0.0>
 [3.0.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0..3.0.1>
