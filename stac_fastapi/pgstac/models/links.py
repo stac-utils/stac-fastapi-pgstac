@@ -140,8 +140,8 @@ class PagingLinks(BaseLinks):
 
             if method == "POST":
                 return {
-                    "rel": Relations.next,
-                    "type": MimeTypes.geojson,
+                    "rel": Relations.next.value,
+                    "type": MimeTypes.geojson.value,
                     "method": method,
                     "href": f"{self.request.url}",
                     "body": {**self.request.postbody, "token": f"next:{self.next}"},
@@ -164,8 +164,8 @@ class PagingLinks(BaseLinks):
 
             if method == "POST":
                 return {
-                    "rel": Relations.previous,
-                    "type": MimeTypes.geojson,
+                    "rel": Relations.previous.value,
+                    "type": MimeTypes.geojson.value,
                     "method": method,
                     "href": f"{self.request.url}",
                     "body": {**self.request.postbody, "token": f"prev:{self.prev}"},

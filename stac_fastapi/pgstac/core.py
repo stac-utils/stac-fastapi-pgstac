@@ -393,7 +393,13 @@ class CoreCrudClient(AsyncBaseCoreClient):
             sortby=sortby,
         )
 
-        search_request = self.pgstac_search_model(**clean)
+        try:
+            search_request = self.pgstac_search_model(**clean)
+        except ValidationError as e:
+            raise HTTPException(
+                status_code=400, detail=f"Invalid parameters provided {e}"
+            ) from e
+
         item_collection = await self._search_base(search_request, request=request)
 
         links = await ItemCollectionLinks(
@@ -401,7 +407,14 @@ class CoreCrudClient(AsyncBaseCoreClient):
         ).get_links(extra_links=item_collection["links"])
         item_collection["links"] = links
 
-        return item_collection
+        # If we have the `fields` extension enabled
+        # we need to avoid Pydantic validation because the
+        # Items might not be a valid STAC Item objects
+        if fields := getattr(search_request, "fields", None):
+            if fields.include or fields.exclude:
+                return JSONResponse(item_collection)  # type: ignore
+
+        return ItemCollection(**item_collection)
 
     async def get_item(
         self, item_id: str, collection_id: str, request: Request, **kwargs
@@ -500,7 +513,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
             filter_lang=filter_lang,
         )
 
-        # Do the request
         try:
             search_request = self.pgstac_search_model(**clean)
         except ValidationError as e:
@@ -508,7 +520,16 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 status_code=400, detail=f"Invalid parameters provided {e}"
             ) from e
 
-        return await self.post_search(search_request, request=request)
+        item_collection = await self._search_base(search_request, request=request)
+
+        # If we have the `fields` extension enabled
+        # we need to avoid Pydantic validation because the
+        # Items might not be a valid STAC Item objects
+        if fields := getattr(search_request, "fields", None):
+            if fields.include or fields.exclude:
+                return JSONResponse(item_collection)  # type: ignore
+
+        return ItemCollection(**item_collection)
 
     def _clean_search_args(  # noqa: C901
         self,

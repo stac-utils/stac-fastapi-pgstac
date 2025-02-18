@@ -1073,6 +1073,13 @@ async def test_field_extension_get(app_client, load_test_data, load_test_collect
     assert resp.status_code == 201
 
     params = {"fields": "+properties.proj:epsg,+properties.gsd,+collection"}
+    resp = await app_client.get(
+        f"/collections/{test_item['collection']}/items", params=params
+    )
+    feat_properties = resp.json()["features"][0]["properties"]
+    assert not set(feat_properties) - {"proj:epsg", "gsd", "datetime"}
+
+    params = {"fields": "+properties.proj:epsg,+properties.gsd,+collection"}
     resp = await app_client.get("/search", params=params)
     feat_properties = resp.json()["features"][0]["properties"]
     assert not set(feat_properties) - {"proj:epsg", "gsd", "datetime"}
