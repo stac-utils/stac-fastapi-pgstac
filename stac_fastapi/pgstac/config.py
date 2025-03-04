@@ -1,6 +1,6 @@
 """Postgres API configuration."""
 
-from typing import List, Type
+from typing import List, Optional, Type
 from urllib.parse import quote_plus as quote
 
 from pydantic import BaseModel, field_validator
@@ -57,12 +57,12 @@ class Settings(ApiSettings):
         invalid_id_chars: list of characters that are not allowed in item or collection ids.
     """
 
-    postgres_user: str
-    postgres_pass: str
-    postgres_host_reader: str
-    postgres_host_writer: str
-    postgres_port: int
-    postgres_dbname: str
+    postgres_user: Optional[str] = None
+    postgres_pass: Optional[str] = None
+    postgres_host_reader: Optional[str] = None
+    postgres_host_writer: Optional[str] = None
+    postgres_port: Optional[int] = None
+    postgres_dbname: Optional[str] = None
 
     db_min_conn_size: int = 10
     db_max_conn_size: int = 10
@@ -93,17 +93,40 @@ class Settings(ApiSettings):
     @property
     def reader_connection_string(self):
         """Create reader psql connection string."""
+        self._validate_postgres_settings()
         return f"postgresql://{self.postgres_user}:{quote(self.postgres_pass)}@{self.postgres_host_reader}:{self.postgres_port}/{self.postgres_dbname}"
 
     @property
     def writer_connection_string(self):
         """Create writer psql connection string."""
+        self._validate_postgres_settings()
         return f"postgresql://{self.postgres_user}:{quote(self.postgres_pass)}@{self.postgres_host_writer}:{self.postgres_port}/{self.postgres_dbname}"
 
     @property
     def testing_connection_string(self):
         """Create testing psql connection string."""
+        self._validate_postgres_settings()
         return f"postgresql://{self.postgres_user}:{quote(self.postgres_pass)}@{self.postgres_host_writer}:{self.postgres_port}/pgstactestdb"
+
+    def _validate_postgres_settings(self) -> None:
+        """Validate that required PostgreSQL settings are configured."""
+        required_settings = [
+            "postgres_host_writer",
+            "postgres_host_reader",
+            "postgres_user",
+            "postgres_pass",
+            "postgres_port",
+            "postgres_dbname",
+        ]
+
+        missing = [
+            setting for setting in required_settings if getattr(self, setting) is None
+        ]
+
+        if missing:
+            raise ValueError(
+                f"Missing required PostgreSQL settings: {', '.join(missing)}",
+            )
 
     model_config = SettingsConfigDict(
         **{**ApiSettings.model_config, **{"env_nested_delimiter": "__"}}
