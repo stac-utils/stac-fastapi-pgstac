@@ -525,17 +525,6 @@ async def test_create_bulk_items_id_mismatch(
 #         assert item.collection == coll.id
 
 
-@asynccontextmanager
-async def custom_get_connection(
-    request: Request,
-    readwrite: Literal["r", "w"],
-):
-    """An example of customizing the connection getter"""
-    async with get_connection(request, readwrite) as conn:
-        await conn.execute("SELECT set_config('api.test', 'added-config', false)")
-        yield conn
-
-
 async def test_db_setup_works_with_env_vars(api_client, database, monkeypatch):
     """Test that the application starts successfully if the POSTGRES_* environment variables are set"""
     monkeypatch.setenv("POSTGRES_USER", database.user)
@@ -546,12 +535,27 @@ async def test_db_setup_works_with_env_vars(api_client, database, monkeypatch):
     monkeypatch.setenv("POSTGRES_DBNAME", database.dbname)
 
     await connect_to_db(api_client.app)
+    await close_db_connection(api_client.app)
 
 
 async def test_db_setup_fails_without_env_vars(api_client):
     """Test that the application fails to start if database environment variables are not set."""
-    with pytest.raises(ValidationError):
+    try:
         await connect_to_db(api_client.app)
+    except ValidationError:
+        await close_db_connection(api_client.app)
+        pytest.raises(ValidationError)
+
+
+@asynccontextmanager
+async def custom_get_connection(
+    request: Request,
+    readwrite: Literal["r", "w"],
+):
+    """An example of customizing the connection getter"""
+    async with get_connection(request, readwrite) as conn:
+        await conn.execute("SELECT set_config('api.test', 'added-config', false)")
+        yield conn
 
 
 class TestDbConnect:
