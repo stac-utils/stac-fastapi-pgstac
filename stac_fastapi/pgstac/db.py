@@ -25,6 +25,8 @@ from stac_fastapi.types.errors import (
     NotFoundError,
 )
 
+from stac_fastapi.pgstac.config import PostgresSettings
+
 
 async def con_init(conn):
     """Use orjson for json returns."""
@@ -46,19 +48,25 @@ ConnectionGetter = Callable[[Request, Literal["r", "w"]], AsyncIterator[Connecti
 
 
 async def connect_to_db(
-    app: FastAPI, get_conn: Optional[ConnectionGetter] = None
+    app: FastAPI,
+    get_conn: Optional[ConnectionGetter] = None,
+    postgres_settings: Optional[PostgresSettings] = None,
 ) -> None:
     """Create connection pools & connection retriever on application."""
-    settings = app.state.settings
-    if app.state.settings.testing:
-        readpool = writepool = settings.testing_connection_string
+    app_settings = app.state.settings
+
+    if not postgres_settings:
+        postgres_settings = PostgresSettings()
+
+    if app_settings.testing:
+        readpool = writepool = postgres_settings.testing_connection_string
     else:
-        readpool = settings.reader_connection_string
-        writepool = settings.writer_connection_string
+        readpool = postgres_settings.reader_connection_string
+        writepool = postgres_settings.writer_connection_string
 
     db = DB()
-    app.state.readpool = await db.create_pool(readpool, settings)
-    app.state.writepool = await db.create_pool(writepool, settings)
+    app.state.readpool = await db.create_pool(readpool, postgres_settings)
+    app.state.writepool = await db.create_pool(writepool, postgres_settings)
     app.state.get_connection = get_conn if get_conn else get_connection
 
 
