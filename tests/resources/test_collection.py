@@ -116,6 +116,7 @@ async def test_nocollections(
 ):
     resp = await app_client.get("/collections")
     assert resp.status_code == 200
+    assert resp.json()["numberReturned"] == 0
 
 
 async def test_returns_valid_collection(app_client, load_test_data):
@@ -168,6 +169,9 @@ async def test_returns_valid_links_in_collections(app_client, load_test_data):
     resp = await app_client.get("/collections")
     assert resp.status_code == 200
     resp_json = resp.json()
+    assert resp.json()["numberReturned"]
+    assert resp.json()["numberMatched"]
+
     collections = resp_json["collections"]
     # Find collection in list by ID
     single_coll = next(coll for coll in collections if coll["id"] == in_json["id"])
@@ -317,6 +321,8 @@ async def test_collection_search_freetext(
         "/collections",
         params={"q": "temperature"},
     )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["numberMatched"] == 1
     assert len(resp.json()["collections"]) == 1
     assert resp.json()["collections"][0]["id"] == load_test2_collection.id
 
@@ -341,6 +347,8 @@ async def test_all_collections_with_pagination(app_client, load_test_data):
         assert resp.status_code == 201
 
     resp = await app_client.get("/collections")
+    assert resp.json()["numberReturned"] == 10
+    assert resp.json()["numberMatched"] == 12
     cols = resp.json()["collections"]
     assert len(cols) == 10
     links = resp.json()["links"]
@@ -348,6 +356,8 @@ async def test_all_collections_with_pagination(app_client, load_test_data):
     assert {"root", "self", "next"} == {link["rel"] for link in links}
 
     resp = await app_client.get("/collections", params={"limit": 12})
+    assert resp.json()["numberReturned"] == 12
+    assert resp.json()["numberMatched"] == 12
     cols = resp.json()["collections"]
     assert len(cols) == 12
     links = resp.json()["links"]
@@ -369,6 +379,8 @@ async def test_all_collections_without_pagination(app_client_no_ext, load_test_d
         assert resp.status_code == 201
 
     resp = await app_client_no_ext.get("/collections")
+    assert resp.json()["numberReturned"] == 12
+    assert resp.json()["numberMatched"] == 12
     cols = resp.json()["collections"]
     assert len(cols) == 12
     links = resp.json()["links"]
@@ -382,6 +394,8 @@ async def test_get_collections_search_pagination(
     app_client, load_test_collection, load_test2_collection
 ):
     resp = await app_client.get("/collections")
+    assert resp.json()["numberReturned"] == 2
+    assert resp.json()["numberMatched"] == 2
     cols = resp.json()["collections"]
     assert len(cols) == 2
     links = resp.json()["links"]

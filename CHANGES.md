@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+## [4.0.2] - 2025-02-18
+
+### Fixed
+
+- use Relation's `value` for `POST` prev/next links
+- return `JSONResponse` directly from `/items` endpoint when `fields` parameter is pass and avoid Pydantic validation
+
+### Changed
+
+- avoid re-use of internal `CoreCrudClient.post_search` in `CoreCrudClient.get_search` method to allow customization
+
+## [4.0.1] - 2025-02-06
+
+### Added
+
+- add `numberReturned` and `numberMatched` in `/collections` response
+
+## [4.0.0] - 2025-02-03
+
 ### Changed
 
 - remove `python 3.8` support
@@ -17,6 +36,8 @@
 ### Fixed
 
 - handle `next` and `dev` tokens now returned as links from pgstac>=0.9.0 (author @zstatmanweil, <https://github.com/stac-utils/stac-fastapi-pgstac/pull/140>)
+- fix Docker compose file, so example data can be loaded into database (author @zstatmanweil, <https://github.com/stac-utils/stac-fastapi-pgstac/pull/142>)
+- fix `filter` extension implementation in `CoreCrudClient`
 
 ### Added
 
@@ -26,11 +47,6 @@
 - add [sort extension](https://github.com/stac-api-extensions/sort) support to Item Collection endpoint ([#192](https://github.com/stac-utils/stac-fastapi-pgstac/pull/192))
 - add [query extension](https://github.com/stac-api-extensions/query) support to Item Collection endpoint ([#162](https://github.com/stac-utils/stac-fastapi-pgstac/pull/192))
 - add [fields extension](https://github.com/stac-api-extensions/fields) support to Item Collection endpoint ([#162](https://github.com/stac-utils/stac-fastapi-pgstac/pull/192))
-
-### Fixed
-
-- fix Docker compose file, so example data can be loaded into database (author @zstatmanweil, <https://github.com/stac-utils/stac-fastapi-pgstac/pull/142>)
-- fix `filter` extension implementation in `CoreCrudClient`
 
 ## [3.0.1] - 2024-11-14
 
@@ -367,7 +383,10 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.1..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.2..main>
+[4.0.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.1..4.0.2>
+[4.0.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.0..4.0.1>
+[4.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.1..4.0.0>
 [3.0.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0..3.0.1>
 [3.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.5.0..3.0.0>
 [2.5.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.11..2.5.0>
