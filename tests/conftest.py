@@ -42,7 +42,7 @@ from stac_fastapi.extensions.core.sort import SortConformanceClasses
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
 from stac_pydantic import Collection, Item
 
-from stac_fastapi.pgstac.config import Settings
+from stac_fastapi.pgstac.config import PostgresSettings, Settings
 from stac_fastapi.pgstac.core import CoreCrudClient
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
 from stac_fastapi.pgstac.extensions import QueryExtension
@@ -120,15 +120,9 @@ async def pgstac(database):
 def api_client(request, database):
     hydrate, prefix, response_model = request.param
     api_settings = Settings(
-        postgres_user=database.user,
-        postgres_pass=database.password,
-        postgres_host_reader=database.host,
-        postgres_host_writer=database.host,
-        postgres_port=database.port,
-        postgres_dbname=database.dbname,
-        use_api_hydrate=hydrate,
         enable_response_models=response_model,
         testing=True,
+        use_api_hydrate=hydrate,
     )
 
     api_settings.openapi_url = prefix + api_settings.openapi_url
@@ -209,11 +203,19 @@ def api_client(request, database):
 
 
 @pytest.fixture(scope="function")
-async def app(api_client):
+async def app(api_client, database):
+    postgres_settings = PostgresSettings(
+        postgres_user=database.user,
+        postgres_pass=database.password,
+        postgres_host_reader=database.host,
+        postgres_host_writer=database.host,
+        postgres_port=database.port,
+        postgres_dbname=database.dbname,
+    )
     logger.info("Creating app Fixture")
     time.time()
     app = api_client.app
-    await connect_to_db(app)
+    await connect_to_db(app, postgres_settings=postgres_settings)
 
     yield app
 

@@ -20,6 +20,7 @@ from stac_fastapi.extensions.core import (
 from stac_fastapi.extensions.core.fields import FieldsConformanceClasses
 from stac_fastapi.types import stac as stac_types
 
+from stac_fastapi.pgstac.config import PostgresSettings
 from stac_fastapi.pgstac.core import CoreCrudClient, Settings
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
 from stac_fastapi.pgstac.transactions import TransactionsClient
@@ -720,13 +721,16 @@ async def test_wrapped_function(load_test_data, database) -> None:
             return await super().get_collection(collection_id, request=request, **kwargs)
 
     settings = Settings(
+        testing=True,
+    )
+
+    postgres_settings = PostgresSettings(
         postgres_user=database.user,
         postgres_pass=database.password,
         postgres_host_reader=database.host,
         postgres_host_writer=database.host,
         postgres_port=database.port,
         postgres_dbname=database.dbname,
-        testing=True,
     )
 
     extensions = [
@@ -751,7 +755,7 @@ async def test_wrapped_function(load_test_data, database) -> None:
         collections_get_request_model=collection_search_extension.GET,
     )
     app = api.app
-    await connect_to_db(app)
+    await connect_to_db(app, postgres_settings=postgres_settings)
     try:
         async with AsyncClient(transport=ASGITransport(app=app)) as client:
             response = await client.post(
@@ -786,15 +790,17 @@ async def test_no_extension(
         loader.load_items(os.path.join(DATA_DIR, "test_item.json"))
 
     settings = Settings(
+        testing=True,
+        use_api_hydrate=hydrate,
+        enable_response_models=validation,
+    )
+    postgres_settings = PostgresSettings(
         postgres_user=database.user,
         postgres_pass=database.password,
         postgres_host_reader=database.host,
         postgres_host_writer=database.host,
         postgres_port=database.port,
         postgres_dbname=database.dbname,
-        testing=True,
-        use_api_hydrate=hydrate,
-        enable_response_models=validation,
     )
     extensions = []
     post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
@@ -805,7 +811,7 @@ async def test_no_extension(
         search_post_request_model=post_request_model,
     )
     app = api.app
-    await connect_to_db(app)
+    await connect_to_db(app, postgres_settings=postgres_settings)
     try:
         async with AsyncClient(transport=ASGITransport(app=app)) as client:
             landing = await client.get("http://test/")
