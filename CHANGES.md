@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- move Postgres settings into separate `PostgresSettings` class and defer loading until connecting to database ([#209](https://github.com/stac-utils/stac-fastapi-pgstac/pull/209))
+
 ## [4.0.2] - 2025-02-18
 
 ### Fixed
