@@ -60,7 +60,7 @@ def tests_app_links(prefix, root_path):
         base_url="http://stac.io",
         root_path=root_path,
     ) as client:
-        response = client.get(f"{endpoint_prefix}/search")
+        response = client.get(f"{prefix}/search")
         assert response.status_code == 200
         assert response.json()["url"] == url_prefix + "/search"
         assert response.json()["base_url"].rstrip("/") == url_prefix
@@ -71,7 +71,7 @@ def tests_app_links(prefix, root_path):
             assert link["href"].startswith(url_prefix)
         assert {"next", "previous", "root", "self"} == {link["rel"] for link in links}
 
-        response = client.post(f"{endpoint_prefix}/search", json={})
+        response = client.post(f"{prefix}/search", json={})
         assert response.status_code == 200
         assert response.json()["url"] == url_prefix + "/search"
         assert response.json()["base_url"].rstrip("/") == url_prefix
@@ -82,7 +82,7 @@ def tests_app_links(prefix, root_path):
             assert link["href"].startswith(url_prefix)
         assert {"next", "previous", "root", "self"} == {link["rel"] for link in links}
 
-        response = client.get(f"{endpoint_prefix}/collections")
+        response = client.get(f"{prefix}/collections")
         assert response.status_code == 200
         assert response.json()["url"] == url_prefix + "/collections"
         assert response.json()["base_url"].rstrip("/") == url_prefix
