@@ -51,7 +51,11 @@ class BaseLinks:
     @property
     def url(self):
         """Get the current request url."""
-        return urljoin(str(self.request.base_url), str(self.request.url.path).lstrip("/"))
+        url = urljoin(str(self.request.base_url), self.request.url.path.lstrip("/"))
+        if qs := self.request.url.query:
+            url += f"?{qs}"
+
+        return url
 
     def resolve(self, url):
         """Resolve url to the current request url."""

@@ -8,7 +8,7 @@ from stac_fastapi.pgstac.models import links as app_links
 
 @pytest.mark.parametrize("root_path", ["", "/api/v1"])
 @pytest.mark.parametrize("prefix", ["", "/stac"])
-def tests_app_links(prefix, root_path):
+def tests_app_links(prefix, root_path):  # noqa: C901
     endpoint_prefix = root_path + prefix
     url_prefix = "http://stac.io" + endpoint_prefix
 
@@ -68,6 +68,18 @@ def tests_app_links(prefix, root_path):
         for link in links:
             if link["rel"] in ["previous", "next"]:
                 assert link["method"] == "GET"
+            assert link["href"].startswith(url_prefix)
+        assert {"next", "previous", "root", "self"} == {link["rel"] for link in links}
+
+        response = client.get(f"{prefix}/search", params={"limit": 1})
+        assert response.status_code == 200
+        assert response.json()["url"] == url_prefix + "/search?limit=1"
+        assert response.json()["base_url"].rstrip("/") == url_prefix
+        links = response.json()["links"]
+        for link in links:
+            if link["rel"] in ["previous", "next"]:
+                assert link["method"] == "GET"
+                assert "limit=1" in link["href"]
             assert link["href"].startswith(url_prefix)
         assert {"next", "previous", "root", "self"} == {link["rel"] for link in links}
 
