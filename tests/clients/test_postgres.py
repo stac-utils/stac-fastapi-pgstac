@@ -6,8 +6,10 @@ from typing import Callable, Literal
 
 import pytest
 from fastapi import Request
+from pydantic import ValidationError
 from stac_pydantic import Collection, Item
 
+from stac_fastapi.pgstac.config import PostgresSettings
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db, get_connection
 
 # from tests.conftest import MockStarletteRequest
@@ -523,6 +525,28 @@ async def test_create_bulk_items_id_mismatch(
 #         assert item.collection == coll.id
 
 
+async def test_db_setup_works_with_env_vars(api_client, database, monkeypatch):
+    """Test that the application starts successfully if the POSTGRES_* environment variables are set"""
+    monkeypatch.setenv("POSTGRES_USER", database.user)
+    monkeypatch.setenv("POSTGRES_PASS", database.password)
+    monkeypatch.setenv("POSTGRES_HOST_READER", database.host)
+    monkeypatch.setenv("POSTGRES_HOST_WRITER", database.host)
+    monkeypatch.setenv("POSTGRES_PORT", str(database.port))
+    monkeypatch.setenv("POSTGRES_DBNAME", database.dbname)
+
+    await connect_to_db(api_client.app)
+    await close_db_connection(api_client.app)
+
+
+async def test_db_setup_fails_without_env_vars(api_client):
+    """Test that the application fails to start if database environment variables are not set."""
+    try:
+        await connect_to_db(api_client.app)
+    except ValidationError:
+        await close_db_connection(api_client.app)
+        pytest.raises(ValidationError)
+
+
 @asynccontextmanager
 async def custom_get_connection(
     request: Request,
@@ -536,12 +560,21 @@ async def custom_get_connection(
 
 class TestDbConnect:
     @pytest.fixture
-    async def app(self, api_client):
+    async def app(self, api_client, database):
         """
         app fixture override to setup app with a customized db connection getter
         """
+        postgres_settings = PostgresSettings(
+            postgres_user=database.user,
+            postgres_pass=database.password,
+            postgres_host_reader=database.host,
+            postgres_host_writer=database.host,
+            postgres_port=database.port,
+            postgres_dbname=database.dbname,
+        )
+
         logger.debug("Customizing app setup")
-        await connect_to_db(api_client.app, custom_get_connection)
+        await connect_to_db(api_client.app, custom_get_connection, postgres_settings)
         yield api_client.app
         await close_db_connection(api_client.app)
 
