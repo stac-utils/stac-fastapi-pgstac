@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 import os
@@ -60,11 +59,6 @@ requires_pgstac_0_9_2 = pytest.mark.skipif(
     tuple(map(int, pgstac_version.split("."))) < (0, 9, 2),
     reason="PgSTAC>=0.9.2 required",
 )
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    return asyncio.get_event_loop()
 
 
 @pytest.fixture(scope="session")
