@@ -83,7 +83,9 @@ async def test_landing_links(app_client):
     """test landing page links."""
     landing = await app_client.get("/")
     assert landing.status_code == 200, landing.text
-    assert "Queryables" in [link.get("title") for link in landing.json()["links"]]
+    assert "Queryables available for this Catalog" in [
+        link.get("title") for link in landing.json()["links"]
+    ]
 
 
 async def test_get_queryables_content_type(app_client, load_test_collection):

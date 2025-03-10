@@ -2,9 +2,12 @@
 
 ## [Unreleased]
 
+## [5.0.0] - 2025-03-10
+
 ### Changed
 
 - move Postgres settings into separate `PostgresSettings` class and defer loading until connecting to database ([#209](https://github.com/stac-utils/stac-fastapi-pgstac/pull/209))
+- update `stac-fastapi-*` version requirements to `>=5.1,<6.0`
 
 ## [4.0.3] - 2025-03-10
 
@@ -393,7 +396,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.3..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.0..main>
+[5.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.3..5.0.0>
 [4.0.3]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.2..4.0.3>
 [4.0.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.1..4.0.2>
 [4.0.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.0..4.0.1>
