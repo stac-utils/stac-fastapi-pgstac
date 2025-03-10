@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- fix links when app is mounted behind proxy or has router-prefix ([#195](https://github.com/stac-utils/stac-fastapi-pgstac/pull/195))
+
 ## [4.0.2] - 2025-02-18
 
 ### Fixed
