@@ -6,6 +6,12 @@ This is a checklist for releasing a new version of **stac-fastapi**.
    We currently do not have published versioning guidelines, but there is some text on the subject here: <https://github.com/radiantearth/stac-spec/discussions/1184>.
 2. Create a release branch named `release/vX.Y.Z`, where `X.Y.Z` is the new version.
 3. Search and replace all instances of the current version number with the new version.
+
+   Note: You can use [`bump-my-version`](https://github.com/callowayproject/bump-my-version) CLI
+   ```
+   bump-my-version bump --new-version 3.1.0
+   ```
+
 4. Update [CHANGES.md](./CHANGES.md) for the new version.
    Add the appropriate header, and update the links at the bottom of the file.
 5. Audit CHANGES.md for completeness and accuracy.
