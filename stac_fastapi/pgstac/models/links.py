@@ -51,7 +51,11 @@ class BaseLinks:
     @property
     def url(self):
         """Get the current request url."""
-        return str(self.request.url)
+        url = urljoin(str(self.request.base_url), self.request.url.path.lstrip("/"))
+        if qs := self.request.url.query:
+            url += f"?{qs}"
+
+        return url
 
     def resolve(self, url):
         """Resolve url to the current request url."""
@@ -143,7 +147,7 @@ class PagingLinks(BaseLinks):
                     "rel": Relations.next.value,
                     "type": MimeTypes.geojson.value,
                     "method": method,
-                    "href": f"{self.request.url}",
+                    "href": self.url,
                     "body": {**self.request.postbody, "token": f"next:{self.next}"},
                 }
 
@@ -167,7 +171,7 @@ class PagingLinks(BaseLinks):
                     "rel": Relations.previous.value,
                     "type": MimeTypes.geojson.value,
                     "method": method,
-                    "href": f"{self.request.url}",
+                    "href": self.url,
                     "body": {**self.request.postbody, "token": f"prev:{self.prev}"},
                 }
         return None
