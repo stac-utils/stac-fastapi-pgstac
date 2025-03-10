@@ -29,7 +29,7 @@ ignore = [
 
 
 [tool.bumpversion]
-current_version = "4.0.2"
+current_version = "4.0.3"
 parse = """(?x)
     (?P<major>\\d+)\\.
     (?P<minor>\\d+)\\.
