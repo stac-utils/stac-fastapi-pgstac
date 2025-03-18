@@ -48,7 +48,7 @@
 
 ### Fixed
 
-- handle `next` and `dev` tokens now returned as links from pgstac>=0.9.0 (author @zstatmanweil, <https://github.com/stac-utils/stac-fastapi-pgstac/pull/140>)
+- handle `next` and `prev` tokens now returned as links from pgstac>=0.9.0 (author @zstatmanweil, <https://github.com/stac-utils/stac-fastapi-pgstac/pull/140>)
 - fix Docker compose file, so example data can be loaded into database (author @zstatmanweil, <https://github.com/stac-utils/stac-fastapi-pgstac/pull/142>)
 - fix `filter` extension implementation in `CoreCrudClient`
 
