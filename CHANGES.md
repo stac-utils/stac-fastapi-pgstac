@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [5.0.1] - 2025-03-27
+
+### Fixed
+
+- fix media type for `self` links in `/search` responses
+
 ## [5.0.0] - 2025-03-10
 
 ### Changed

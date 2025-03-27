@@ -267,6 +267,19 @@ class CollectionLinks(CollectionLinksBase):
 
 
 @attr.s
+class SearchLinks(BaseLinks):
+    """Create inferred links specific to collections."""
+
+    def link_self(self) -> Dict:
+        """Return the self link."""
+        return {
+            "rel": Relations.self.value,
+            "type": MimeTypes.geojson.value,
+            "href": self.resolve("search"),
+        }
+
+
+@attr.s
 class ItemCollectionLinks(CollectionLinksBase):
     """Create inferred links specific to collections."""
 
