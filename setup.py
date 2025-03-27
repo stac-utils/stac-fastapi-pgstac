@@ -9,7 +9,7 @@ install_requires = [
     "attrs",
     "orjson",
     "pydantic",
-    "stac_pydantic==3.1.*",
+    "stac_pydantic>=3.1,<3.3",
     "stac-fastapi.api>=5.1,<6.0",
     "stac-fastapi.extensions>=5.1,<6.0",
     "stac-fastapi.types>=5.1,<6.0",
