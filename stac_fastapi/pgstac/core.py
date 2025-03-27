@@ -28,6 +28,7 @@ from stac_fastapi.pgstac.models.links import (
     ItemCollectionLinks,
     ItemLinks,
     PagingLinks,
+    SearchLinks,
 )
 from stac_fastapi.pgstac.types.search import PgstacSearch
 from stac_fastapi.pgstac.utils import filter_fields
@@ -466,6 +467,11 @@ class CoreCrudClient(AsyncBaseCoreClient):
             if fields.include or fields.exclude:
                 return JSONResponse(item_collection)  # type: ignore
 
+        links = await SearchLinks(request=request).get_links(
+            extra_links=item_collection["links"]
+        )
+        item_collection["links"] = links
+
         return ItemCollection(**item_collection)
 
     async def get_search(
@@ -521,6 +527,11 @@ class CoreCrudClient(AsyncBaseCoreClient):
             ) from e
 
         item_collection = await self._search_base(search_request, request=request)
+
+        links = await SearchLinks(request=request).get_links(
+            extra_links=item_collection["links"]
+        )
+        item_collection["links"] = links
 
         # If we have the `fields` extension enabled
         # we need to avoid Pydantic validation because the
