@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- reduce `db_min_conn_size` to `1` to avoid creating too many db connections when starting the application
+
 ## [5.0.1] - 2025-03-27
 
 ### Fixed
