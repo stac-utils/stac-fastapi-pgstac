@@ -35,7 +35,12 @@ DEFAULT_INVALID_ID_CHARS = [
 
 
 class ServerSettings(BaseModel):
-    """Server runtime parameters."""
+    """Server runtime parameters.
+
+    Attributes:
+        search_path: Postgres search path. Defaults to "pgstac,public".
+        application_name: PgSTAC Application name. Defaults to 'pgstac'.
+    """
 
     search_path: str = "pgstac,public"
     application_name: str = "pgstac"
@@ -90,6 +95,8 @@ class PostgresSettings(BaseSettings):
 
 
 class Settings(ApiSettings):
+    """Api Settings."""
+
     use_api_hydrate: bool = False
     invalid_id_chars: List[str] = DEFAULT_INVALID_ID_CHARS
     base_item_cache: Type[BaseItemCache] = DefaultBaseItemCache

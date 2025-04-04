@@ -17,26 +17,49 @@ nav:
   - Home: "index.md"
   - API:
       - stac_fastapi.pgstac:
-          - index: api/stac_fastapi/pgstac/index.md
+          - module: api/stac_fastapi/pgstac/index.md
           - app: api/stac_fastapi/pgstac/app.md
           - config: api/stac_fastapi/pgstac/config.md
           - core: api/stac_fastapi/pgstac/core.md
           - db: api/stac_fastapi/pgstac/db.md
           - extensions:
-              - index: api/stac_fastapi/pgstac/extensions/index.md
+              - module: api/stac_fastapi/pgstac/extensions/index.md
               - filter: api/stac_fastapi/pgstac/extensions/filter.md
               - query: api/stac_fastapi/pgstac/extensions/query.md
           - models:
-              - index: api/stac_fastapi/pgstac/models/index.md
+              - module: api/stac_fastapi/pgstac/models/index.md
               - links: api/stac_fastapi/pgstac/models/links.md
           - transactions: api/stac_fastapi/pgstac/transactions.md
           - utils: api/stac_fastapi/pgstac/utils.md
-          - version: api/stac_fastapi/pgstac/version.md
   - Development - Contributing: "contributing.md"
   - Release Notes: "release-notes.md"
 
 plugins:
   - search
+  - mkdocstrings:
+      enable_inventory: true
+      handlers:
+        python:
+          options:
+            docstring_section_style: list
+            docstring_style: google
+            line_length: 100
+            separate_signature: true
+            show_root_heading: true
+            show_signature_annotations: true
+            show_source: false
+            show_symbol_type_toc: true
+            signature_crossrefs: true
+            extensions:
+              - griffe_inherited_docstrings
+          inventories:
+            - https://docs.python.org/3/objects.inv
+            - https://docs.pydantic.dev/latest/objects.inv
+            - https://fastapi.tiangolo.com/objects.inv
+            - https://www.starlette.io/objects.inv
+            - https://magicstack.github.io/asyncpg/current/objects.inv
+            - https://stac-utils.github.io/stac-fastapi/objects.inv
+            - https://www.attrs.org/en/stable/objects.inv
 
 # Theme
 theme:

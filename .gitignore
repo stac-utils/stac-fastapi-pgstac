@@ -121,9 +121,6 @@ celerybeat-schedule
 # skaffold temporary build/deploy files
 build.out
 
-# pdocs
-docs/api/*
-
 # Direnv
 .envrc
 

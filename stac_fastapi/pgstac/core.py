@@ -208,7 +208,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         """Get the base item of a collection for use in rehydrating full item collection properties.
 
         Args:
-            collection: ID of the collection.
+            collection_id: ID of the collection.
 
         Returns:
             Item.
