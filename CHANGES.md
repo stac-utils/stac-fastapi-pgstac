@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [5.0.2] - 2025-04-03
+
+### Fixed
+
+- fix root-path handling when setting in uvicorn command
+
 ## [5.0.1] - 2025-03-27
 
 ### Fixed
@@ -402,7 +408,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.1..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.2..main>
+[5.0.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.1..5.0.2>
 [5.0.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.0..5.0.1>
 [5.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.3..5.0.0>
 [4.0.3]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.2..4.0.3>
