@@ -119,8 +119,5 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install .[docs,dev,server]
 
-      - name: Generate API docs
-        run: make docs
-
       - name: Build documentation
         run: mkdocs build --strict
