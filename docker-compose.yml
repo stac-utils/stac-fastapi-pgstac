@@ -89,9 +89,7 @@ services:
   app-nginx:
     extends:
       service: app
-    command: bash -c "./scripts/wait-for-it.sh database:5432 && uvicorn stac_fastapi.pgstac.app:app --host 0.0.0.0 --port 8082 --proxy-headers --forwarded-allow-ips=*"
-    environment:
-      - ROOT_PATH=/api/v1/pgstac
+    command: bash -c "./scripts/wait-for-it.sh database:5432 && uvicorn stac_fastapi.pgstac.app:app --host 0.0.0.0 --port 8082 --proxy-headers --forwarded-allow-ips=* --root-path=/api/v1/pgstac"
 
 networks:
   default:
