@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       pgstac:
-        image: ghcr.io/stac-utils/pgstac:v0.8.6
+        image: ghcr.io/stac-utils/pgstac:v0.9.5
         env:
           POSTGRES_USER: username
           POSTGRES_PASSWORD: password
@@ -78,7 +78,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           cache: pip
           cache-dependency-path: setup.py
 
@@ -110,7 +110,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           cache: pip
           cache-dependency-path: setup.py
 
