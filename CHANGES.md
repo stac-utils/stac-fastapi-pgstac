@@ -2,11 +2,12 @@
 
 ## [Unreleased]
 
-## [5.0.2] - 2025-04-03
+## [5.0.2] - 2025-04-04
 
 ### Fixed
 
 - fix root-path handling when setting in uvicorn command
+- reduce `db_min_conn_size` to `1` to avoid creating too many db connections when starting the application
 
 ## [5.0.1] - 2025-03-27
 
