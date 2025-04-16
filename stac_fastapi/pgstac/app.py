@@ -9,8 +9,8 @@ import os
 from contextlib import asynccontextmanager
 
 from brotli_asgi import BrotliMiddleware
-from fastapi import FastAPI, Request, APIRouter
-from fastapi.responses import ORJSONResponse, JSONResponse
+from fastapi import APIRouter, FastAPI, Request
+from fastapi.responses import JSONResponse, ORJSONResponse
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.middleware import CORSMiddleware, ProxyHeaderMiddleware
 from stac_fastapi.api.models import (
@@ -175,18 +175,26 @@ class PgStacApi(StacApi):
                 async with request.app.state.get_connection(request, "r") as conn:
                     # Execute a simple query to verify pgstac is ready
                     # Check if we can query the migrations table which should exist in pgstac
-                    result = await conn.fetchval("SELECT 1 FROM pgstac.migrations LIMIT 1")
+                    result = await conn.fetchval(
+                        "SELECT 1 FROM pgstac.migrations LIMIT 1"
+                    )
                     if result is not None:
                         return {"message": "PONG", "database": "OK"}
                     else:
                         return JSONResponse(
                             status_code=503,
-                            content={"message": "Database tables not found", "database": "ERROR"}
+                            content={
+                                "message": "Database tables not found",
+                                "database": "ERROR",
+                            },
                         )
             except Exception as e:
                 return JSONResponse(
                     status_code=503,
-                    content={"message": f"Database connection failed: {str(e)}", "database": "ERROR"}
+                    content={
+                        "message": f"Database connection failed: {str(e)}",
+                        "database": "ERROR",
+                    },
                 )
 
         self.app.include_router(mgmt_router, tags=["Liveliness/Readiness"])

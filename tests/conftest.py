@@ -15,7 +15,6 @@ from pypgstac import __version__ as pgstac_version
 from pypgstac.db import PgstacDB
 from pypgstac.migrate import Migrate
 from pytest_postgresql.janitor import DatabaseJanitor
-from stac_fastapi.pgstac.app import PgStacApi
 from stac_fastapi.api.models import (
     ItemCollectionUri,
     create_get_request_model,
@@ -41,6 +40,7 @@ from stac_fastapi.extensions.core.sort import SortConformanceClasses
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
 from stac_pydantic import Collection, Item
 
+from stac_fastapi.pgstac.app import PgStacApi
 from stac_fastapi.pgstac.config import PostgresSettings, Settings
 from stac_fastapi.pgstac.core import CoreCrudClient
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
