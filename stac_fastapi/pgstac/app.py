@@ -9,8 +9,8 @@ import os
 from contextlib import asynccontextmanager
 
 from brotli_asgi import BrotliMiddleware
-from fastapi import FastAPI
-from fastapi.responses import ORJSONResponse
+from fastapi import FastAPI, Request, APIRouter
+from fastapi.responses import ORJSONResponse, JSONResponse
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.middleware import CORSMiddleware, ProxyHeaderMiddleware
 from stac_fastapi.api.models import (
@@ -160,7 +160,39 @@ async def lifespan(app: FastAPI):
     await close_db_connection(app)
 
 
-api = StacApi(
+class PgStacApi(StacApi):
+    """PgStac API with enhanced health checks."""
+
+    def add_health_check(self):
+        """Add a health check with pgstac database readiness check."""
+        mgmt_router = APIRouter(prefix=self.app.state.router_prefix)
+
+        @mgmt_router.get("/_mgmt/ping")
+        async def ping(request: Request):
+            """Liveliness/readiness probe that checks database connection."""
+            try:
+                # Test read connection
+                async with request.app.state.get_connection(request, "r") as conn:
+                    # Execute a simple query to verify pgstac is ready
+                    # Check if we can query the migrations table which should exist in pgstac
+                    result = await conn.fetchval("SELECT 1 FROM pgstac.migrations LIMIT 1")
+                    if result is not None:
+                        return {"message": "PONG", "database": "OK"}
+                    else:
+                        return JSONResponse(
+                            status_code=503,
+                            content={"message": "Database tables not found", "database": "ERROR"}
+                        )
+            except Exception as e:
+                return JSONResponse(
+                    status_code=503,
+                    content={"message": f"Database connection failed: {str(e)}", "database": "ERROR"}
+                )
+
+        self.app.include_router(mgmt_router, tags=["Liveliness/Readiness"])
+
+
+api = PgStacApi(
     app=FastAPI(
         openapi_url=settings.openapi_url,
         docs_url=settings.docs_url,

@@ -32,6 +32,10 @@ docker-shell:
 test:
 	$(runtests) /bin/bash -c 'export && python -m pytest /app/tests/api/test_api.py --log-cli-level $(LOG_LEVEL)'
 
+.PHONY: test-mgmt
+test-mgmt:
+	$(runtests) /bin/bash -c 'export && python -m pytest /app/tests/resources/test_mgmt.py --log-cli-level $(LOG_LEVEL)'
+
 .PHONY: run-database
 run-database:
 	docker compose run --rm database

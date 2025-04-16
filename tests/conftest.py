@@ -15,7 +15,7 @@ from pypgstac import __version__ as pgstac_version
 from pypgstac.db import PgstacDB
 from pypgstac.migrate import Migrate
 from pytest_postgresql.janitor import DatabaseJanitor
-from stac_fastapi.api.app import StacApi
+from stac_fastapi.pgstac.app import PgStacApi
 from stac_fastapi.api.models import (
     ItemCollectionUri,
     create_get_request_model,
@@ -181,7 +181,7 @@ def api_client(request):
         search_extensions, base_model=PgstacSearch
     )
 
-    api = StacApi(
+    api = PgStacApi(
         settings=api_settings,
         extensions=application_extensions,
         client=CoreCrudClient(pgstac_search_model=search_post_request_model),
@@ -296,7 +296,7 @@ def api_client_no_ext():
     api_settings = Settings(
         testing=True,
     )
-    return StacApi(
+    return PgStacApi(
         settings=api_settings,
         extensions=[
             TransactionExtension(client=TransactionsClient(), settings=api_settings)
