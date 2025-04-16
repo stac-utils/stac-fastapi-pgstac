@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Enhance `/_mgmt/ping` endpoint to check if pgstac database is ready before responding ([#230](https://github.com/stac-utils/stac-fastapi-pgstac/pull/230))
+
 ## [5.0.2] - 2025-04-07
 
 ### Fixed
