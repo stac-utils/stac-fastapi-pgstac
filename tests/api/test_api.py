@@ -10,7 +10,6 @@ from httpx import ASGITransport, AsyncClient
 from pypgstac.db import PgstacDB
 from pypgstac.load import Loader
 from pystac import Collection, Extent, Item, SpatialExtent, TemporalExtent
-from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.models import create_get_request_model, create_post_request_model
 from stac_fastapi.extensions.core import (
     CollectionSearchExtension,
@@ -20,6 +19,7 @@ from stac_fastapi.extensions.core import (
 from stac_fastapi.extensions.core.fields import FieldsConformanceClasses
 from stac_fastapi.types import stac as stac_types
 
+from stac_fastapi.pgstac.app import PgStacApi
 from stac_fastapi.pgstac.config import PostgresSettings
 from stac_fastapi.pgstac.core import CoreCrudClient, Settings
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
@@ -748,7 +748,7 @@ async def test_wrapped_function(load_test_data, database) -> None:
         ]
     )
 
-    api = StacApi(
+    api = PgStacApi(
         client=Client(pgstac_search_model=post_request_model),
         settings=settings,
         extensions=extensions,
@@ -806,7 +806,7 @@ async def test_no_extension(
     )
     extensions = []
     post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
-    api = StacApi(
+    api = PgStacApi(
         client=CoreCrudClient(pgstac_search_model=post_request_model),
         settings=settings,
         extensions=extensions,

@@ -6,4 +6,7 @@ async def test_ping_no_param(app_client):
     """
     res = await app_client.get("/_mgmt/ping")
     assert res.status_code == 200
-    assert res.json() == {"message": "PONG"}
+    response_json = res.json()
+    assert response_json["message"] == "PONG"
+    assert "database" in response_json
+    assert response_json["database"] == "OK"
