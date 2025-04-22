@@ -76,7 +76,7 @@
 
 ## [3.0.1] - 2024-11-14
 
-- Enable runtime `CORS` configuration using environment variables (`CORS_ORIGIN="https://...,https://..."`, `CORS_METHODS="PUT,OPTIONS"`) (<https://github.com/stac-utils/stac-fastapi-pgstac/pull/168>)
+- Enable runtime `CORS` configuration using environment variables (`CORS_ORIGINS="https://...,https://..."`, `CORS_METHODS="PUT,OPTIONS"`) (<https://github.com/stac-utils/stac-fastapi-pgstac/pull/168>)
 
 ## [3.0.0] - 2024-08-02
 
