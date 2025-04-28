@@ -622,7 +622,7 @@ async def health_check(request: Request) -> Union[Dict, JSONResponse]:
                 "status": "DOWN",
                 "lifespan": {
                     "status": "DOWN",
-                    "message": "application lifespan wasn't ran",
+                    "message": "application lifespan wasn't run",
                 },
                 "pgstac": {
                     "status": "DOWN",
