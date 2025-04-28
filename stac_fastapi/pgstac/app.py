@@ -101,10 +101,12 @@ known_extensions = {
     "collection_search",
 }
 
+disabled_extensions = {"transaction", "bulk_transactions"}
+
 enabled_extensions = (
     os.environ["ENABLED_EXTENSIONS"].split(",")
     if "ENABLED_EXTENSIONS" in os.environ
-    else known_extensions
+    else known_extensions - disabled_extensions
 )
 
 application_extensions = [

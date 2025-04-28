@@ -68,6 +68,17 @@ DEFAULT_EXTENT = Extent(
 )
 
 
+async def test_default_app_no_transactions(
+    default_app_client, load_test_data, load_test_collection
+):
+    coll = load_test_collection
+    item = load_test_data("test_item.json")
+    resp = await default_app_client.post(f"/collections/{coll['id']}/items", json=item)
+
+    # the default application does not have the transaction extensions enabled!
+    assert resp.status_code == 405
+
+
 async def test_post_search_content_type(app_client):
     params = {"limit": 1}
     resp = await app_client.post("search", json=params)

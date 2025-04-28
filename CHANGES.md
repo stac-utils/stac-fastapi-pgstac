@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Disable transaction and bulk_transactions extensions by default **breaking change**
+
 ## [5.0.2] - 2025-04-07
 
 ### Fixed

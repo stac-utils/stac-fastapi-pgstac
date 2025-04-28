@@ -41,6 +41,7 @@ from stac_fastapi.extensions.core.sort import SortConformanceClasses
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
 from stac_pydantic import Collection, Item
 
+from stac_fastapi.pgstac.app import api as default_api
 from stac_fastapi.pgstac.config import PostgresSettings, Settings
 from stac_fastapi.pgstac.core import CoreCrudClient
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
@@ -332,5 +333,47 @@ async def app_client_no_ext(app_no_ext):
     logger.info("creating app_client")
     async with AsyncClient(
         transport=ASGITransport(app=app_no_ext), base_url="http://test"
+    ) as c:
+        yield c
+
+
+@pytest.fixture(scope="function")
+async def default_client_app():
+    api_settings = Settings(
+        testing=True,
+    )
+    api = default_api
+    api.settings = api_settings
+
+    return api
+
+
+@pytest.fixture(scope="function")
+async def default_app(default_client_app, database):
+    postgres_settings = PostgresSettings(
+        postgres_user=database.user,
+        postgres_pass=database.password,
+        postgres_host_reader=database.host,
+        postgres_host_writer=database.host,
+        postgres_port=database.port,
+        postgres_dbname=database.dbname,
+    )
+    logger.info("Creating app Fixture")
+    time.time()
+    app = default_client_app.app
+    await connect_to_db(app, postgres_settings=postgres_settings)
+
+    yield app
+
+    await close_db_connection(app)
+
+    logger.info("Closed Pools.")
+
+
+@pytest.fixture(scope="function")
+async def default_app_client(default_app):
+    logger.info("creating app_client")
+    async with AsyncClient(
+        transport=ASGITransport(app=default_app), base_url="http://test"
     ) as c:
         yield c
