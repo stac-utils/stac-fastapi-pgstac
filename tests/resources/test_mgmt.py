@@ -52,18 +52,11 @@ async def test_health_503(database):
         body = res.json()
         assert body["status"] == "DOWN"
         assert body["lifespan"]["status"] == "DOWN"
-        assert body["lifespan"]["message"] == "application lifespan wasn't ran"
+        assert body["lifespan"]["message"] == "application lifespan wasn't run"
         assert body["pgstac"]["status"] == "DOWN"
         assert body["pgstac"]["message"] == "Could not connect to database"
 
     # No lifespan so no `get_connection` is application state
-    api = StacApi(
-        settings=Settings(testing=True),
-        extensions=[],
-        client=CoreCrudClient(),
-        health_check=health_check,
-    )
-
     postgres_settings = PostgresSettings(
         postgres_user=database.user,
         postgres_pass=database.password,
