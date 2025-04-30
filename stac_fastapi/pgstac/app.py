@@ -49,8 +49,8 @@ from stac_fastapi.pgstac.types.search import PgstacSearch
 
 settings = Settings()
 
-# application extensions
-application_extensions_map = {
+# transaction extensions
+transaction_extensions_map = {
     "transaction": TransactionExtension(
         client=TransactionsClient(),
         settings=settings,
@@ -93,27 +93,31 @@ itm_col_extensions_map = {
     "pagination": TokenPaginationExtension(),
 }
 
-known_extensions = {
-    *application_extensions_map.keys(),
+enabled_extensions = {
     *search_extensions_map.keys(),
     *cs_extensions_map.keys(),
     *itm_col_extensions_map.keys(),
     "collection_search",
 }
 
-disabled_extensions = {"transaction", "bulk_transactions"}
+if ext := os.environ.get("ENABLED_EXTENSIONS"):
+    enabled_extensions = set(ext.split(","))
 
-enabled_extensions = (
-    os.environ["ENABLED_EXTENSIONS"].split(",")
-    if "ENABLED_EXTENSIONS" in os.environ
-    else known_extensions - disabled_extensions
-)
+application_extensions = []
 
-application_extensions = [
-    extension
-    for key, extension in application_extensions_map.items()
-    if key in enabled_extensions
-]
+if "transaction" in enabled_extensions:
+    application_extensions.append(
+        TransactionExtension(
+            client=TransactionsClient(),
+            settings=settings,
+            response_class=ORJSONResponse,
+        ),
+    )
+
+if "bulk_transactions" in enabled_extensions:
+    application_extensions.append(
+        BulkTransactionExtension(client=BulkTransactionsClient()),
+    )
 
 # /search models
 search_extensions = [

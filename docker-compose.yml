@@ -21,6 +21,7 @@ services:
       - DB_MIN_CONN_SIZE=1
       - DB_MAX_CONN_SIZE=1
       - USE_API_HYDRATE=${USE_API_HYDRATE:-false}
+      - ENABLED_EXTENSIONS=transaction,bulk_transactions,query,sort,fields,filter,pagination,collection_search
     ports:
       - "8082:8082"
     volumes:
