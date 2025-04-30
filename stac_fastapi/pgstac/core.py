@@ -647,7 +647,7 @@ async def health_check(request: Request) -> Union[Dict, JSONResponse]:
 
     resp["pgstac"] = {
         "status": "UP",
-        "version": version,
+        "pgstac_version": version,
     }
 
     return resp
