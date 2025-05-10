@@ -30,7 +30,7 @@ async def test_health(app_client):
     body = res.json()
     assert body["status"] == "UP"
     assert body["pgstac"]["status"] == "UP"
-    assert body["pgstac"]["version"]
+    assert body["pgstac"]["pgstac_version"]
 
 
 async def test_health_503(database):
