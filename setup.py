@@ -9,7 +9,7 @@ install_requires = [
     "attrs",
     "orjson",
     "pydantic",
-    "stac_pydantic==3.1.*",
+    "stac_pydantic>=3.1,<3.3",
     "stac-fastapi.api>=5.2,<6.0",
     "stac-fastapi.extensions>=5.2,<6.0",
     "stac-fastapi.types>=5.2,<6.0",
@@ -27,7 +27,7 @@ extra_reqs = {
         "pytest-postgresql",
         "pytest",
         "pytest-cov",
-        "pytest-asyncio>=0.17,<0.26.0",
+        "pytest-asyncio>=0.17,<0.27.0",
         "pre-commit",
         "requests",
         "shapely",
@@ -43,7 +43,7 @@ extra_reqs = {
         "griffe-inherited-docstrings>=1.0.0",
         "mkdocstrings[python]>=0.25.1",
     ],
-    "server": ["uvicorn[standard]==0.34.0"],
+    "server": ["uvicorn[standard]==0.34.2"],
     "awslambda": ["mangum"],
 }
 
