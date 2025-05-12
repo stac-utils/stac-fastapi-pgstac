@@ -9,7 +9,6 @@ from urllib.parse import urljoin
 import asyncpg
 import pytest
 from fastapi import APIRouter
-from fastapi.responses import ORJSONResponse
 from httpx import ASGITransport, AsyncClient
 from pypgstac import __version__ as pgstac_version
 from pypgstac.db import PgstacDB
@@ -18,6 +17,7 @@ from pytest_postgresql.janitor import DatabaseJanitor
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.models import (
     ItemCollectionUri,
+    JSONResponse,
     create_get_request_model,
     create_post_request_model,
     create_request_model,
@@ -41,7 +41,6 @@ from stac_fastapi.extensions.core.sort import SortConformanceClasses
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
 from stac_pydantic import Collection, Item
 
-from stac_fastapi.pgstac.app import api as default_api
 from stac_fastapi.pgstac.config import PostgresSettings, Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
@@ -190,7 +189,7 @@ def api_client(request):
         search_get_request_model=search_get_request_model,
         search_post_request_model=search_post_request_model,
         collections_get_request_model=collection_search_extension.GET,
-        response_class=ORJSONResponse,
+        response_class=JSONResponse,
         router=APIRouter(prefix=prefix),
         health_check=health_check,
     )
@@ -291,14 +290,11 @@ async def load_test2_item(app_client, load_test_data, load_test2_collection):
     return Item.model_validate(resp.json())
 
 
-@pytest.fixture(
-    scope="session",
-)
-def api_client_no_ext():
-    api_settings = Settings(
-        testing=True,
-    )
-    return StacApi(
+@pytest.fixture(scope="function")
+async def app_no_ext(database):
+    """Default stac-fastapi-pgstac application without only the transaction extensions."""
+    api_settings = Settings(testing=True)
+    api_client_no_ext = StacApi(
         settings=api_settings,
         extensions=[
             TransactionExtension(client=TransactionsClient(), settings=api_settings)
@@ -307,9 +303,6 @@ def api_client_no_ext():
         health_check=health_check,
     )
 
-
-@pytest.fixture(scope="function")
-async def app_no_ext(api_client_no_ext, database):
     postgres_settings = PostgresSettings(
         postgres_user=database.user,
         postgres_pass=database.password,
@@ -320,12 +313,9 @@ async def app_no_ext(api_client_no_ext, database):
     )
     logger.info("Creating app Fixture")
     time.time()
-    app = api_client_no_ext.app
-    await connect_to_db(app, postgres_settings=postgres_settings)
-
-    yield app
-
-    await close_db_connection(app)
+    await connect_to_db(api_client_no_ext.app, postgres_settings=postgres_settings)
+    yield api_client_no_ext.app
+    await close_db_connection(api_client_no_ext.app)
 
     logger.info("Closed Pools.")
 
@@ -340,18 +330,16 @@ async def app_client_no_ext(app_no_ext):
 
 
 @pytest.fixture(scope="function")
-async def default_client_app():
-    api_settings = Settings(
-        testing=True,
+async def default_app(database):
+    """Default stac-fastapi-pgstac application without any extensions."""
+    api_settings = Settings(testing=True)
+    api = StacApi(
+        settings=api_settings,
+        extensions=[],
+        client=CoreCrudClient(),
+        health_check=health_check,
     )
-    api = default_api
-    api.settings = api_settings
 
-    return api
-
-
-@pytest.fixture(scope="function")
-async def default_app(default_client_app, database):
     postgres_settings = PostgresSettings(
         postgres_user=database.user,
         postgres_pass=database.password,
@@ -362,12 +350,9 @@ async def default_app(default_client_app, database):
     )
     logger.info("Creating app Fixture")
     time.time()
-    app = default_client_app.app
-    await connect_to_db(app, postgres_settings=postgres_settings)
-
-    yield app
-
-    await close_db_connection(app)
+    await connect_to_db(api.app, postgres_settings=postgres_settings)
+    yield api.app
+    await close_db_connection(api.app)
 
     logger.info("Closed Pools.")
 
