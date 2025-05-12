@@ -10,12 +10,12 @@ from contextlib import asynccontextmanager
 
 from brotli_asgi import BrotliMiddleware
 from fastapi import FastAPI
-from fastapi.responses import ORJSONResponse
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.middleware import CORSMiddleware, ProxyHeaderMiddleware
 from stac_fastapi.api.models import (
     EmptyRequest,
     ItemCollectionUri,
+    JSONResponse,
     create_get_request_model,
     create_post_request_model,
     create_request_model,
@@ -40,7 +40,7 @@ from stac_fastapi.extensions.third_party import BulkTransactionExtension
 from starlette.middleware import Middleware
 
 from stac_fastapi.pgstac.config import Settings
-from stac_fastapi.pgstac.core import CoreCrudClient
+from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
 from stac_fastapi.pgstac.extensions import QueryExtension
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
@@ -54,7 +54,7 @@ transaction_extensions_map = {
     "transaction": TransactionExtension(
         client=TransactionsClient(),
         settings=settings,
-        response_class=ORJSONResponse,
+        response_class=JSONResponse,
     ),
     "bulk_transactions": BulkTransactionExtension(client=BulkTransactionsClient()),
 }
@@ -110,7 +110,7 @@ if "transaction" in enabled_extensions:
         TransactionExtension(
             client=TransactionsClient(),
             settings=settings,
-            response_class=ORJSONResponse,
+            response_class=JSONResponse,
         ),
     )
 
@@ -180,7 +180,7 @@ api = StacApi(
     settings=settings,
     extensions=application_extensions,
     client=CoreCrudClient(pgstac_search_model=post_request_model),
-    response_class=ORJSONResponse,
+    response_class=JSONResponse,
     items_get_request_model=items_get_request_model,
     search_get_request_model=get_request_model,
     search_post_request_model=post_request_model,
@@ -194,6 +194,7 @@ api = StacApi(
             allow_methods=settings.cors_methods,
         ),
     ],
+    health_check=health_check,
 )
 app = api.app
 

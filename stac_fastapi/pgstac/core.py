@@ -605,3 +605,49 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 clean[k] = v
 
         return clean
+
+
+async def health_check(request: Request) -> Union[Dict, JSONResponse]:
+    """PgSTAC HealthCheck."""
+    resp = {
+        "status": "UP",
+        "lifespan": {
+            "status": "UP",
+        },
+    }
+    if not hasattr(request.app.state, "get_connection"):
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "DOWN",
+                "lifespan": {
+                    "status": "DOWN",
+                    "message": "application lifespan wasn't run",
+                },
+                "pgstac": {
+                    "status": "DOWN",
+                    "message": "Could not connect to database",
+                },
+            },
+        )
+
+    try:
+        async with request.app.state.get_connection(request, "r") as conn:
+            q, p = render(
+                """SELECT pgstac.get_version();""",
+            )
+            version = await conn.fetchval(q, *p)
+    except Exception as e:
+        resp["status"] = "DOWN"
+        resp["pgstac"] = {
+            "status": "DOWN",
+            "message": str(e),
+        }
+        return JSONResponse(status_code=503, content=resp)
+
+    resp["pgstac"] = {
+        "status": "UP",
+        "pgstac_version": version,
+    }
+
+    return resp

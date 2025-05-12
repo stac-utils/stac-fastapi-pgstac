@@ -43,7 +43,7 @@ from stac_pydantic import Collection, Item
 
 from stac_fastapi.pgstac.app import api as default_api
 from stac_fastapi.pgstac.config import PostgresSettings, Settings
-from stac_fastapi.pgstac.core import CoreCrudClient
+from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
 from stac_fastapi.pgstac.extensions import QueryExtension
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
@@ -192,6 +192,7 @@ def api_client(request):
         collections_get_request_model=collection_search_extension.GET,
         response_class=ORJSONResponse,
         router=APIRouter(prefix=prefix),
+        health_check=health_check,
     )
 
     return api
@@ -303,6 +304,7 @@ def api_client_no_ext():
             TransactionExtension(client=TransactionsClient(), settings=api_settings)
         ],
         client=CoreCrudClient(),
+        health_check=health_check,
     )
 
 
