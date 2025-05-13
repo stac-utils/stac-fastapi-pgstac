@@ -4,10 +4,24 @@
 
 ### Changed
 
+- rename `POSTGRES_HOST_READER` to `POSTGRES_HOST` in config **breaking change**
+- rename `reader_connection_string` to `connection_string` in `PostgresSettings` class **breaking change**
 - add `ENABLE_TRANSACTIONS_EXTENSIONS` env variable to enable `transaction` extensions
 - disable transaction and bulk_transactions extensions by default **breaking change**
 - update `stac-fastapi-*` version requirements to `>=5.2,<6.0`
 - add pgstac health-check in `/_mgmt/health`
+
+### Added
+
+- add `write_connection_pool` option in `stac_fastapi.pgstac.db.connect_to_db` function
+- add `write_postgres_settings` option in `stac_fastapi.pgstac.db.connect_to_db` function to set specific settings for the `writer` DB connection pool
+
+### removed
+
+- `stac_fastapi.pgstac.db.DB` class
+- `POSTGRES_HOST_WRITER` in config
+- `writer_connection_string` in `PostgresSettings` class
+- `testing_connection_string` in `PostgresSettings` class
 
 ## [5.0.2] - 2025-04-07
 

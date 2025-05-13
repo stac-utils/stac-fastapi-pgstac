@@ -60,8 +60,7 @@ async def test_health_503(database):
     postgres_settings = PostgresSettings(
         postgres_user=database.user,
         postgres_pass=database.password,
-        postgres_host_reader=database.host,
-        postgres_host_writer=database.host,
+        postgres_host=database.host,
         postgres_port=database.port,
         postgres_dbname=database.dbname,
     )

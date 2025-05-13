@@ -93,8 +93,7 @@ jobs:
           POSTGRES_USER: username
           POSTGRES_PASS: password
           POSTGRES_DBNAME: postgis
-          POSTGRES_HOST_READER: localhost
-          POSTGRES_HOST_WRITER: localhost
+          POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
           PGUSER: username
           PGPASSWORD: password

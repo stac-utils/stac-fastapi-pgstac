@@ -54,8 +54,7 @@ class PostgresSettings(BaseSettings):
     Attributes:
         postgres_user: postgres username.
         postgres_pass: postgres password.
-        postgres_host_reader: hostname for the reader connection.
-        postgres_host_writer: hostname for the writer connection.
+        postgres_host: hostname for the connection.
         postgres_port: database port.
         postgres_dbname: database name.
         use_api_hydrate: perform hydration of stac items within stac-fastapi.
@@ -64,8 +63,7 @@ class PostgresSettings(BaseSettings):
 
     postgres_user: str
     postgres_pass: str
-    postgres_host_reader: str
-    postgres_host_writer: str
+    postgres_host: str
     postgres_port: int
     postgres_dbname: str
 
@@ -79,19 +77,9 @@ class PostgresSettings(BaseSettings):
     model_config = {"env_file": ".env", "extra": "ignore"}
 
     @property
-    def reader_connection_string(self):
+    def connection_string(self):
         """Create reader psql connection string."""
-        return f"postgresql://{self.postgres_user}:{quote(self.postgres_pass)}@{self.postgres_host_reader}:{self.postgres_port}/{self.postgres_dbname}"
-
-    @property
-    def writer_connection_string(self):
-        """Create writer psql connection string."""
-        return f"postgresql://{self.postgres_user}:{quote(self.postgres_pass)}@{self.postgres_host_writer}:{self.postgres_port}/{self.postgres_dbname}"
-
-    @property
-    def testing_connection_string(self):
-        """Create testing psql connection string."""
-        return f"postgresql://{self.postgres_user}:{quote(self.postgres_pass)}@{self.postgres_host_writer}:{self.postgres_port}/pgstactestdb"
+        return f"postgresql://{self.postgres_user}:{quote(self.postgres_pass)}@{self.postgres_host}:{self.postgres_port}/{self.postgres_dbname}"
 
 
 class Settings(ApiSettings):
