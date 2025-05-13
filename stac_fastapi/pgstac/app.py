@@ -95,8 +95,7 @@ if ext := os.environ.get("ENABLED_EXTENSIONS"):
 
 application_extensions = []
 
-# transaction extensions
-if "transaction" in enabled_extensions:
+if os.environ.get("ENABLE_TRANSACTIONS_EXTENSIONS", "").lower() in ["yes", "true", "1"]:
     application_extensions.append(
         TransactionExtension(
             client=TransactionsClient(),
@@ -105,7 +104,6 @@ if "transaction" in enabled_extensions:
         ),
     )
 
-if "bulk_transactions" in enabled_extensions:
     application_extensions.append(
         BulkTransactionExtension(client=BulkTransactionsClient()),
     )
