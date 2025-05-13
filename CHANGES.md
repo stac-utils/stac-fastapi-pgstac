@@ -4,6 +4,8 @@
 
 ### Changed
 
+- add `ENABLE_TRANSACTIONS_EXTENSIONS` env variable to enable `transaction` extensions
+- disable transaction and bulk_transactions extensions by default **breaking change**
 - update `stac-fastapi-*` version requirements to `>=5.2,<6.0`
 - add pgstac health-check in `/_mgmt/health`
 

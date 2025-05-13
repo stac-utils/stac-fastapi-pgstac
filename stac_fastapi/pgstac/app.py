@@ -49,16 +49,6 @@ from stac_fastapi.pgstac.types.search import PgstacSearch
 
 settings = Settings()
 
-# application extensions
-application_extensions_map = {
-    "transaction": TransactionExtension(
-        client=TransactionsClient(),
-        settings=settings,
-        response_class=JSONResponse,
-    ),
-    "bulk_transactions": BulkTransactionExtension(client=BulkTransactionsClient()),
-}
-
 # search extensions
 search_extensions_map = {
     "query": QueryExtension(),
@@ -93,25 +83,30 @@ itm_col_extensions_map = {
     "pagination": TokenPaginationExtension(),
 }
 
-known_extensions = {
-    *application_extensions_map.keys(),
+enabled_extensions = {
     *search_extensions_map.keys(),
     *cs_extensions_map.keys(),
     *itm_col_extensions_map.keys(),
     "collection_search",
 }
 
-enabled_extensions = (
-    os.environ["ENABLED_EXTENSIONS"].split(",")
-    if "ENABLED_EXTENSIONS" in os.environ
-    else known_extensions
-)
+if ext := os.environ.get("ENABLED_EXTENSIONS"):
+    enabled_extensions = set(ext.split(","))
 
-application_extensions = [
-    extension
-    for key, extension in application_extensions_map.items()
-    if key in enabled_extensions
-]
+application_extensions = []
+
+if os.environ.get("ENABLE_TRANSACTIONS_EXTENSIONS", "").lower() in ["yes", "true", "1"]:
+    application_extensions.append(
+        TransactionExtension(
+            client=TransactionsClient(),
+            settings=settings,
+            response_class=JSONResponse,
+        ),
+    )
+
+    application_extensions.append(
+        BulkTransactionExtension(client=BulkTransactionsClient()),
+    )
 
 # /search models
 search_extensions = [
