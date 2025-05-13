@@ -101,7 +101,7 @@ jobs:
           PGDATABASE: postgis
           APP_HOST: 0.0.0.0
           APP_PORT: 8080
-          ENABLED_EXTENSIONS: transaction,bulk_transactions,query,sort,fields,filter,pagination,collection_search
+          ENABLE_TRANSACTIONS_EXTENSIONS: TRUE
 
   test-docs:
     runs-on: ubuntu-latest

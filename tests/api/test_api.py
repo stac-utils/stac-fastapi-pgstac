@@ -69,11 +69,13 @@ DEFAULT_EXTENT = Extent(
 
 
 async def test_default_app_no_transactions(
-    default_app_client, load_test_data, load_test_collection
+    app_client_no_transaction, load_test_data, load_test_collection
 ):
     coll = load_test_collection
     item = load_test_data("test_item.json")
-    resp = await default_app_client.post(f"/collections/{coll['id']}/items", json=item)
+    resp = await app_client_no_transaction.post(
+        f"/collections/{coll['id']}/items", json=item
+    )
 
     # the default application does not have the transaction extensions enabled!
     assert resp.status_code == 405
@@ -903,3 +905,40 @@ async def test_no_extension(
 
     finally:
         await close_db_connection(app)
+
+
+async def test_default_app(default_client, default_app, load_test_data):
+    api_routes = {
+        f"{list(route.methods)[0]} {route.path}" for route in default_app.routes
+    }
+    assert set(STAC_CORE_ROUTES).issubset(api_routes)
+    assert set(STAC_TRANSACTION_ROUTES).issubset(api_routes)
+
+    # Load collections
+    col = load_test_data("test_collection.json")
+    resp = await default_client.post("/collections", json=col)
+    assert resp.status_code == 201
+
+    # Load items
+    item = load_test_data("test_item.json")
+    resp = await default_client.post(f"/collections/{col['id']}/items", json=item)
+    assert resp.status_code == 201
+
+    resp = await default_client.get("/conformance")
+    assert resp.status_code == 200
+    conf = resp.json()["conformsTo"]
+    assert (
+        "https://api.stacspec.org/v1.0.0/ogcapi-features/extensions/transaction" in conf
+    )
+    assert "https://api.stacspec.org/v1.0.0/collections/extensions/transaction" in conf
+    assert "http://www.opengis.net/spec/cql2/1.0/conf/basic-cql2" in conf
+    assert "http://www.opengis.net/spec/ogcapi-common-2/1.0/conf/simple-query" in conf
+    assert "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core" in conf
+    assert (
+        "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/features-filter" in conf
+    )
+    assert "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/filter" in conf
+    assert "https://api.stacspec.org/v1.0.0-rc.1/collection-search" in conf
+    assert "https://api.stacspec.org/v1.0.0/collections" in conf
+    assert "https://api.stacspec.org/v1.0.0/ogcapi-features#query" in conf
+    assert "https://api.stacspec.org/v1.0.0/ogcapi-features#sort" in conf

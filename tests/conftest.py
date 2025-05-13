@@ -330,7 +330,7 @@ async def app_client_no_ext(app_no_ext):
 
 
 @pytest.fixture(scope="function")
-async def default_app(database):
+async def app_no_transaction(database):
     """Default stac-fastapi-pgstac application without any extensions."""
     api_settings = Settings(testing=True)
     api = StacApi(
@@ -358,8 +358,38 @@ async def default_app(database):
 
 
 @pytest.fixture(scope="function")
-async def default_app_client(default_app):
+async def app_client_no_transaction(app_no_transaction):
     logger.info("creating app_client")
+    async with AsyncClient(
+        transport=ASGITransport(app=app_no_transaction), base_url="http://test"
+    ) as c:
+        yield c
+
+
+@pytest.fixture(scope="function")
+async def default_app(database, monkeypatch):
+    """Test default stac-fastapi-pgstac application."""
+    monkeypatch.setenv("POSTGRES_USER", database.user)
+    monkeypatch.setenv("POSTGRES_PASS", database.password)
+    monkeypatch.setenv("POSTGRES_HOST_READER", database.host)
+    monkeypatch.setenv("POSTGRES_HOST_WRITER", database.host)
+    monkeypatch.setenv("POSTGRES_PORT", str(database.port))
+    monkeypatch.setenv("POSTGRES_DBNAME", database.dbname)
+    monkeypatch.delenv("ENABLED_EXTENSIONS", raising=False)
+
+    monkeypatch.setenv("ENABLE_TRANSACTIONS_EXTENSIONS", "TRUE")
+    monkeypatch.setenv("USE_API_HYDRATE", "TRUE")
+    monkeypatch.setenv("ENABLE_RESPONSE_MODELS", "TRUE")
+
+    from stac_fastapi.pgstac.app import app
+
+    await connect_to_db(app)
+    yield app
+    await close_db_connection(app)
+
+
+@pytest.fixture(scope="function")
+async def default_client(default_app):
     async with AsyncClient(
         transport=ASGITransport(app=default_app), base_url="http://test"
     ) as c:
