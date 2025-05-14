@@ -8,7 +8,7 @@
 - rename `POSTGRES_USER` to `PGUSER` in config **breaking change**
 - rename `POSTGRES_PASS` to `PGPASSWORD` in config **breaking change**
 - rename `POSTGRES_PORT` to `PGPORT` in config **breaking change**
-- rename `POSTGRES_DBNAME` to `PGDBNAME` in config **breaking change**
+- rename `POSTGRES_DBNAME` to `PGDATABASE` in config **breaking change**
   ```python
   from stac_fastapi.pgstac.config import PostgresSettings
 
