@@ -24,7 +24,9 @@ async def test_pg_settings_with_env_postgres(monkeypatch):
     monkeypatch.setenv("POSTGRES_HOST", "0.0.0.0")
     monkeypatch.setenv("POSTGRES_PORT", "1111")
     monkeypatch.setenv("POSTGRES_DBNAME", "pgstac")
-    assert PostgresSettings(_env_file=None)
+    with pytest.warns(DeprecationWarning) as record:
+        assert PostgresSettings(_env_file=None)
+    assert len(record) == 5
 
 
 async def test_pg_settings_attributes(monkeypatch):
