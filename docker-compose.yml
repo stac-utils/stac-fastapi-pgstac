@@ -8,11 +8,11 @@ services:
       - APP_PORT=8082
       - RELOAD=true
       - ENVIRONMENT=local
-      - POSTGRES_USER=username
-      - POSTGRES_PASS=password
-      - POSTGRES_DBNAME=postgis
-      - POSTGRES_HOST=database
-      - POSTGRES_PORT=5432
+      - PGUSER=username
+      - PGPASS=password
+      - PGDATABASE=postgis
+      - PGHOST=database
+      - PGPORT=5432
       - WEB_CONCURRENCY=10
       - VSI_CACHE=TRUE
       - GDAL_HTTP_MERGE_CONSECUTIVE_RANGES=YES

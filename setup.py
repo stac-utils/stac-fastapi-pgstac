@@ -17,6 +17,7 @@ install_requires = [
     "brotli_asgi",
     "pygeofilter>=0.2",
     "pypgstac>=0.8,<0.10",
+    "typing_extensions>=4.9.0",
 ]
 
 extra_reqs = {

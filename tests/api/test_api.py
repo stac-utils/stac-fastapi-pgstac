@@ -740,11 +740,11 @@ async def test_wrapped_function(load_test_data, database) -> None:
     )
 
     postgres_settings = PostgresSettings(
-        postgres_user=database.user,
-        postgres_pass=database.password,
-        postgres_host=database.host,
-        postgres_port=database.port,
-        postgres_dbname=database.dbname,
+        pguser=database.user,
+        pgpassword=database.password,
+        pghost=database.host,
+        pgport=database.port,
+        pgdatabase=database.dbname,
     )
 
     extensions = [
@@ -773,7 +773,6 @@ async def test_wrapped_function(load_test_data, database) -> None:
         app,
         postgres_settings=postgres_settings,
         add_write_connection_pool=True,
-        write_postgres_settings=postgres_settings,
     )
     try:
         async with AsyncClient(transport=ASGITransport(app=app)) as client:
@@ -814,11 +813,11 @@ async def test_no_extension(
         enable_response_models=validation,
     )
     postgres_settings = PostgresSettings(
-        postgres_user=database.user,
-        postgres_pass=database.password,
-        postgres_host=database.host,
-        postgres_port=database.port,
-        postgres_dbname=database.dbname,
+        pguser=database.user,
+        pgpassword=database.password,
+        pghost=database.host,
+        pgport=database.port,
+        pgdatabase=database.dbname,
     )
     extensions = []
     post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
@@ -833,7 +832,6 @@ async def test_no_extension(
         app,
         postgres_settings=postgres_settings,
         add_write_connection_pool=True,
-        write_postgres_settings=postgres_settings,
     )
     try:
         async with AsyncClient(transport=ASGITransport(app=app)) as client:

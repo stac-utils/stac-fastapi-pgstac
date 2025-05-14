@@ -4,7 +4,34 @@
 
 ### Changed
 
-- rename `POSTGRES_HOST_READER` to `POSTGRES_HOST` in config **breaking change**
+- rename `POSTGRES_HOST_READER` to `PGHOST` in config **breaking change**
+- rename `POSTGRES_USER` to `PGUSER` in config **breaking change**
+- rename `POSTGRES_PASS` to `PGPASSWORD` in config **breaking change**
+- rename `POSTGRES_PORT` to `PGPORT` in config **breaking change**
+- rename `POSTGRES_DBNAME` to `PGDBNAME` in config **breaking change**
+  ```python
+  from stac_fastapi.pgstac.config import PostgresSettings
+
+  # before
+  settings = PostgresSettings(
+      postgres_user="user",
+      postgres_pass="password",
+      postgres_host_reader="0.0.0.0",
+      postgres_host_writer="0.0.0.0",
+      postgres_port=1111,
+      postgres_dbname="pgstac",
+  )
+
+  # now
+  settings = PostgresSettings(
+      pguser="user",
+      pgpassword="password",
+      pghost="0.0.0.0",
+      pgport=1111,
+      pgdatabase="pgstac",
+  )
+  ```
+
 - rename `reader_connection_string` to `connection_string` in `PostgresSettings` class **breaking change**
 - add `ENABLE_TRANSACTIONS_EXTENSIONS` env variable to enable `transaction` extensions
 - disable transaction and bulk_transactions extensions by default **breaking change**

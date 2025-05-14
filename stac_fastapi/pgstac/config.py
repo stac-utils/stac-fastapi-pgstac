@@ -1,9 +1,10 @@
 """Postgres API configuration."""
 
-from typing import List, Type
+import warnings
+from typing import Annotated, Any, List, Optional, Type
 from urllib.parse import quote_plus as quote
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from stac_fastapi.types.config import ApiSettings
 
@@ -61,11 +62,44 @@ class PostgresSettings(BaseSettings):
         invalid_id_chars: list of characters that are not allowed in item or collection ids.
     """
 
-    postgres_user: str
-    postgres_pass: str
-    postgres_host: str
-    postgres_port: int
-    postgres_dbname: str
+    postgres_user: Annotated[
+        Optional[str],
+        Field(
+            deprecated="`postgres_user` is deprecated, please use `pguser`", default=None
+        ),
+    ]
+    postgres_pass: Annotated[
+        Optional[str],
+        Field(
+            deprecated="`postgres_pass` is deprecated, please use `pgpassword`",
+            default=None,
+        ),
+    ]
+    postgres_host: Annotated[
+        Optional[str],
+        Field(
+            deprecated="`postgres_host` is deprecated, please use `pghost`", default=None
+        ),
+    ]
+    postgres_port: Annotated[
+        Optional[int],
+        Field(
+            deprecated="`postgres_port` is deprecated, please use `pgport`", default=None
+        ),
+    ]
+    postgres_dbname: Annotated[
+        Optional[str],
+        Field(
+            deprecated="`postgres_dbname` is deprecated, please use `pgdatabase`",
+            default=None,
+        ),
+    ]
+
+    pguser: str
+    pgpassword: str
+    pghost: str
+    pgport: int
+    pgdatabase: str
 
     db_min_conn_size: int = 1
     db_max_conn_size: int = 10
@@ -76,10 +110,32 @@ class PostgresSettings(BaseSettings):
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 
+    @model_validator(mode="before")
+    @classmethod
+    def _pg_settings_compat(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            compat = {
+                "postgres_user": "pguser",
+                "postgres_pass": "pgpassword",
+                "postgres_host": "pghost",
+                "postgres_port": "pgport",
+                "postgres_dbname": "pgdatabase",
+            }
+            for old_key, new_key in compat.items():
+                if val := data.get(old_key, None):
+                    warnings.warn(
+                        f"`{old_key}` is deprecated, please use `{new_key}`",
+                        DeprecationWarning,
+                        stacklevel=1,
+                    )
+                    data[new_key] = val
+
+        return data
+
     @property
     def connection_string(self):
         """Create reader psql connection string."""
-        return f"postgresql://{self.postgres_user}:{quote(self.postgres_pass)}@{self.postgres_host}:{self.postgres_port}/{self.postgres_dbname}"
+        return f"postgresql://{self.pguser}:{quote(self.pgpassword)}@{self.pghost}:{self.pgport}/{self.pgdatabase}"
 
 
 class Settings(ApiSettings):

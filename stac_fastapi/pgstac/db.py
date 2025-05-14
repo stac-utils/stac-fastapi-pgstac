@@ -74,7 +74,7 @@ async def connect_to_db(
 
     if add_write_connection_pool:
         if not write_postgres_settings:
-            write_postgres_settings = PostgresSettings()
+            write_postgres_settings = postgres_settings
 
         app.state.writepool = await _create_pool(write_postgres_settings)
 
