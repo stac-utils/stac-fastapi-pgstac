@@ -75,10 +75,16 @@ class PostgresSettings(BaseSettings):
             default=None,
         ),
     ]
-    postgres_host: Annotated[
+    postgres_host_reader: Annotated[
         Optional[str],
         Field(
-            deprecated="`postgres_host` is deprecated, please use `pghost`", default=None
+            deprecated="`postgres_host_reader` is deprecated, please use `pghost`", default=None
+        ),
+    ]
+    postgres_host_writer: Annotated[
+        Optional[str],
+        Field(
+            deprecated="`postgres_host_writer` is deprecated, please use `pghost`", default=None
         ),
     ]
     postgres_port: Annotated[
