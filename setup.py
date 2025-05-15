@@ -15,7 +15,7 @@ install_requires = [
     "asyncpg",
     "buildpg",
     "brotli_asgi",
-    "pygeofilter>=0.2",
+    "cql2>=0.3.6",
     "pypgstac>=0.8,<0.10",
 ]
 

@@ -9,10 +9,9 @@ import attr
 import orjson
 from asyncpg.exceptions import InvalidDatetimeFormatError
 from buildpg import render
+from cql2 import Expr
 from fastapi import HTTPException, Request
 from pydantic import ValidationError
-from pygeofilter.backends.cql2_json import to_cql2
-from pygeofilter.parsers.cql2_text import parse as parse_cql2_text
 from pypgstac.hydration import hydrate
 from stac_fastapi.api.models import JSONResponse
 from stac_fastapi.types.core import AsyncBaseCoreClient, Relations
@@ -556,11 +555,12 @@ class CoreCrudClient(AsyncBaseCoreClient):
         """Clean up search arguments to match format expected by pgstac"""
         if filter_query:
             if filter_lang == "cql2-text":
-                filter_query = to_cql2(parse_cql2_text(filter_query))
-                filter_lang = "cql2-json"
-
-            base_args["filter"] = orjson.loads(filter_query)
-            base_args["filter_lang"] = filter_lang
+                e = Expr(filter_query)
+                base_args["filter"] = e.to_json()
+                base_args["filter_lang"] = "cql2-json"
+            else:
+                base_args["filter"] = orjson.loads(filter_query)
+                base_args["filter_lang"] = filter_lang
 
         if datetime:
             base_args["datetime"] = datetime
