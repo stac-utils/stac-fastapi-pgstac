@@ -850,6 +850,12 @@ async def test_item_search_post_filter_extension_cql2(
     )
     assert resp.status_code == 201
 
+    # make sure we have 2 items
+    resp = await app_client.post("/search", json={})
+    resp_json = resp.json()
+    assert resp.status_code == 200
+    assert len(resp_json.get("features")) == 2
+
     # EPSG is a JSONB key
     params = {
         "collections": [test_item["collection"]],
@@ -887,6 +893,39 @@ async def test_item_search_post_filter_extension_cql2(
         == test_item["properties"]["proj:epsg"]
     )
 
+    # Test IN operator
+    params = {
+        "collections": [test_item["collection"]],
+        "filter-lang": "cql2-json",
+        "filter": {
+            "op": "in",
+            "args": [
+                {"property": "proj:epsg"},
+                [test_item["properties"]["proj:epsg"]],
+            ],
+        },
+    }
+    resp = await app_client.post("/search", json=params)
+    resp_json = resp.json()
+    assert resp.status_code == 200
+    assert len(resp_json.get("features")) == 1
+
+    params = {
+        "collections": [test_item["collection"]],
+        "filter-lang": "cql2-json",
+        "filter": {
+            "op": "in",
+            "args": [
+                {"property": "proj:epsg"},
+                [test_item["properties"]["proj:epsg"] + 1],
+            ],
+        },
+    }
+    resp = await app_client.post("/search", json=params)
+    resp_json = resp.json()
+    assert resp.status_code == 200
+    assert len(resp_json.get("features")) == 0
+
 
 async def test_item_search_post_filter_extension_cql2_with_query_fails(
     app_client, load_test_data, load_test_collection
@@ -904,7 +943,7 @@ async def test_item_search_post_filter_extension_cql2_with_query_fails(
     )
     assert resp.status_code == 201
 
-    # EPSG is a JSONB key
+    # Cannot use `query` and `filter`
     params = {
         "collections": [test_item["collection"]],
         "filter-lang": "cql2-json",
