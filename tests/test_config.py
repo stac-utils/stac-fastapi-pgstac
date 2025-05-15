@@ -3,6 +3,7 @@
 import warnings
 
 import pytest
+from pydantic import ValidationError
 
 from stac_fastapi.pgstac.config import PostgresSettings
 
@@ -21,12 +22,13 @@ async def test_pg_settings_with_env_postgres(monkeypatch):
     """Test PostgresSettings with POSTGRES_* environment variables"""
     monkeypatch.setenv("POSTGRES_USER", "username")
     monkeypatch.setenv("POSTGRES_PASS", "password")
-    monkeypatch.setenv("POSTGRES_HOST", "0.0.0.0")
+    monkeypatch.setenv("POSTGRES_HOST_READER", "0.0.0.0")
+    monkeypatch.setenv("POSTGRES_HOST_WRITER", "0.0.0.0")
     monkeypatch.setenv("POSTGRES_PORT", "1111")
     monkeypatch.setenv("POSTGRES_DBNAME", "pgstac")
     with pytest.warns(DeprecationWarning) as record:
         assert PostgresSettings(_env_file=None)
-    assert len(record) == 5
+    assert len(record) == 6
 
 
 async def test_pg_settings_attributes(monkeypatch):
@@ -49,7 +51,7 @@ async def test_pg_settings_attributes(monkeypatch):
         settings = PostgresSettings(
             postgres_user="user",
             postgres_pass="password",
-            postgres_host="0.0.0.0",
+            postgres_host_reader="0.0.0.0",
             postgres_port=1111,
             postgres_dbname="pgstac",
             _env_file=None,
@@ -59,4 +61,16 @@ async def test_pg_settings_attributes(monkeypatch):
 
     # Should raise warning when accessing deprecated attributes
     with pytest.warns(DeprecationWarning):
-        assert settings.postgres_host == "0.0.0.0"
+        assert settings.postgres_host_reader == "0.0.0.0"
+
+    with pytest.raises(ValidationError):
+        with pytest.warns(DeprecationWarning) as record:
+            PostgresSettings(
+                postgres_user="user",
+                postgres_pass="password",
+                postgres_host_reader="0.0.0.0",
+                postgres_host_writer="1.1.1.1",
+                postgres_port=1111,
+                postgres_dbname="pgstac",
+                _env_file=None,
+            )

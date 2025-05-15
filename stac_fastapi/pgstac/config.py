@@ -78,13 +78,15 @@ class PostgresSettings(BaseSettings):
     postgres_host_reader: Annotated[
         Optional[str],
         Field(
-            deprecated="`postgres_host_reader` is deprecated, please use `pghost`", default=None
+            deprecated="`postgres_host_reader` is deprecated, please use `pghost`",
+            default=None,
         ),
     ]
     postgres_host_writer: Annotated[
         Optional[str],
         Field(
-            deprecated="`postgres_host_writer` is deprecated, please use `pghost`", default=None
+            deprecated="`postgres_host_writer` is deprecated, please use `pghost`",
+            default=None,
         ),
     ]
     postgres_port: Annotated[
@@ -123,7 +125,8 @@ class PostgresSettings(BaseSettings):
             compat = {
                 "postgres_user": "pguser",
                 "postgres_pass": "pgpassword",
-                "postgres_host": "pghost",
+                "postgres_host_reader": "pghost",
+                "postgres_host_writer": "pghost",
                 "postgres_port": "pgport",
                 "postgres_dbname": "pgdatabase",
             }
@@ -135,6 +138,15 @@ class PostgresSettings(BaseSettings):
                         stacklevel=1,
                     )
                     data[new_key] = val
+
+            if (pgh_reader := data.get("postgres_host_reader")) and (
+                pgh_writer := data.get("postgres_host_writer")
+            ):
+                if pgh_reader != pgh_writer:
+                    raise ValueError(
+                        "In order to use different host values for reading and writing "
+                        "you must explicitly provide write_postgres_settings to the connect_to_db function"
+                    )
 
         return data
 
