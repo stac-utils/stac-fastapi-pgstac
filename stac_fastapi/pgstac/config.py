@@ -58,8 +58,7 @@ class PostgresSettings(BaseSettings):
         pghost: hostname for the connection.
         pgport: database port.
         pgdatabase: database name.
-        use_api_hydrate: perform hydration of stac items within stac-fastapi.
-        invalid_id_chars: list of characters that are not allowed in item or collection ids.
+
     """
 
     postgres_user: Annotated[
@@ -157,7 +156,13 @@ class PostgresSettings(BaseSettings):
 
 
 class Settings(ApiSettings):
-    """Api Settings."""
+    """API settings.
+
+    Attributes:
+        use_api_hydrate: perform hydration of stac items within stac-fastapi.
+        invalid_id_chars: list of characters that are not allowed in item or collection ids.
+
+    """
 
     use_api_hydrate: bool = False
     invalid_id_chars: List[str] = DEFAULT_INVALID_ID_CHARS
