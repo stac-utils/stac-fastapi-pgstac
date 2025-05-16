@@ -53,11 +53,11 @@ class PostgresSettings(BaseSettings):
     """Postgres-specific API settings.
 
     Attributes:
-        postgres_user: postgres username.
-        postgres_pass: postgres password.
-        postgres_host: hostname for the connection.
-        postgres_port: database port.
-        postgres_dbname: database name.
+        pguser: postgres username.
+        pgpassword: postgres password.
+        pghost: hostname for the connection.
+        pgport: database port.
+        pgdatabase: database name.
         use_api_hydrate: perform hydration of stac items within stac-fastapi.
         invalid_id_chars: list of characters that are not allowed in item or collection ids.
     """
