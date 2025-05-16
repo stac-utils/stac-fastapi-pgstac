@@ -200,17 +200,20 @@ def api_client(request):
 @pytest.fixture(scope="function")
 async def app(api_client, database):
     postgres_settings = PostgresSettings(
-        postgres_user=database.user,
-        postgres_pass=database.password,
-        postgres_host_reader=database.host,
-        postgres_host_writer=database.host,
-        postgres_port=database.port,
-        postgres_dbname=database.dbname,
+        pguser=database.user,
+        pgpassword=database.password,
+        pghost=database.host,
+        pgport=database.port,
+        pgdatabase=database.dbname,
     )
     logger.info("Creating app Fixture")
     time.time()
     app = api_client.app
-    await connect_to_db(app, postgres_settings=postgres_settings)
+    await connect_to_db(
+        app,
+        postgres_settings=postgres_settings,
+        add_write_connection_pool=True,
+    )
 
     yield app
 
@@ -304,16 +307,19 @@ async def app_no_ext(database):
     )
 
     postgres_settings = PostgresSettings(
-        postgres_user=database.user,
-        postgres_pass=database.password,
-        postgres_host_reader=database.host,
-        postgres_host_writer=database.host,
-        postgres_port=database.port,
-        postgres_dbname=database.dbname,
+        pguser=database.user,
+        pgpassword=database.password,
+        pghost=database.host,
+        pgport=database.port,
+        pgdatabase=database.dbname,
     )
     logger.info("Creating app Fixture")
     time.time()
-    await connect_to_db(api_client_no_ext.app, postgres_settings=postgres_settings)
+    await connect_to_db(
+        api_client_no_ext.app,
+        postgres_settings=postgres_settings,
+        add_write_connection_pool=True,
+    )
     yield api_client_no_ext.app
     await close_db_connection(api_client_no_ext.app)
 
@@ -341,16 +347,19 @@ async def app_no_transaction(database):
     )
 
     postgres_settings = PostgresSettings(
-        postgres_user=database.user,
-        postgres_pass=database.password,
-        postgres_host_reader=database.host,
-        postgres_host_writer=database.host,
-        postgres_port=database.port,
-        postgres_dbname=database.dbname,
+        pguser=database.user,
+        pgpassword=database.password,
+        pghost=database.host,
+        pgport=database.port,
+        pgdatabase=database.dbname,
     )
     logger.info("Creating app Fixture")
     time.time()
-    await connect_to_db(api.app, postgres_settings=postgres_settings)
+    await connect_to_db(
+        api.app,
+        postgres_settings=postgres_settings,
+        add_write_connection_pool=False,
+    )
     yield api.app
     await close_db_connection(api.app)
 
@@ -369,12 +378,11 @@ async def app_client_no_transaction(app_no_transaction):
 @pytest.fixture(scope="function")
 async def default_app(database, monkeypatch):
     """Test default stac-fastapi-pgstac application."""
-    monkeypatch.setenv("POSTGRES_USER", database.user)
-    monkeypatch.setenv("POSTGRES_PASS", database.password)
-    monkeypatch.setenv("POSTGRES_HOST_READER", database.host)
-    monkeypatch.setenv("POSTGRES_HOST_WRITER", database.host)
-    monkeypatch.setenv("POSTGRES_PORT", str(database.port))
-    monkeypatch.setenv("POSTGRES_DBNAME", database.dbname)
+    monkeypatch.setenv("PGUSER", database.user)
+    monkeypatch.setenv("PGPASSWORD", database.password)
+    monkeypatch.setenv("PGHOST", database.host)
+    monkeypatch.setenv("PGPORT", str(database.port))
+    monkeypatch.setenv("PGDATABASE", database.dbname)
     monkeypatch.delenv("ENABLED_EXTENSIONS", raising=False)
 
     monkeypatch.setenv("ENABLE_TRANSACTIONS_EXTENSIONS", "TRUE")
@@ -383,7 +391,7 @@ async def default_app(database, monkeypatch):
 
     from stac_fastapi.pgstac.app import app
 
-    await connect_to_db(app)
+    await connect_to_db(app, add_write_connection_pool=True)
     yield app
     await close_db_connection(app)
 

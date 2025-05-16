@@ -90,14 +90,10 @@ jobs:
       - name: Load data and validate
         run: python -m stac_fastapi.pgstac.app & ./scripts/wait-for-it.sh localhost:8080 && python ./scripts/ingest_joplin.py http://localhost:8080 && ./scripts/validate http://localhost:8080
         env:
-          POSTGRES_USER: username
-          POSTGRES_PASS: password
-          POSTGRES_DBNAME: postgis
-          POSTGRES_HOST_READER: localhost
-          POSTGRES_HOST_WRITER: localhost
-          POSTGRES_PORT: 5432
           PGUSER: username
           PGPASSWORD: password
+          PGHOST: localhost
+          PGPORT: 5432
           PGDATABASE: postgis
           APP_HOST: 0.0.0.0
           APP_PORT: 8080

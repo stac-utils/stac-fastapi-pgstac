@@ -740,12 +740,11 @@ async def test_wrapped_function(load_test_data, database) -> None:
     )
 
     postgres_settings = PostgresSettings(
-        postgres_user=database.user,
-        postgres_pass=database.password,
-        postgres_host_reader=database.host,
-        postgres_host_writer=database.host,
-        postgres_port=database.port,
-        postgres_dbname=database.dbname,
+        pguser=database.user,
+        pgpassword=database.password,
+        pghost=database.host,
+        pgport=database.port,
+        pgdatabase=database.dbname,
     )
 
     extensions = [
@@ -770,7 +769,11 @@ async def test_wrapped_function(load_test_data, database) -> None:
         collections_get_request_model=collection_search_extension.GET,
     )
     app = api.app
-    await connect_to_db(app, postgres_settings=postgres_settings)
+    await connect_to_db(
+        app,
+        postgres_settings=postgres_settings,
+        add_write_connection_pool=True,
+    )
     try:
         async with AsyncClient(transport=ASGITransport(app=app)) as client:
             response = await client.post(
@@ -810,12 +813,11 @@ async def test_no_extension(
         enable_response_models=validation,
     )
     postgres_settings = PostgresSettings(
-        postgres_user=database.user,
-        postgres_pass=database.password,
-        postgres_host_reader=database.host,
-        postgres_host_writer=database.host,
-        postgres_port=database.port,
-        postgres_dbname=database.dbname,
+        pguser=database.user,
+        pgpassword=database.password,
+        pghost=database.host,
+        pgport=database.port,
+        pgdatabase=database.dbname,
     )
     extensions = []
     post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
@@ -826,7 +828,11 @@ async def test_no_extension(
         search_post_request_model=post_request_model,
     )
     app = api.app
-    await connect_to_db(app, postgres_settings=postgres_settings)
+    await connect_to_db(
+        app,
+        postgres_settings=postgres_settings,
+        add_write_connection_pool=True,
+    )
     try:
         async with AsyncClient(transport=ASGITransport(app=app)) as client:
             landing = await client.get("http://test/")

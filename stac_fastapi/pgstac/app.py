@@ -95,7 +95,12 @@ if ext := os.environ.get("ENABLED_EXTENSIONS"):
 
 application_extensions = []
 
-if os.environ.get("ENABLE_TRANSACTIONS_EXTENSIONS", "").lower() in ["yes", "true", "1"]:
+with_transactions = os.environ.get("ENABLE_TRANSACTIONS_EXTENSIONS", "").lower() in [
+    "yes",
+    "true",
+    "1",
+]
+if with_transactions:
     application_extensions.append(
         TransactionExtension(
             client=TransactionsClient(),
@@ -150,7 +155,7 @@ if "collection_search" in enabled_extensions:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """FastAPI Lifespan."""
-    await connect_to_db(app)
+    await connect_to_db(app, add_write_connection_pool=with_transactions)
     yield
     await close_db_connection(app)
 

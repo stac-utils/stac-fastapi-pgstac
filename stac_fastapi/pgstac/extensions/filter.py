@@ -25,9 +25,7 @@ class FiltersClient(AsyncBaseFiltersClient):
         under OGC CQL but it is allowed by the STAC API Filter Extension
         https://github.com/radiantearth/stac-api-spec/tree/master/fragments/filter#queryables
         """
-        pool = request.app.state.readpool
-
-        async with pool.acquire() as conn:
+        async with request.app.state.get_connection(request, "r") as conn:
             q, p = render(
                 """
                     SELECT * FROM get_queryables(:collection::text);
