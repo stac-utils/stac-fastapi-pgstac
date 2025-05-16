@@ -9,6 +9,7 @@
 - update `stac-fastapi-*` version requirements to `>=5.2,<6.0`
 - add pgstac health-check in `/_mgmt/health`
 - switch from using pygeofilter to cql2
+- publish arm64 Docker images
 
 ## [5.0.2] - 2025-04-07
 
