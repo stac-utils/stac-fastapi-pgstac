@@ -58,12 +58,11 @@ async def test_health_503(database):
 
     # No lifespan so no `get_connection` is application state
     postgres_settings = PostgresSettings(
-        postgres_user=database.user,
-        postgres_pass=database.password,
-        postgres_host_reader=database.host,
-        postgres_host_writer=database.host,
-        postgres_port=database.port,
-        postgres_dbname=database.dbname,
+        pguser=database.user,
+        pgpassword=database.password,
+        pghost=database.host,
+        pgport=database.port,
+        pgdatabase=database.dbname,
     )
     # Create connection pool but close it just after
     await connect_to_db(api.app, postgres_settings=postgres_settings)

@@ -15,6 +15,7 @@ extra:
 # Layout
 nav:
   - Home: "index.md"
+  - Configuration: "settings.md"
   - API:
       - stac_fastapi.pgstac:
           - module: api/stac_fastapi/pgstac/index.md

@@ -4,12 +4,53 @@
 
 ### Changed
 
+- rename `POSTGRES_HOST_READER` to `PGHOST` in config **breaking change**
+- rename `POSTGRES_USER` to `PGUSER` in config **breaking change**
+- rename `POSTGRES_PASS` to `PGPASSWORD` in config **breaking change**
+- rename `POSTGRES_PORT` to `PGPORT` in config **breaking change**
+- rename `POSTGRES_DBNAME` to `PGDATABASE` in config **breaking change**
+  ```python
+  from stac_fastapi.pgstac.config import PostgresSettings
+
+  # before
+  settings = PostgresSettings(
+      postgres_user="user",
+      postgres_pass="password",
+      postgres_host_reader="0.0.0.0",
+      postgres_host_writer="0.0.0.0",
+      postgres_port=1111,
+      postgres_dbname="pgstac",
+  )
+
+  # now
+  settings = PostgresSettings(
+      pguser="user",
+      pgpassword="password",
+      pghost="0.0.0.0",
+      pgport=1111,
+      pgdatabase="pgstac",
+  )
+  ```
+
+- rename `reader_connection_string` to `connection_string` in `PostgresSettings` class **breaking change**
 - add `ENABLE_TRANSACTIONS_EXTENSIONS` env variable to enable `transaction` extensions
 - disable transaction and bulk_transactions extensions by default **breaking change**
 - update `stac-fastapi-*` version requirements to `>=5.2,<6.0`
 - add pgstac health-check in `/_mgmt/health`
 - switch from using pygeofilter to cql2
 - publish arm64 Docker images
+
+### Added
+
+- add `write_connection_pool` option in `stac_fastapi.pgstac.db.connect_to_db` function
+- add `write_postgres_settings` option in `stac_fastapi.pgstac.db.connect_to_db` function to set specific settings for the `writer` DB connection pool
+
+### removed
+
+- `stac_fastapi.pgstac.db.DB` class
+- `POSTGRES_HOST_WRITER` in config
+- `writer_connection_string` in `PostgresSettings` class
+- `testing_connection_string` in `PostgresSettings` class
 
 ## [5.0.2] - 2025-04-07
 
@@ -184,7 +225,7 @@ As a part of this release, this repository was extracted from the main
 ### Added
 
 - Nginx service as second docker-compose stack to demonstrate proxy ([#503](https://github.com/stac-utils/stac-fastapi/pull/503))
-- Validation checks in CI using [stac-api-validator](github.com/stac-utils/stac-api-validator) ([#508](https://github.com/stac-utils/stac-fastapi/pull/508))
+- Validation checks in CI using [stac-api-validator](https://github.com/stac-utils/stac-api-validator) ([#508](https://github.com/stac-utils/stac-fastapi/pull/508))
 - Required links to the sqlalchemy ItemCollection endpoint ([#508](https://github.com/stac-utils/stac-fastapi/pull/508))
 - Publication of docker images to GHCR ([#525](https://github.com/stac-utils/stac-fastapi/pull/525))
 
