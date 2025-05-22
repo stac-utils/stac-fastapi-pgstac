@@ -35,7 +35,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-
       - name: Extract metadata (name, tag) for Docker
         id: meta
         uses: docker/metadata-action@v5.7.0
@@ -44,6 +43,7 @@ jobs:
 
       - name: Build and push Docker image (multi-arch)
         uses: docker/build-push-action@v6.16.0
+
         with:
           context: .
           file: Dockerfile
