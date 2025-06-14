@@ -51,35 +51,30 @@ class BaseLinks:
     @property
     def url(self):
         """Get the current request url."""
-        base_url = self.request.base_url
-        path = self.request.url.path
+        # self.base_url calls stac_fastapi.types.requests.get_base_url which accounts for ROOT_PATH env var.
+        # Ensure it has a trailing slash for urljoin.
+        final_base_url = str(self.base_url)
+        if not final_base_url.endswith("/"):
+            final_base_url += "/"
 
-        # root path can be set in the request scope in two different ways:
-        # - by uvicorn when running with --root-path
-        # - by FastAPI when running with FastAPI(root_path="...")
-        #
-        # When root path is set by uvicorn, request.url.path will have the root path prefix.
-        # eg. if root path is "/api" and the path is "/collections",
-        # the request.url.path will be "/api/collections"
-        #
-        # We need to remove the root path prefix from the path before
-        # joining the base_url and path to get the full url to avoid
-        # having root_path twice in the url
-        if (
-            root_path := self.request.scope.get("root_path")
-        ) and not self.request.app.root_path:
-            # self.request.app.root_path is set by FastAPI when running with FastAPI(root_path="...")
-            # If self.request.app.root_path is not set but self.request.scope.get("root_path") is set,
-            # then the root path is set by uvicorn
-            # So we need to remove the root path prefix from the path before
-            # joining the base_url and path to get the full url
-            if path.startswith(root_path):
-                path = path[len(root_path) :]
+        # Path of the current request from the server root, e.g., /env_root/items/1
+        current_item_path = self.request.url.path
 
-        url = urljoin(str(base_url), path.lstrip("/"))
+        # Get the path component of final_base_url, e.g., /env_root/ (guaranteed by previous step)
+        final_base_url_path_part = urlparse(final_base_url).path
+
+        # Make current_item_path relative to final_base_url_path_part
+        # e.g., if current_item_path is /env_root/items/1 and final_base_url_path_part is /env_root/,
+        # then path_relative_to_base becomes items/1
+        path_relative_to_base = current_item_path
+        if current_item_path.startswith(final_base_url_path_part):
+            path_relative_to_base = current_item_path[len(final_base_url_path_part):]
+
+        # urljoin will combine them correctly: urljoin("http://server/env_root/", "items/1")
+        url = urljoin(final_base_url, path_relative_to_base)
+
         if qs := self.request.url.query:
             url += f"?{qs}"
-
         return url
 
     def resolve(self, url):
