@@ -9,7 +9,7 @@ services:
       - RELOAD=true
       - ENVIRONMENT=local
       - PGUSER=username
-      - PGPASS=password
+      - PGPASSWORD=password
       - PGDATABASE=postgis
       - PGHOST=database
       - PGPORT=5432
