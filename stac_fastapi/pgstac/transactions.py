@@ -2,18 +2,23 @@
 
 import logging
 import re
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import attr
 from buildpg import render
 from fastapi import HTTPException, Request
+from stac_fastapi.extensions.core.transaction import AsyncBaseTransactionsClient
+from stac_fastapi.extensions.core.transaction.request import (
+    PartialCollection,
+    PartialItem,
+    PatchOperation,
+)
 from stac_fastapi.extensions.third_party.bulk_transactions import (
     AsyncBaseBulkTransactionsClient,
     BulkTransactionMethod,
     Items,
 )
 from stac_fastapi.types import stac as stac_types
-from stac_fastapi.types.core import AsyncBaseTransactionsClient
 from stac_pydantic import Collection, Item, ItemCollection
 from starlette.responses import JSONResponse, Response
 
@@ -202,6 +207,25 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
             await dbfunc(conn, "delete_collection", collection_id)
 
         return JSONResponse({"deleted collection": collection_id})
+
+    async def patch_item(
+        self,
+        collection_id: str,
+        item_id: str,
+        patch: Union[PartialItem, List[PatchOperation]],
+        **kwargs,
+    ) -> Optional[Union[stac_types.Item, Response]]:
+        """Patch Item."""
+        raise NotImplementedError
+
+    async def patch_collection(
+        self,
+        collection_id: str,
+        patch: Union[PartialCollection, List[PatchOperation]],
+        **kwargs,
+    ) -> Optional[Union[stac_types.Collection, Response]]:
+        """Patch Collection."""
+        raise NotImplementedError
 
 
 @attr.s
