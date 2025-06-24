@@ -41,9 +41,8 @@ jobs:
         with:
           images: ghcr.io/stac-utils/stac-fastapi-pgstac
 
-      - name: Build and push Docker image (multi-arch)
-        uses: docker/build-push-action@v6.16.0
-
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6.18.0
         with:
           context: .
           file: Dockerfile
