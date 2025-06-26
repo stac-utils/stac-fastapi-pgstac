@@ -163,7 +163,7 @@ async def test_create_item_no_geometry(
     item["geometry"] = None
     resp = await app_client.post(f"/collections/{coll['id']}/items", json=item)
     assert resp.status_code == 400
-    assert "Geometry is required to be not null in pgstac." in resp.json()["detail"]
+    assert "Geometry is required in pgstac." in resp.json()["detail"]
 
 
 async def test_update_item(app_client, load_test_collection, load_test_item):
