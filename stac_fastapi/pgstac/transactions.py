@@ -57,6 +57,12 @@ class ClientValidateMixIn:
 
         self._validate_id(body_item_id, request.app.state.settings)
 
+        if item.get("geometry", None) is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Missing or null `geometry` for Item ({body_item_id}). Geometry is required in pgstac.",
+            )
+
         if body_collection_id is not None and collection_id != body_collection_id:
             raise HTTPException(
                 status_code=400,
