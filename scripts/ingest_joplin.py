@@ -46,4 +46,6 @@ def ingest_joplin_data(app_host: str = app_host, data_dir: Path = joplindata):
 
 
 if __name__ == "__main__":
+    print("Loading Joplin Collection")
     ingest_joplin_data()
+    print("All Done")

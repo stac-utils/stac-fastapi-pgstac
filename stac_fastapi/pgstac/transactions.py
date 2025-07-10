@@ -2,18 +2,23 @@
 
 import logging
 import re
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import attr
 from buildpg import render
 from fastapi import HTTPException, Request
+from stac_fastapi.extensions.core.transaction import AsyncBaseTransactionsClient
+from stac_fastapi.extensions.core.transaction.request import (
+    PartialCollection,
+    PartialItem,
+    PatchOperation,
+)
 from stac_fastapi.extensions.third_party.bulk_transactions import (
     AsyncBaseBulkTransactionsClient,
     BulkTransactionMethod,
     Items,
 )
 from stac_fastapi.types import stac as stac_types
-from stac_fastapi.types.core import AsyncBaseTransactionsClient
 from stac_pydantic import Collection, Item, ItemCollection
 from starlette.responses import JSONResponse, Response
 
@@ -51,6 +56,12 @@ class ClientValidateMixIn:
         body_item_id = item.get("id")
 
         self._validate_id(body_item_id, request.app.state.settings)
+
+        if item.get("geometry", None) is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Missing or null `geometry` for Item ({body_item_id}). Geometry is required in pgstac.",
+            )
 
         if body_collection_id is not None and collection_id != body_collection_id:
             raise HTTPException(
@@ -202,6 +213,25 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
             await dbfunc(conn, "delete_collection", collection_id)
 
         return JSONResponse({"deleted collection": collection_id})
+
+    async def patch_item(
+        self,
+        collection_id: str,
+        item_id: str,
+        patch: Union[PartialItem, List[PatchOperation]],
+        **kwargs,
+    ) -> Optional[Union[stac_types.Item, Response]]:
+        """Patch Item."""
+        raise NotImplementedError
+
+    async def patch_collection(
+        self,
+        collection_id: str,
+        patch: Union[PartialCollection, List[PatchOperation]],
+        **kwargs,
+    ) -> Optional[Union[stac_types.Collection, Response]]:
+        """Patch Collection."""
+        raise NotImplementedError
 
 
 @attr.s

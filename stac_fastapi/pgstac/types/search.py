@@ -18,7 +18,7 @@ class PgstacSearch(BaseSearchPostRequest):
     @classmethod
     def validate_query_uses_cql(cls, v: str, info: ValidationInfo):
         """Use of Query Extension is not allowed with cql2."""
-        if info.data.get("query", None) is not None and v != "cql-json":
+        if info.data.get("query", None) is not None:
             raise ValueError(
                 "Query extension is not available when using pgstac with cql2"
             )

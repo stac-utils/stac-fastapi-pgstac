@@ -152,6 +152,20 @@ async def test_create_item_bad_body(
     assert resp.status_code == 400
 
 
+async def test_create_item_no_geometry(
+    app_client, load_test_data: Callable, load_test_collection
+):
+    """Items with missing or null Geometry should return an error"""
+    coll = load_test_collection
+
+    item = load_test_data("test_item.json")
+    _ = item.pop("bbox")
+    item["geometry"] = None
+    resp = await app_client.post(f"/collections/{coll['id']}/items", json=item)
+    assert resp.status_code == 400
+    assert "Geometry is required in pgstac." in resp.json()["detail"]
+
+
 async def test_update_item(app_client, load_test_collection, load_test_item):
     coll = load_test_collection
     item = load_test_item

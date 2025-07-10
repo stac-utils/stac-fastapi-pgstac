@@ -9,7 +9,7 @@ services:
       - RELOAD=true
       - ENVIRONMENT=local
       - PGUSER=username
-      - PGPASS=password
+      - PGPASSWORD=password
       - PGDATABASE=postgis
       - PGHOST=database
       - PGPORT=5432
@@ -69,6 +69,7 @@ services:
     command: >
       /bin/sh -c "
         ./scripts/wait-for-it.sh -t 60 app:8082 &&
+        python -m pip install pip -U &&
         python -m pip install requests &&
         python /app/scripts/ingest_joplin.py http://app:8082
         "
