@@ -54,7 +54,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         sortby: Optional[str] = None,
         filter_expr: Optional[str] = None,
         filter_lang: Optional[str] = None,
-        q: Optional[List[str]] = None,
+        q: Optional[Union[str, List[str]]] = None,
         **kwargs,
     ) -> Collections:
         """Cross catalog search (GET).
@@ -550,7 +550,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         sortby: Optional[str] = None,
         filter_query: Optional[str] = None,
         filter_lang: Optional[str] = None,
-        q: Optional[List[str]] = None,
+        q: Optional[Union[str, List[str]]] = None,
     ) -> Dict[str, Any]:
         """Clean up search arguments to match format expected by pgstac"""
         if filter_query:
@@ -596,7 +596,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             base_args["fields"] = {"include": includes, "exclude": excludes}
 
         if q:
-            base_args["q"] = " OR ".join(q)
+            base_args["q"] = " OR ".join(q) if isinstance(q, list) else q
 
         # Remove None values from dict
         clean = {}
