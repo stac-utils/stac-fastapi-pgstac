@@ -243,12 +243,17 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
             )
 
         # Merge Patch with Existing Item
-        if isinstance(patch, PartialItem):
+        if isinstance(patch, list):
+            patchjson = [op.model_dump(mode="json") for op in patch]
+            p = jsonpatch.JsonPatch(patchjson)
+            item = p.apply(existing)
+        elif isinstance(patch, PartialItem):
             partial = patch.model_dump(mode="json")
             item = merge(existing, partial)
         else:
-            patch = jsonpatch.JsonPatch(patch)
-            item = patch.apply(existing)
+            raise Exception(
+                "Patch must be a list of PatchOperations or a PartialCollection."
+            )
 
         self._validate_item(request, item, collection_id, item_id)
         item["collection"] = collection_id
@@ -286,12 +291,17 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
             raise NotFoundError(f"Collection {collection_id} does not exist.")
 
         # Merge Patch with Existing Collection
-        if isinstance(patch, PartialCollection):
+        if isinstance(patch, list):
+            patchjson = [op.model_dump(mode="json") for op in patch]
+            p = jsonpatch.JsonPatch(patchjson)
+            col = p.apply(existing)
+        elif isinstance(patch, PartialCollection):
             partial = patch.model_dump(mode="json")
             col = merge(existing, partial)
         else:
-            patch = jsonpatch.JsonPatch(patch)
-            col = patch.apply(existing)
+            raise Exception(
+                "Patch must be a list of PatchOperations or a PartialCollection."
+            )
 
         async with request.app.state.get_connection(request, "w") as conn:
             await dbfunc(conn, "update_collection", col)

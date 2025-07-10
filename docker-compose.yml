@@ -1,6 +1,6 @@
 services:
   app:
-    container_name: stac-fastapi-pgstac
+    #container_name: stac-fastapi-pgstac
     image: stac-utils/stac-fastapi-pgstac
     build: .
     environment:
@@ -30,7 +30,7 @@ services:
     command: bash -c "./scripts/wait-for-it.sh database:5432 && python -m stac_fastapi.pgstac.app"
 
   tests:
-    container_name: stac-fastapi-pgstac-test
+    #container_name: stac-fastapi-pgstac-test
     image: stac-utils/stac-fastapi-pgstac-test
     build:
       context: .
@@ -45,7 +45,7 @@ services:
     command: bash -c "python -m pytest -s -vv"
 
   database:
-    container_name: stac-db
+    #container_name: stac-db
     image: ghcr.io/stac-utils/pgstac:v0.9.2
     environment:
       - POSTGRES_USER=username
