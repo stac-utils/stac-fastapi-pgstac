@@ -82,6 +82,13 @@ async def test_collection_links_are_valid(loaded_client):
     assert_links_href(response_json.get("links", []), base_url)
 
 
+async def test_items_collection_links_are_valid(loaded_client):
+    resp = await loaded_client.get("/collections/test-collection/items?limit=1")
+    assert resp.status_code == 200
+    response_json = resp.json()
+    assert_links_href(response_json.get("links", []), base_url)
+
+
 def assert_links_href(links, url_prefix):
     """
     Ensure all links start with the expected URL prefix and check that
