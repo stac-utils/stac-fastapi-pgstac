@@ -4,6 +4,9 @@
 
 ### Changed
 
+- add missing `q` parameters for free-text search extensions on `/search` 
+  and `/collections/{collection_id}/items` endpoints
+- add `str` type for `q` parameter when free-text advanced search extension is employed
 - rename `POSTGRES_HOST_READER` to `PGHOST` in config **breaking change**
 - rename `POSTGRES_USER` to `PGUSER` in config **breaking change**
 - rename `POSTGRES_PASS` to `PGPASSWORD` in config **breaking change**

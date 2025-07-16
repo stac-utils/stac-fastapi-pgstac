@@ -54,7 +54,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         sortby: Optional[str] = None,
         filter_expr: Optional[str] = None,
         filter_lang: Optional[str] = None,
-        q: Optional[List[str]] = None,
+        q: Optional[List[str] | str] = None,
         **kwargs,
     ) -> Collections:
         """Cross catalog search (GET).
@@ -359,6 +359,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         filter_expr: Optional[str] = None,
         filter_lang: Optional[str] = None,
         token: Optional[str] = None,
+        q: Optional[List[str] | str] = None,
         **kwargs,
     ) -> ItemCollection:
         """Get all items from a specific collection.
@@ -391,6 +392,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             filter_lang=filter_lang,
             fields=fields,
             sortby=sortby,
+            q=q,
         )
 
         try:
@@ -489,6 +491,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         filter_expr: Optional[str] = None,
         filter_lang: Optional[str] = None,
         token: Optional[str] = None,
+        q: Optional[List[str] | str] = None,
         **kwargs,
     ) -> ItemCollection:
         """Cross catalog search (GET).
@@ -516,6 +519,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             sortby=sortby,
             filter_query=filter_expr,
             filter_lang=filter_lang,
+            q=q,
         )
 
         try:
@@ -550,7 +554,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         sortby: Optional[str] = None,
         filter_query: Optional[str] = None,
         filter_lang: Optional[str] = None,
-        q: Optional[List[str]] = None,
+        q: Optional[List[str] | str] = None,
     ) -> Dict[str, Any]:
         """Clean up search arguments to match format expected by pgstac"""
         if filter_query:
@@ -595,7 +599,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
             base_args["fields"] = {"include": includes, "exclude": excludes}
 
-        if q:
+        # free-text search basic list[str] vs advanced str
+        # it is up to advanced to form the string properly
+        if isinstance(q, list):
             base_args["q"] = " OR ".join(q)
 
         # Remove None values from dict
