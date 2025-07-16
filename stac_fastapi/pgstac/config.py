@@ -159,11 +159,13 @@ class Settings(ApiSettings):
     """API settings.
 
     Attributes:
+        prefix_path: An optional path prefix for the underyling FastAPI router.
         use_api_hydrate: perform hydration of stac items within stac-fastapi.
         invalid_id_chars: list of characters that are not allowed in item or collection ids.
 
     """
 
+    prefix_path: str = ""
     use_api_hydrate: bool = False
     invalid_id_chars: List[str] = DEFAULT_INVALID_ID_CHARS
     base_item_cache: Type[BaseItemCache] = DefaultBaseItemCache
