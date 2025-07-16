@@ -20,6 +20,7 @@ from stac_fastapi.extensions.third_party.bulk_transactions import (
 )
 from stac_fastapi.types import stac as stac_types
 from stac_pydantic import Collection, Item, ItemCollection
+from stac_pydantic.extensions import validate_extensions
 from starlette.responses import JSONResponse, Response
 
 from stac_fastapi.pgstac.config import Settings
@@ -41,8 +42,29 @@ class ClientValidateMixIn:
                 detail=f"ID ({id}) cannot contain the following characters: {' '.join(invalid_chars)}",
             )
 
+    def _validate_extensions(
+        self,
+        stac_object: stac_types.Item | stac_types.Collection | stac_types.Catalog,
+        settings: Settings,
+    ):
+        """Validate extensions of the STAC object data."""
+        if not settings.validate_extensions or not stac_object.stac_extensions:
+            return
+
+        try:
+            validate_extensions(
+                stac_object,
+                reraise_exceptions=True,
+            )
+        except Exception as err:
+            raise HTTPException(
+                status_code=422,
+                detail=f"STAC Extensions failed validation: {str(err)}",
+            ) from err
+
     def _validate_collection(self, request: Request, collection: stac_types.Collection):
         self._validate_id(collection["id"], request.app.state.settings)
+        self._validate_extensions(collection, request.app.state.settings)
 
     def _validate_item(
         self,
@@ -56,6 +78,7 @@ class ClientValidateMixIn:
         body_item_id = item.get("id")
 
         self._validate_id(body_item_id, request.app.state.settings)
+        self._validate_extensions(item, request.app.state.settings)
 
         if item.get("geometry", None) is None:
             raise HTTPException(
@@ -177,6 +200,7 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
         """Update collection."""
 
         col = collection.model_dump(mode="json")
+        self._validate_collection(request, col)
 
         async with request.app.state.get_connection(request, "w") as conn:
             await dbfunc(conn, "update_collection", col)
