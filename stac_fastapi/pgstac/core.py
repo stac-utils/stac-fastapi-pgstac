@@ -54,7 +54,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         sortby: Optional[str] = None,
         filter_expr: Optional[str] = None,
         filter_lang: Optional[str] = None,
-        q: Optional[List[str] | str] = None,
+        q: Optional[Union[List[str], str]] = None,
         **kwargs,
     ) -> Collections:
         """Cross catalog search (GET).
@@ -359,7 +359,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         filter_expr: Optional[str] = None,
         filter_lang: Optional[str] = None,
         token: Optional[str] = None,
-        q: Optional[List[str] | str] = None,
+        q: Optional[Union[List[str], str]] = None,
         **kwargs,
     ) -> ItemCollection:
         """Get all items from a specific collection.
@@ -491,7 +491,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         filter_expr: Optional[str] = None,
         filter_lang: Optional[str] = None,
         token: Optional[str] = None,
-        q: Optional[List[str] | str] = None,
+        q: Optional[Union[List[str], str]] = None,
         **kwargs,
     ) -> ItemCollection:
         """Cross catalog search (GET).
@@ -554,7 +554,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         sortby: Optional[str] = None,
         filter_query: Optional[str] = None,
         filter_lang: Optional[str] = None,
-        q: Optional[List[str] | str] = None,
+        q: Optional[Union[List[str], str]] = None,
     ) -> Dict[str, Any]:
         """Clean up search arguments to match format expected by pgstac"""
         if filter_query:
