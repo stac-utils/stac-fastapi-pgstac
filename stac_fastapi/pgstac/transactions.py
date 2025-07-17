@@ -2,7 +2,7 @@
 
 import logging
 import re
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import attr
 from buildpg import render
@@ -44,22 +44,28 @@ class ClientValidateMixIn:
 
     def _validate_extensions(
         self,
-        stac_object: stac_types.Item | stac_types.Collection | stac_types.Catalog,
+        stac_object: stac_types.Item | stac_types.Collection | stac_types.Catalog | Dict[str, Any],
         settings: Settings,
-    ):
+    ) -> None:
         """Validate extensions of the STAC object data."""
-        if not settings.validate_extensions or not stac_object.stac_extensions:
+        if not settings.validate_extensions:
             return
+        if isinstance(stac_object, dict):
+            if not stac_object.get("stac_extensions"):
+                return
+        else:
+            if not stac_object.stac_extensions:
+                return
 
         try:
             validate_extensions(
                 stac_object,
-                reraise_exceptions=True,
+                reraise_exception=True,
             )
         except Exception as err:
             raise HTTPException(
                 status_code=422,
-                detail=f"STAC Extensions failed validation: {str(err)}",
+                detail=f"STAC Extensions failed validation: {err!s}",
             ) from err
 
     def _validate_collection(self, request: Request, collection: stac_types.Collection):

@@ -21,6 +21,10 @@ install_requires = [
 ]
 
 extra_reqs = {
+    "validate": [
+        "jsonschema",
+        "requests"
+    ],
     "dev": [
         "pystac[validation]",
         "pypgstac[psycopg]==0.9.*",
