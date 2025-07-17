@@ -603,6 +603,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
         # it is up to advanced to form the string properly
         if isinstance(q, list):
             base_args["q"] = " OR ".join(q)
+        elif q:
+            base_args["q"] = q
 
         # Remove None values from dict
         clean = {}
