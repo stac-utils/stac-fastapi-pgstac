@@ -62,3 +62,4 @@ In version `6.0.0` we've renamed the PG configuration variable to match the offi
 - `CORS_METHODS`: A list of HTTP methods that should be allowed for cross-origin requests. Defaults to `"GET,POST,OPTIONS"`
 - `USE_API_HYDRATE`: perform hydration of stac items within stac-fastapi
 - `INVALID_ID_CHARS`: list of characters that are not allowed in item or collection ids (used in Transaction endpoints)
+- `PREFIX_PATH`: An optional path prefix for the underlying FastAPI router.
