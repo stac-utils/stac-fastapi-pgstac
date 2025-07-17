@@ -44,7 +44,7 @@
 - add `validate_extensions` setting that enables validation of `stac_extensions` from submitted STAC objects
   using the `stac_pydantic.extensions.validate_extensions` utility. Applicable only when `TransactionExtension`
   is active.
-- add `validate` extra requirement to install additional dependencies required by extension validation
+- add `validation` extra requirement to install dependencies of `stac_pydantic` required for extension validation
 - add `write_connection_pool` option in `stac_fastapi.pgstac.db.connect_to_db` function
 - add `write_postgres_settings` option in `stac_fastapi.pgstac.db.connect_to_db` function to set specific settings for the `writer` DB connection pool
 - add specific error message when trying to create `Item` with null geometry (not supported by PgSTAC)

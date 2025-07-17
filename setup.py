@@ -21,10 +21,6 @@ install_requires = [
 ]
 
 extra_reqs = {
-    "validate": [
-        "jsonschema",
-        "requests"
-    ],
     "dev": [
         "pystac[validation]",
         "pypgstac[psycopg]==0.9.*",
@@ -49,6 +45,9 @@ extra_reqs = {
     ],
     "server": ["uvicorn[standard]==0.35.0"],
     "awslambda": ["mangum"],
+    "validation": [
+        "stac_pydantic[validation]",
+    ],
 }
 
 
