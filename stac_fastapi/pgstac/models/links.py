@@ -65,7 +65,9 @@ class BaseLinks:
         # We need to remove the root path prefix from the path before
         # joining the base_url and path to get the full url to avoid
         # having root_path twice in the url
-        if root_path := self.request.scope.get("root_path"):
+        if (
+            root_path := self.request.scope.get("root_path")
+        ) and not self.request.app.root_path:
             # self.request.app.root_path is set by FastAPI when running with FastAPI(root_path="...")
             # If self.request.app.root_path is not set but self.request.scope.get("root_path") is set,
             # then the root path is set by uvicorn
