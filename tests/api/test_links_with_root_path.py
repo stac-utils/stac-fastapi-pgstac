@@ -1,3 +1,5 @@
+import importlib
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -23,6 +25,11 @@ async def app_with_root_path(database, monkeypatch):
     monkeypatch.setenv("PGPORT", str(database.port))
     monkeypatch.setenv("PGDATABASE", database.dbname)
     monkeypatch.setenv("ENABLE_TRANSACTIONS_EXTENSIONS", "TRUE")
+
+    # Reload the app module to pick up the new environment variables
+    import stac_fastapi.pgstac.app
+
+    importlib.reload(stac_fastapi.pgstac.app)
 
     from stac_fastapi.pgstac.app import app, with_transactions
 
