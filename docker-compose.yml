@@ -1,6 +1,5 @@
 services:
   app:
-    #container_name: stac-fastapi-pgstac
     image: stac-utils/stac-fastapi-pgstac
     build: .
     environment:
