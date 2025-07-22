@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [5.0.3] - 2025-07-22
+
+### Fixed
+
+- fix root-path handling when setting via env var or on app instance
+
 ## [5.0.2] - 2025-04-07
 
 ### Fixed
