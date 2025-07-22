@@ -58,21 +58,10 @@ class BaseLinks:
         # - by uvicorn when running with --root-path
         # - by FastAPI when running with FastAPI(root_path="...")
         #
-        # When root path is set by uvicorn, request.url.path will have the root path prefix.
-        # eg. if root path is "/api" and the path is "/collections",
-        # the request.url.path will be "/api/collections"
-        #
         # We need to remove the root path prefix from the path before
         # joining the base_url and path to get the full url to avoid
         # having root_path twice in the url
-        if (
-            root_path := self.request.scope.get("root_path")
-        ) and not self.request.app.root_path:
-            # self.request.app.root_path is set by FastAPI when running with FastAPI(root_path="...")
-            # If self.request.app.root_path is not set but self.request.scope.get("root_path") is set,
-            # then the root path is set by uvicorn
-            # So we need to remove the root path prefix from the path before
-            # joining the base_url and path to get the full url
+        if root_path := self.request.scope.get("root_path"):
             if path.startswith(root_path):
                 path = path[len(root_path) :]
 
