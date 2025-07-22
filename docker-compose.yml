@@ -29,7 +29,6 @@ services:
     command: bash -c "./scripts/wait-for-it.sh database:5432 && python -m stac_fastapi.pgstac.app"
 
   tests:
-    #container_name: stac-fastapi-pgstac-test
     image: stac-utils/stac-fastapi-pgstac-test
     build:
       context: .
