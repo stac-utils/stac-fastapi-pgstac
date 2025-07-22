@@ -252,7 +252,7 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
             item = merge(existing, partial)
         else:
             raise Exception(
-                "Patch must be a list of PatchOperations or a PartialCollection."
+                "Patch must be a list of PatchOperations or a PartialItem."
             )
 
         self._validate_item(request, item, collection_id, item_id)
