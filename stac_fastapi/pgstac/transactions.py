@@ -251,9 +251,7 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
             partial = patch.model_dump(mode="json")
             item = merge(existing, partial)
         else:
-            raise Exception(
-                "Patch must be a list of PatchOperations or a PartialItem."
-            )
+            raise Exception("Patch must be a list of PatchOperations or a PartialItem.")
 
         self._validate_item(request, item, collection_id, item_id)
         item["collection"] = collection_id
