@@ -9,7 +9,7 @@ import os
 from contextlib import asynccontextmanager
 
 from brotli_asgi import BrotliMiddleware
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.middleware import CORSMiddleware, ProxyHeaderMiddleware
 from stac_fastapi.api.models import (
@@ -171,6 +171,7 @@ api = StacApi(
         description=settings.stac_fastapi_description,
         lifespan=lifespan,
     ),
+    router=APIRouter(prefix=settings.prefix_path),
     settings=settings,
     extensions=application_extensions,
     client=CoreCrudClient(pgstac_search_model=post_request_model),
