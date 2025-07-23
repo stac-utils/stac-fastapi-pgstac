@@ -188,6 +188,61 @@ async def test_update_item(
     assert post_self_link["href"] == get_self_link["href"]
 
 
+async def test_patch_item_partialitem(
+    app_client,
+    load_test_collection: Collection,
+    load_test_item: Item,
+):
+    """Test patching an Item with a PartialCollection."""
+    item_id = load_test_item["id"]
+    collection_id = load_test_item["collection"]
+    assert collection_id == load_test_collection["id"]
+    partial = {
+        "id": item_id,
+        "collection": collection_id,
+        "properties": {"gsd": 10},
+    }
+
+    resp = await app_client.patch(
+        f"/collections/{collection_id}/items/{item_id}", json=partial
+    )
+    assert resp.status_code == 200
+
+    resp = await app_client.get(f"/collections/{collection_id}/items/{item_id}")
+    assert resp.status_code == 200
+
+    get_item_json = resp.json()
+    Item.model_validate(get_item_json)
+
+    assert get_item_json["properties"]["gsd"] == 10
+
+
+async def test_patch_item_operations(
+    app_client,
+    load_test_collection: Collection,
+    load_test_item: Item,
+):
+    """Test patching an Item with PatchOperations ."""
+
+    item_id = load_test_item["id"]
+    collection_id = load_test_item["collection"]
+    assert collection_id == load_test_collection["id"]
+    operations = [{"op": "replace", "path": "/properties/gsd", "value": 20}]
+
+    resp = await app_client.patch(
+        f"/collections/{collection_id}/items/{item_id}", json=operations
+    )
+    assert resp.status_code == 200
+
+    resp = await app_client.get(f"/collections/{collection_id}/items/{item_id}")
+    assert resp.status_code == 200
+
+    get_item_json = resp.json()
+    Item.model_validate(get_item_json)
+
+    assert get_item_json["properties"]["gsd"] == 20
+
+
 async def test_update_item_mismatched_collection_id(
     app_client, load_test_data: Callable, load_test_collection, load_test_item
 ) -> None:
