@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- fix root-path handling when setting via env var or on app instance
+
 ### Changed
 
 - rename `POSTGRES_HOST_READER` to `PGHOST` in config **breaking change**
