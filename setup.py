@@ -47,6 +47,9 @@ extra_reqs = {
     ],
     "server": ["uvicorn[standard]==0.35.0"],
     "awslambda": ["mangum"],
+    "validation": [
+        "stac_pydantic[validation]",
+    ],
 }
 
 

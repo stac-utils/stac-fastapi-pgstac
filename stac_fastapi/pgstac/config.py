@@ -168,6 +168,13 @@ class Settings(ApiSettings):
     invalid_id_chars: List[str] = DEFAULT_INVALID_ID_CHARS
     base_item_cache: Type[BaseItemCache] = DefaultBaseItemCache
 
+    validate_extensions: bool = False
+    """
+    Validate `stac_extensions` schemas against submitted data when creating or updated STAC objects.
+
+    Implies that the `Transactions` extension is enabled.
+    """
+
     cors_origins: str = "*"
     cors_methods: str = "GET,POST,OPTIONS"
 
