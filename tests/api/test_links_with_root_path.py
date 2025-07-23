@@ -17,26 +17,26 @@ async def app_with_root_path(database, monkeypatch):
     """
 
     monkeypatch.setenv("ROOT_PATH", ROOT_PATH)
-    monkeypatch.setenv("PGUSER", database.user)
-    monkeypatch.setenv("PGPASSWORD", database.password)
-    monkeypatch.setenv("PGHOST", database.host)
-    monkeypatch.setenv("PGPORT", str(database.port))
-    monkeypatch.setenv("PGDATABASE", database.dbname)
-    monkeypatch.setenv("ENABLE_TRANSACTIONS_EXTENSIONS", "TRUE")
+    monkeypatch.setenv("POSTGRES_USER", database.user)
+    monkeypatch.setenv("POSTGRES_PASS", database.password)
+    monkeypatch.setenv("POSTGRES_HOST_READER", database.host)
+    monkeypatch.setenv("POSTGRES_HOST_WRITER", database.host)
+    monkeypatch.setenv("POSTGRES_PORT", str(database.port))
+    monkeypatch.setenv("POSTGRES_DBNAME", database.dbname)
 
     # Reload the app module to pick up the new environment variables
     import stac_fastapi.pgstac.app
 
     importlib.reload(stac_fastapi.pgstac.app)
 
-    from stac_fastapi.pgstac.app import app, with_transactions
+    from stac_fastapi.pgstac.app import app
 
     # Ensure the app's root_path is configured as expected
     assert (
         app.root_path == ROOT_PATH
     ), f"app_with_root_path fixture: app.root_path is '{app.root_path}', expected '{ROOT_PATH}'"
 
-    await connect_to_db(app, add_write_connection_pool=with_transactions)
+    await connect_to_db(app)
     yield app
     await close_db_connection(app)
 
