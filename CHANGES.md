@@ -48,6 +48,7 @@
 - add `write_connection_pool` option in `stac_fastapi.pgstac.db.connect_to_db` function
 - add `write_postgres_settings` option in `stac_fastapi.pgstac.db.connect_to_db` function to set specific settings for the `writer` DB connection pool
 - add specific error message when trying to create `Item` with null geometry (not supported by PgSTAC)
+- add support for Patch in transactions extension
 
 ### removed
 
