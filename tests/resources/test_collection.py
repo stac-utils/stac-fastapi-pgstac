@@ -111,6 +111,44 @@ async def test_update_new_collection(app_client, load_test_collection):
     assert resp.status_code == 404
 
 
+async def test_patch_collection_partialcollection(
+    app_client, load_test_collection: Collection
+):
+    """Test patching a collection with a PartialCollection."""
+    partial = {
+        "id": load_test_collection["id"],
+        "description": "Patched description",
+    }
+
+    resp = await app_client.patch(f"/collections/{partial['id']}", json=partial)
+    assert resp.status_code == 200
+
+    resp = await app_client.get(f"/collections/{partial['id']}")
+    assert resp.status_code == 200
+
+    get_coll = Collection.model_validate(resp.json())
+
+    assert get_coll.description == "Patched description"
+
+
+async def test_patch_collection_operations(app_client, load_test_collection: Collection):
+    """Test patching a collection with PatchOperations ."""
+    operations = [
+        {"op": "replace", "path": "/description", "value": "Patched description"}
+    ]
+
+    resp = await app_client.patch(
+        f"/collections/{load_test_collection['id']}", json=operations
+    )
+    assert resp.status_code == 200
+
+    resp = await app_client.get(f"/collections/{load_test_collection['id']}")
+    assert resp.status_code == 200
+
+    get_coll = Collection.model_validate(resp.json())
+    assert get_coll.description == "Patched description"
+
+
 async def test_nocollections(
     app_client,
 ):
