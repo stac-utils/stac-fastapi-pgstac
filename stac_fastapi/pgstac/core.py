@@ -54,8 +54,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         sortby: Optional[str] = None,
         filter_expr: Optional[str] = None,
         filter_lang: Optional[str] = None,
-        q: Optional[Union[str, List[str]]] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> Collections:
         """Cross catalog search (GET).
 
@@ -86,7 +85,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 sortby=sortby,
                 filter_query=filter_expr,
                 filter_lang=filter_lang,
-                q=q,
+                **kwargs,
             )
 
             async with request.app.state.get_connection(request, "r") as conn:
@@ -157,7 +156,10 @@ class CoreCrudClient(AsyncBaseCoreClient):
         )
 
     async def get_collection(
-        self, collection_id: str, request: Request, **kwargs
+        self,
+        collection_id: str,
+        request: Request,
+        **kwargs: Any,
     ) -> Collection:
         """Get collection by id.
 
@@ -202,7 +204,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
         return Collection(**collection)
 
     async def _get_base_item(
-        self, collection_id: str, request: Request
+        self,
+        collection_id: str,
+        request: Request,
     ) -> Dict[str, Any]:
         """Get the base item of a collection for use in rehydrating full item collection properties.
 
@@ -359,7 +363,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         filter_expr: Optional[str] = None,
         filter_lang: Optional[str] = None,
         token: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> ItemCollection:
         """Get all items from a specific collection.
 
@@ -391,6 +395,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             filter_lang=filter_lang,
             fields=fields,
             sortby=sortby,
+            **kwargs,
         )
 
         try:
@@ -417,7 +422,11 @@ class CoreCrudClient(AsyncBaseCoreClient):
         return ItemCollection(**item_collection)
 
     async def get_item(
-        self, item_id: str, collection_id: str, request: Request, **kwargs
+        self,
+        item_id: str,
+        collection_id: str,
+        request: Request,
+        **kwargs: Any,
     ) -> Item:
         """Get item by id.
 
@@ -445,7 +454,10 @@ class CoreCrudClient(AsyncBaseCoreClient):
         return Item(**item_collection["features"][0])
 
     async def post_search(
-        self, search_request: PgstacSearch, request: Request, **kwargs
+        self,
+        search_request: PgstacSearch,
+        request: Request,
+        **kwargs: Any,
     ) -> ItemCollection:
         """Cross catalog search (POST).
 
@@ -489,7 +501,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         filter_expr: Optional[str] = None,
         filter_lang: Optional[str] = None,
         token: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> ItemCollection:
         """Cross catalog search (GET).
 
@@ -516,6 +528,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             sortby=sortby,
             filter_query=filter_expr,
             filter_lang=filter_lang,
+            **kwargs,
         )
 
         try:
@@ -551,6 +564,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         filter_query: Optional[str] = None,
         filter_lang: Optional[str] = None,
         q: Optional[Union[str, List[str]]] = None,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Clean up search arguments to match format expected by pgstac"""
         if filter_query:
