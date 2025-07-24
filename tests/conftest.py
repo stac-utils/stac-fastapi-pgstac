@@ -26,6 +26,7 @@ from stac_fastapi.extensions.core import (
     CollectionSearchExtension,
     CollectionSearchFilterExtension,
     FieldsExtension,
+    FreeTextAdvancedExtension,
     FreeTextExtension,
     ItemCollectionFilterExtension,
     OffsetPaginationExtension,
@@ -400,5 +401,60 @@ async def default_app(database, monkeypatch):
 async def default_client(default_app):
     async with AsyncClient(
         transport=ASGITransport(app=default_app), base_url="http://test"
+    ) as c:
+        yield c
+
+
+@pytest.fixture(scope="function")
+async def app_advanced_freetext(database):
+    """Default stac-fastapi-pgstac application without only the transaction extensions."""
+    api_settings = Settings(testing=True)
+
+    application_extensions = [
+        TransactionExtension(client=TransactionsClient(), settings=api_settings)
+    ]
+
+    collection_extensions = [
+        FreeTextAdvancedExtension(),
+        OffsetPaginationExtension(),
+    ]
+    collection_search_extension = CollectionSearchExtension.from_extensions(
+        collection_extensions
+    )
+    application_extensions.append(collection_search_extension)
+
+    app = StacApi(
+        settings=api_settings,
+        extensions=application_extensions,
+        client=CoreCrudClient(),
+        health_check=health_check,
+        collections_get_request_model=collection_search_extension.GET,
+    )
+
+    postgres_settings = PostgresSettings(
+        pguser=database.user,
+        pgpassword=database.password,
+        pghost=database.host,
+        pgport=database.port,
+        pgdatabase=database.dbname,
+    )
+    logger.info("Creating app Fixture")
+    time.time()
+    await connect_to_db(
+        app.app,
+        postgres_settings=postgres_settings,
+        add_write_connection_pool=True,
+    )
+    yield app.app
+    await close_db_connection(app.app)
+
+    logger.info("Closed Pools.")
+
+
+@pytest.fixture(scope="function")
+async def app_client_advanced_freetext(app_advanced_freetext):
+    logger.info("creating app_client")
+    async with AsyncClient(
+        transport=ASGITransport(app=app_advanced_freetext), base_url="http://test"
     ) as c:
         yield c
