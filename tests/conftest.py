@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import time
 from typing import Callable, Dict
 from urllib.parse import quote_plus as quote
 from urllib.parse import urljoin
@@ -140,6 +139,7 @@ def api_client(request):
         FieldsExtension(),
         SearchFilterExtension(client=FiltersClient()),
         TokenPaginationExtension(),
+        FreeTextExtension(),  # not recommended by PgSTAC
     ]
     application_extensions.extend(search_extensions)
 
@@ -168,6 +168,7 @@ def api_client(request):
         FieldsExtension(conformance_classes=[FieldsConformanceClasses.ITEMS]),
         ItemCollectionFilterExtension(client=FiltersClient()),
         TokenPaginationExtension(),
+        FreeTextExtension(),  # not recommended by PgSTAC
     ]
     application_extensions.extend(item_collection_extensions)
 
@@ -208,7 +209,6 @@ async def app(api_client, database):
         pgdatabase=database.dbname,
     )
     logger.info("Creating app Fixture")
-    time.time()
     app = api_client.app
     await connect_to_db(
         app,
@@ -315,7 +315,6 @@ async def app_no_ext(database):
         pgdatabase=database.dbname,
     )
     logger.info("Creating app Fixture")
-    time.time()
     await connect_to_db(
         api_client_no_ext.app,
         postgres_settings=postgres_settings,
@@ -355,7 +354,6 @@ async def app_no_transaction(database):
         pgdatabase=database.dbname,
     )
     logger.info("Creating app Fixture")
-    time.time()
     await connect_to_db(
         api.app,
         postgres_settings=postgres_settings,
@@ -439,7 +437,6 @@ async def app_advanced_freetext(database):
         pgdatabase=database.dbname,
     )
     logger.info("Creating app Fixture")
-    time.time()
     await connect_to_db(
         app.app,
         postgres_settings=postgres_settings,
