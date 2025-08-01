@@ -1705,42 +1705,20 @@ async def test_item_search_freetext(app_client, load_test_data, load_test_collec
     # free-text
     resp = await app_client.get(
         "/search",
-        params={"q": "temperature"},
+        params={"q": "orthorectified"},
     )
-    print(resp.json())
-    # assert resp.json()["numberReturned"] == 1
-    # assert resp.json()["numberMatched"] == 1
-    # assert len(resp.json()["collections"]) == 1
-    # assert resp.json()["collections"][0]["id"] == load_test2_collection.id
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["features"][0]["id"] == "test-item"
 
-    # resp = await app_client_advanced_freetext.get(
-    #     "/collections",
-    #     params={"q": "temperature,calibrated"},
-    # )
-    # assert resp.json()["numberReturned"] == 2
-    # assert resp.json()["numberMatched"] == 2
-    # assert len(resp.json()["collections"]) == 2
+    resp = await app_client.get(
+        "/search",
+        params={"q": "orthorectified,yo"},
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["features"][0]["id"] == "test-item"
 
-    # resp = await app_client_advanced_freetext.get(
-    #     "/collections",
-    #     params={"q": "temperature,yo"},
-    # )
-    # assert resp.json()["numberReturned"] == 1
-    # assert resp.json()["numberMatched"] == 1
-    # assert len(resp.json()["collections"]) == 1
-    # assert resp.json()["collections"][0]["id"] == load_test2_collection.id
-
-    # resp = await app_client_advanced_freetext.get(
-    #     "/collections",
-    #     params={"q": "temperature OR yo"},
-    # )
-    # assert resp.json()["numberReturned"] == 1
-    # assert resp.json()["numberMatched"] == 1
-    # assert len(resp.json()["collections"]) == 1
-    # assert resp.json()["collections"][0]["id"] == load_test2_collection.id
-
-    # resp = await app_client_advanced_freetext.get(
-    #     "/collections",
-    #     params={"q": "nosuchthing"},
-    # )
-    # assert len(resp.json()["collections"]) == 0
+    resp = await app_client.get(
+        "/search",
+        params={"q": "yo"},
+    )
+    assert resp.json()["numberReturned"] == 0

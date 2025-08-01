@@ -88,6 +88,12 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 **kwargs,
             )
 
+            # NOTE: `FreeTextExtension` - pgstac will only accept `str` so we need to
+            # join the list[str] with ` OR `
+            # ref: https://github.com/stac-utils/stac-fastapi-pgstac/pull/263
+            if q := clean_args.pop("q", None):
+                clean_args["q"] = " OR ".join(q) if isinstance(q, list) else q
+
             async with request.app.state.get_connection(request, "r") as conn:
                 q, p = render(
                     """
@@ -610,7 +616,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             base_args["fields"] = {"include": includes, "exclude": excludes}
 
         if q:
-            base_args["q"] = " OR ".join(q) if isinstance(q, list) else q
+            base_args["q"] = q
 
         # Remove None values from dict
         clean = {}
