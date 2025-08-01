@@ -34,6 +34,7 @@
     "type": "Polygon"
   },
   "properties": {
+    "description": "Landat 8 imagery radiometrically calibrated and orthorectified using gound points and Digital Elevation Model (DEM) data to correct relief displacement.",
     "datetime": "2020-02-12T12:30:22Z",
     "landsat:scene_id": "LC82081612020043LGN00",
     "landsat:row": "161",

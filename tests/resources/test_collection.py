@@ -366,6 +366,71 @@ async def test_collection_search_freetext(
 
     resp = await app_client.get(
         "/collections",
+        params={"q": "temperature,calibrated"},
+    )
+    assert resp.json()["numberReturned"] == 2
+    assert resp.json()["numberMatched"] == 2
+    assert len(resp.json()["collections"]) == 2
+
+    resp = await app_client.get(
+        "/collections",
+        params={"q": "temperature,yo"},
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["numberMatched"] == 1
+    assert len(resp.json()["collections"]) == 1
+    assert resp.json()["collections"][0]["id"] == load_test2_collection.id
+
+    resp = await app_client.get(
+        "/collections",
+        params={"q": "nosuchthing"},
+    )
+    assert len(resp.json()["collections"]) == 0
+
+
+@requires_pgstac_0_9_2
+@pytest.mark.asyncio
+async def test_collection_search_freetext_advanced(
+    app_client_advanced_freetext, load_test_collection, load_test2_collection
+):
+    # free-text
+    resp = await app_client_advanced_freetext.get(
+        "/collections",
+        params={"q": "temperature"},
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["numberMatched"] == 1
+    assert len(resp.json()["collections"]) == 1
+    assert resp.json()["collections"][0]["id"] == load_test2_collection.id
+
+    resp = await app_client_advanced_freetext.get(
+        "/collections",
+        params={"q": "temperature,calibrated"},
+    )
+    assert resp.json()["numberReturned"] == 2
+    assert resp.json()["numberMatched"] == 2
+    assert len(resp.json()["collections"]) == 2
+
+    resp = await app_client_advanced_freetext.get(
+        "/collections",
+        params={"q": "temperature,yo"},
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["numberMatched"] == 1
+    assert len(resp.json()["collections"]) == 1
+    assert resp.json()["collections"][0]["id"] == load_test2_collection.id
+
+    resp = await app_client_advanced_freetext.get(
+        "/collections",
+        params={"q": "temperature OR yo"},
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["numberMatched"] == 1
+    assert len(resp.json()["collections"]) == 1
+    assert resp.json()["collections"][0]["id"] == load_test2_collection.id
+
+    resp = await app_client_advanced_freetext.get(
+        "/collections",
         params={"q": "nosuchthing"},
     )
     assert len(resp.json()["collections"]) == 0
