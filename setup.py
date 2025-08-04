@@ -29,7 +29,7 @@ extra_reqs = {
         "pytest-postgresql",
         "pytest",
         "pytest-cov",
-        "pytest-asyncio>=0.17,<1.1",
+        "pytest-asyncio>=0.17,<1.2",
         "pre-commit",
         "requests",
         "shapely",
