@@ -6,12 +6,12 @@ from urllib.parse import quote_plus as quote
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from stac_fastapi.types.config import ApiSettings
 
 from stac_fastapi.pgstac.types.base_item_cache import (
     BaseItemCache,
     DefaultBaseItemCache,
 )
+from stac_fastapi.types.config import ApiSettings
 
 DEFAULT_INVALID_ID_CHARS = [
     ":",
@@ -171,6 +171,7 @@ class Settings(ApiSettings):
     cors_origins: str = "*"
     cors_methods: str = "GET,POST,OPTIONS"
     cors_credentials: bool = False
+    cors_headers: list[str] = ["Content-Type"]
 
     testing: bool = False
 
