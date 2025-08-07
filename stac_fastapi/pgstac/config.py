@@ -6,12 +6,12 @@ from urllib.parse import quote_plus as quote
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from stac_fastapi.types.config import ApiSettings
 
 from stac_fastapi.pgstac.types.base_item_cache import (
     BaseItemCache,
     DefaultBaseItemCache,
 )
-from stac_fastapi.types.config import ApiSettings
 
 DEFAULT_INVALID_ID_CHARS = [
     ":",

@@ -10,8 +10,6 @@ from contextlib import asynccontextmanager
 
 from brotli_asgi import BrotliMiddleware
 from fastapi import FastAPI
-from starlette.middleware import Middleware
-
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.middleware import CORSMiddleware, ProxyHeaderMiddleware
 from stac_fastapi.api.models import (
@@ -39,6 +37,8 @@ from stac_fastapi.extensions.core.free_text import FreeTextConformanceClasses
 from stac_fastapi.extensions.core.query import QueryConformanceClasses
 from stac_fastapi.extensions.core.sort import SortConformanceClasses
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
+from starlette.middleware import Middleware
+
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
