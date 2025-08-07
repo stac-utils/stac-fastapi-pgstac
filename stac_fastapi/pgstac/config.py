@@ -170,6 +170,7 @@ class Settings(ApiSettings):
 
     cors_origins: str = "*"
     cors_methods: str = "GET,POST,OPTIONS"
+    cors_credentials: bool = False
 
     testing: bool = False
 
