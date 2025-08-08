@@ -47,12 +47,16 @@ class ClientValidateMixIn:
 
     def _validate_extensions(
         self,
-        stac_object: stac_types.Item | stac_types.Collection | stac_types.Catalog | Dict[str, Any],
+        stac_object: stac_types.Item
+        | stac_types.Collection
+        | stac_types.Catalog
+        | Dict[str, Any],
         settings: Settings,
     ) -> None:
         """Validate extensions of the STAC object data."""
         if not settings.validate_extensions:
             return
+
         if isinstance(stac_object, dict):
             if not stac_object.get("stac_extensions"):
                 return

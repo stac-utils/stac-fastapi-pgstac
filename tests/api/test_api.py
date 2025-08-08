@@ -948,3 +948,39 @@ async def test_default_app(default_client, default_app, load_test_data):
     assert "https://api.stacspec.org/v1.0.0/collections" in conf
     assert "https://api.stacspec.org/v1.0.0/ogcapi-features#query" in conf
     assert "https://api.stacspec.org/v1.0.0/ogcapi-features#sort" in conf
+
+
+async def test_app_transactions_validate_extension(
+    app_client_validate_ext, load_test_data
+):
+    coll = load_test_data("test_collection.json")
+    # Add attribution extension
+    # https://github.com/stac-extensions/attribution
+    coll["stac_extensions"] = [
+        "https://stac-extensions.github.io/attribution/v0.1.0/schema.json",
+    ]
+
+    resp = await app_client_validate_ext.post("/collections", json=coll)
+    assert resp.status_code == 422
+    assert "STAC Extensions failed validation:" in resp.json()["detail"]
+
+    # add attribution
+    coll["attribution"] = "something"
+    resp = await app_client_validate_ext.post("/collections", json=coll)
+    assert resp.status_code == 201
+
+    item = load_test_data("test_item.json")
+    item["stac_extensions"].append(
+        "https://stac-extensions.github.io/attribution/v0.1.0/schema.json",
+    )
+    resp = await app_client_validate_ext.post(
+        f"/collections/{coll['id']}/items", json=item
+    )
+    assert resp.status_code == 422
+    assert "STAC Extensions failed validation:" in resp.json()["detail"]
+
+    item["properties"]["attribution"] = "something"
+    resp = await app_client_validate_ext.post(
+        f"/collections/{coll['id']}/items", json=item
+    )
+    assert resp.status_code == 201
