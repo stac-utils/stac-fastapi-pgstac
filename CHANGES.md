@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- fix root-path handling when setting via env var or on app instance
+- Allow `q` parameter to be a `str` not a `list[str]` for Advanced Free-Text extension
+- do not `unquote` parameters for next/prev links
+
 ### Changed
 
 - rename `POSTGRES_HOST_READER` to `PGHOST` in config **breaking change**
@@ -44,6 +50,8 @@
 
 - add `write_connection_pool` option in `stac_fastapi.pgstac.db.connect_to_db` function
 - add `write_postgres_settings` option in `stac_fastapi.pgstac.db.connect_to_db` function to set specific settings for the `writer` DB connection pool
+- add specific error message when trying to create `Item` with null geometry (not supported by PgSTAC)
+- add support for Patch in transactions extension
 
 ### removed
 
@@ -51,6 +59,12 @@
 - `POSTGRES_HOST_WRITER` in config
 - `writer_connection_string` in `PostgresSettings` class
 - `testing_connection_string` in `PostgresSettings` class
+
+## [5.0.3] - 2025-07-23
+
+### Fixed
+
+- fix root-path handling when setting via env var or on app instance ([#270](https://github.com/stac-utils/stac-fastapi-pgstac/pull/270))
 
 ## [5.0.2] - 2025-04-07
 
@@ -459,7 +473,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.2..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.3..main>
+[5.0.3]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.2..5.0.3>
 [5.0.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.1..5.0.2>
 [5.0.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.0..5.0.1>
 [5.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.3..5.0.0>

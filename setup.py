@@ -18,6 +18,8 @@ install_requires = [
     "cql2>=0.3.6",
     "pypgstac>=0.8,<0.10",
     "typing_extensions>=4.9.0",
+    "jsonpatch>=1.33.0",
+    "json-merge-patch>=0.3.0",
 ]
 
 extra_reqs = {
@@ -27,7 +29,7 @@ extra_reqs = {
         "pytest-postgresql",
         "pytest",
         "pytest-cov",
-        "pytest-asyncio>=0.17,<1.1",
+        "pytest-asyncio>=0.17,<1.2",
         "pre-commit",
         "requests",
         "shapely",
@@ -43,7 +45,7 @@ extra_reqs = {
         "griffe-inherited-docstrings>=1.0.0",
         "mkdocstrings[python]>=0.25.1",
     ],
-    "server": ["uvicorn[standard]==0.34.3"],
+    "server": ["uvicorn[standard]==0.35.0"],
     "awslambda": ["mangum"],
 }
 

@@ -5,8 +5,10 @@ import re
 from typing import List, Optional, Union
 
 import attr
+import jsonpatch
 from buildpg import render
 from fastapi import HTTPException, Request
+from json_merge_patch import merge
 from stac_fastapi.extensions.core.transaction import AsyncBaseTransactionsClient
 from stac_fastapi.extensions.core.transaction.request import (
     PartialCollection,
@@ -19,6 +21,7 @@ from stac_fastapi.extensions.third_party.bulk_transactions import (
     Items,
 )
 from stac_fastapi.types import stac as stac_types
+from stac_fastapi.types.errors import NotFoundError
 from stac_pydantic import Collection, Item, ItemCollection
 from starlette.responses import JSONResponse, Response
 
@@ -56,6 +59,12 @@ class ClientValidateMixIn:
         body_item_id = item.get("id")
 
         self._validate_id(body_item_id, request.app.state.settings)
+
+        if item.get("geometry", None) is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Missing or null `geometry` for Item ({body_item_id}). Geometry is required in pgstac.",
+            )
 
         if body_collection_id is not None and collection_id != body_collection_id:
             raise HTTPException(
@@ -213,19 +222,93 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
         collection_id: str,
         item_id: str,
         patch: Union[PartialItem, List[PatchOperation]],
+        request: Request,
         **kwargs,
     ) -> Optional[Union[stac_types.Item, Response]]:
         """Patch Item."""
-        raise NotImplementedError
+
+        # Get Existing Item to Patch
+        async with request.app.state.get_connection(request, "r") as conn:
+            q, p = render(
+                """
+                SELECT * FROM get_item(:item_id::text, :collection_id::text);
+                """,
+                item_id=item_id,
+                collection_id=collection_id,
+            )
+            existing = await conn.fetchval(q, *p)
+        if existing is None:
+            raise NotFoundError(
+                f"Item {item_id} does not exist in collection {collection_id}."
+            )
+
+        # Merge Patch with Existing Item
+        if isinstance(patch, list):
+            patchjson = [op.model_dump(mode="json") for op in patch]
+            p = jsonpatch.JsonPatch(patchjson)
+            item = p.apply(existing)
+        elif isinstance(patch, PartialItem):
+            partial = patch.model_dump(mode="json")
+            item = merge(existing, partial)
+        else:
+            raise Exception("Patch must be a list of PatchOperations or a PartialItem.")
+
+        self._validate_item(request, item, collection_id, item_id)
+        item["collection"] = collection_id
+
+        async with request.app.state.get_connection(request, "w") as conn:
+            await dbfunc(conn, "update_item", item)
+
+        item["links"] = await ItemLinks(
+            collection_id=collection_id,
+            item_id=item["id"],
+            request=request,
+        ).get_links(extra_links=item.get("links"))
+
+        return stac_types.Item(**item)
 
     async def patch_collection(
         self,
         collection_id: str,
         patch: Union[PartialCollection, List[PatchOperation]],
+        request: Request,
         **kwargs,
     ) -> Optional[Union[stac_types.Collection, Response]]:
         """Patch Collection."""
-        raise NotImplementedError
+
+        # Get Existing Collection to Patch
+        async with request.app.state.get_connection(request, "r") as conn:
+            q, p = render(
+                """
+                SELECT * FROM get_collection(:id::text);
+                """,
+                id=collection_id,
+            )
+            existing = await conn.fetchval(q, *p)
+        if existing is None:
+            raise NotFoundError(f"Collection {collection_id} does not exist.")
+
+        # Merge Patch with Existing Collection
+        if isinstance(patch, list):
+            patchjson = [op.model_dump(mode="json") for op in patch]
+            p = jsonpatch.JsonPatch(patchjson)
+            col = p.apply(existing)
+        elif isinstance(patch, PartialCollection):
+            partial = patch.model_dump(mode="json")
+            col = merge(existing, partial)
+        else:
+            raise Exception(
+                "Patch must be a list of PatchOperations or a PartialCollection."
+            )
+
+        async with request.app.state.get_connection(request, "w") as conn:
+            await dbfunc(conn, "update_collection", col)
+
+        col["links"] = await CollectionLinks(
+            collection_id=col["id"], request=request
+        ).get_links(extra_links=col.get("links"))
+
+        return stac_types.Collection(**col)
 
 
 @attr.s
