@@ -1,5 +1,4 @@
 
-
 ### Application Extension
 
 The default `stac-fastapi-pgstac` application comes will **all** extensions enabled (except transaction). Users can use `ENABLED_EXTENSIONS` environment variable to limit the supported extensions.
@@ -15,7 +14,6 @@ Available values for `ENABLED_EXTENSIONS`:
 - `collection_search`
 
 Example: `ENABLED_EXTENSIONS="pagination,sort"`
-
 
 Since `6.0.0`, the transaction extension is not enabled by default. To add the transaction endpoints, users can set `ENABLE_TRANSACTIONS_EXTENSIONS=TRUE/YES/1`.
 
@@ -60,5 +58,6 @@ In version `6.0.0` we've renamed the PG configuration variable to match the offi
 - `ROOT_PATH`: set application root-path (when using proxy)
 - `CORS_ORIGINS`: A list of origins that should be permitted to make cross-origin requests. Defaults to `*`
 - `CORS_METHODS`: A list of HTTP methods that should be allowed for cross-origin requests. Defaults to `"GET,POST,OPTIONS"`
+- `CORS_CREDENTIALS`: Set to `true` to enable credentials via CORS requests. Note that you'll need to set `CORS_ORIGINS` to something other than `*`, because credentials are [disallowed](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS/Errors/CORSNotSupportingCredentials) for wildcard CORS origins.
 - `USE_API_HYDRATE`: perform hydration of stac items within stac-fastapi
 - `INVALID_ID_CHARS`: list of characters that are not allowed in item or collection ids (used in Transaction endpoints)

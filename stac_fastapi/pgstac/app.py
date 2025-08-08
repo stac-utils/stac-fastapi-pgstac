@@ -185,6 +185,7 @@ api = StacApi(
             CORSMiddleware,
             allow_origins=settings.cors_origins,
             allow_methods=settings.cors_methods,
+            allow_credentials=settings.cors_credentials,
         ),
     ],
     health_check=health_check,
