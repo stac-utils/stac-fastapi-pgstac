@@ -5,6 +5,7 @@
 ### Fixed
 
 - fix root-path handling when setting via env var or on app instance
+- Allow `q` parameter to be a `str` not a `list[str]` for Advanced Free-Text extension
 
 ### Changed
 

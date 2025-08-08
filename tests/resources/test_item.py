@@ -18,6 +18,8 @@ from starlette.requests import Request
 
 from stac_fastapi.pgstac.models.links import CollectionLinks
 
+from ..conftest import requires_pgstac_0_9_2
+
 
 async def test_create_collection(app_client, load_test_data: Callable):
     in_json = load_test_data("test_collection.json")
@@ -1689,3 +1691,34 @@ async def test_get_search_link_media(app_client):
     assert len(links) == 2
     get_self_link = next((link for link in links if link["rel"] == "self"), None)
     assert get_self_link["type"] == "application/geo+json"
+
+
+@requires_pgstac_0_9_2
+@pytest.mark.asyncio
+async def test_item_search_freetext(app_client, load_test_data, load_test_collection):
+    test_item = load_test_data("test_item.json")
+    resp = await app_client.post(
+        f"/collections/{test_item['collection']}/items", json=test_item
+    )
+    assert resp.status_code == 201
+
+    # free-text
+    resp = await app_client.get(
+        "/search",
+        params={"q": "orthorectified"},
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["features"][0]["id"] == "test-item"
+
+    resp = await app_client.get(
+        "/search",
+        params={"q": "orthorectified,yo"},
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["features"][0]["id"] == "test-item"
+
+    resp = await app_client.get(
+        "/search",
+        params={"q": "yo"},
+    )
+    assert resp.json()["numberReturned"] == 0
