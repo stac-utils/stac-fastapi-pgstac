@@ -1,7 +1,7 @@
 """link helpers."""
 
 from typing import Any, Dict, List, Optional
-from urllib.parse import ParseResult, parse_qs, unquote, urlencode, urljoin, urlparse
+from urllib.parse import ParseResult, parse_qs, urlencode, urljoin, urlparse
 
 import attr
 from stac_fastapi.types.requests import get_base_url
@@ -24,7 +24,7 @@ def merge_params(url: str, newparams: Dict) -> str:
     u = urlparse(url)
     params = parse_qs(u.query)
     params.update(newparams)
-    param_string = unquote(urlencode(params, True))
+    param_string = urlencode(params, True)
 
     href = ParseResult(
         scheme=u.scheme,
