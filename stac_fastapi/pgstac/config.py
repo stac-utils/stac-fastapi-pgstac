@@ -171,6 +171,7 @@ class Settings(ApiSettings):
     cors_origins: str = "*"
     cors_methods: str = "GET,POST,OPTIONS"
     cors_credentials: bool = False
+    cors_headers: str = "Content-Type"
 
     testing: bool = False
 
@@ -183,3 +184,8 @@ class Settings(ApiSettings):
     def parse_cors_methods(cls, v):
         """Parse CORS methods."""
         return [method.strip() for method in v.split(",")]
+
+    @field_validator("cors_headers")
+    def parse_cors_headers(cls, v):
+        """Parse CORS headers."""
+        return [header.strip() for header in v.split(",")]
