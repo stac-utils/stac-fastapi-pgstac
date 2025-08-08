@@ -454,3 +454,48 @@ async def app_client_advanced_freetext(app_advanced_freetext):
         transport=ASGITransport(app=app_advanced_freetext), base_url="http://test"
     ) as c:
         yield c
+
+
+@pytest.fixture(scope="function")
+async def app_transaction_validation_ext(database):
+    """Default stac-fastapi-pgstac application with extension validation in transaction."""
+    api_settings = Settings(testing=True, validate_extensions=True)
+    api = StacApi(
+        settings=api_settings,
+        extensions=[
+            TransactionExtension(
+                client=TransactionsClient(),
+                settings=api_settings,
+            )
+        ],
+        client=CoreCrudClient(),
+        health_check=health_check,
+    )
+
+    postgres_settings = PostgresSettings(
+        pguser=database.user,
+        pgpassword=database.password,
+        pghost=database.host,
+        pgport=database.port,
+        pgdatabase=database.dbname,
+    )
+    logger.info("Creating app Fixture")
+    await connect_to_db(
+        api.app,
+        postgres_settings=postgres_settings,
+        add_write_connection_pool=True,
+    )
+    yield api.app
+    await close_db_connection(api.app)
+
+    logger.info("Closed Pools.")
+
+
+@pytest.fixture(scope="function")
+async def app_client_validate_ext(app_transaction_validation_ext):
+    logger.info("creating app_client")
+    async with AsyncClient(
+        transport=ASGITransport(app=app_transaction_validation_ext),
+        base_url="http://test",
+    ) as c:
+        yield c
