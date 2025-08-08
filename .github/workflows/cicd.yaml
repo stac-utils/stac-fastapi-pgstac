@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       pgstac:
-        image: ghcr.io/stac-utils/pgstac:v0.9.5
+        image: ghcr.io/stac-utils/pgstac:v0.9.8
         env:
           POSTGRES_USER: username
           POSTGRES_PASSWORD: password

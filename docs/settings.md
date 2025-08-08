@@ -59,5 +59,7 @@ In version `6.0.0` we've renamed the PG configuration variable to match the offi
 - `CORS_ORIGINS`: A list of origins that should be permitted to make cross-origin requests. Defaults to `*`
 - `CORS_METHODS`: A list of HTTP methods that should be allowed for cross-origin requests. Defaults to `"GET,POST,OPTIONS"`
 - `CORS_CREDENTIALS`: Set to `true` to enable credentials via CORS requests. Note that you'll need to set `CORS_ORIGINS` to something other than `*`, because credentials are [disallowed](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS/Errors/CORSNotSupportingCredentials) for wildcard CORS origins.
+- `CORS_HEADERS`: If `CORS_CREDENTIALS` are true and you're using an `Authorization` header, set this to `Content-Type,Authorization`. Alternatively, you can allow all headers by setting this to `*`.
 - `USE_API_HYDRATE`: perform hydration of stac items within stac-fastapi
 - `INVALID_ID_CHARS`: list of characters that are not allowed in item or collection ids (used in Transaction endpoints)
+- `PREFIX_PATH`: An optional path prefix for the underlying FastAPI router.

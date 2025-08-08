@@ -1,3 +1,6 @@
+import json
+from urllib.parse import parse_qs, urlparse
+
 import pytest
 from fastapi import APIRouter, FastAPI
 from starlette.requests import Request
@@ -104,3 +107,36 @@ def tests_app_links(prefix, root_path):  # noqa: C901
                 assert link["method"] == "GET"
             assert link["href"].startswith(url_prefix)
         assert {"next", "previous", "root", "self"} == {link["rel"] for link in links}
+
+        polygon = {
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    (-180.0, -90.0),
+                    (180.0, -90.0),
+                    (180.0, 90.0),
+                    (-180.0, 90.0),
+                    (-180.0, -90.0),
+                ]
+            ],
+        }
+
+        response = client.get(
+            f"{prefix}/search", params={"limit": 1, "intersects": json.dumps(polygon)}
+        )
+        assert "intersects=%7B%22type%" in str(response.url)
+        assert "limit=1" in str(response.url)
+        assert response.status_code == 200
+        assert "intersects=%7B%22type%" in response.json()["url"]
+        assert "limit=1" in response.json()["url"]
+        links = response.json()["links"]
+        for link in links:
+            if link["rel"] in ["previous", "next"]:
+                assert link["method"] == "GET"
+                assert "intersects=%7B%22type%" in link["href"]
+                u = urlparse(link["href"])
+                params = parse_qs(u.query)
+                assert params["limit"][0] == "1"
+                assert params["intersects"][0] == json.dumps(polygon)
+                r = client.get(link["href"])
+                assert r.status_code == 200
