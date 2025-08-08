@@ -30,7 +30,7 @@ docker-shell:
 
 .PHONY: test
 test:
-	$(runtests) /bin/bash -c 'export && python -m pytest /app/tests/api/test_api.py --log-cli-level $(LOG_LEVEL)'
+	$(runtests) /bin/bash -c 'export && python -m pytest /app/tests/ --log-cli-level $(LOG_LEVEL)'
 
 .PHONY: run-database
 run-database:

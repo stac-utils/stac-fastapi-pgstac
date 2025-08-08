@@ -111,6 +111,44 @@ async def test_update_new_collection(app_client, load_test_collection):
     assert resp.status_code == 404
 
 
+async def test_patch_collection_partialcollection(
+    app_client, load_test_collection: Collection
+):
+    """Test patching a collection with a PartialCollection."""
+    partial = {
+        "id": load_test_collection["id"],
+        "description": "Patched description",
+    }
+
+    resp = await app_client.patch(f"/collections/{partial['id']}", json=partial)
+    assert resp.status_code == 200
+
+    resp = await app_client.get(f"/collections/{partial['id']}")
+    assert resp.status_code == 200
+
+    get_coll = Collection.model_validate(resp.json())
+
+    assert get_coll.description == "Patched description"
+
+
+async def test_patch_collection_operations(app_client, load_test_collection: Collection):
+    """Test patching a collection with PatchOperations ."""
+    operations = [
+        {"op": "replace", "path": "/description", "value": "Patched description"}
+    ]
+
+    resp = await app_client.patch(
+        f"/collections/{load_test_collection['id']}", json=operations
+    )
+    assert resp.status_code == 200
+
+    resp = await app_client.get(f"/collections/{load_test_collection['id']}")
+    assert resp.status_code == 200
+
+    get_coll = Collection.model_validate(resp.json())
+    assert get_coll.description == "Patched description"
+
+
 async def test_nocollections(
     app_client,
 ):
@@ -327,6 +365,71 @@ async def test_collection_search_freetext(
     assert resp.json()["collections"][0]["id"] == load_test2_collection.id
 
     resp = await app_client.get(
+        "/collections",
+        params={"q": "temperature,calibrated"},
+    )
+    assert resp.json()["numberReturned"] == 2
+    assert resp.json()["numberMatched"] == 2
+    assert len(resp.json()["collections"]) == 2
+
+    resp = await app_client.get(
+        "/collections",
+        params={"q": "temperature,yo"},
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["numberMatched"] == 1
+    assert len(resp.json()["collections"]) == 1
+    assert resp.json()["collections"][0]["id"] == load_test2_collection.id
+
+    resp = await app_client.get(
+        "/collections",
+        params={"q": "nosuchthing"},
+    )
+    assert len(resp.json()["collections"]) == 0
+
+
+@requires_pgstac_0_9_2
+@pytest.mark.asyncio
+async def test_collection_search_freetext_advanced(
+    app_client_advanced_freetext, load_test_collection, load_test2_collection
+):
+    # free-text
+    resp = await app_client_advanced_freetext.get(
+        "/collections",
+        params={"q": "temperature"},
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["numberMatched"] == 1
+    assert len(resp.json()["collections"]) == 1
+    assert resp.json()["collections"][0]["id"] == load_test2_collection.id
+
+    resp = await app_client_advanced_freetext.get(
+        "/collections",
+        params={"q": "temperature,calibrated"},
+    )
+    assert resp.json()["numberReturned"] == 2
+    assert resp.json()["numberMatched"] == 2
+    assert len(resp.json()["collections"]) == 2
+
+    resp = await app_client_advanced_freetext.get(
+        "/collections",
+        params={"q": "temperature,yo"},
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["numberMatched"] == 1
+    assert len(resp.json()["collections"]) == 1
+    assert resp.json()["collections"][0]["id"] == load_test2_collection.id
+
+    resp = await app_client_advanced_freetext.get(
+        "/collections",
+        params={"q": "temperature OR yo"},
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["numberMatched"] == 1
+    assert len(resp.json()["collections"]) == 1
+    assert resp.json()["collections"][0]["id"] == load_test2_collection.id
+
+    resp = await app_client_advanced_freetext.get(
         "/collections",
         params={"q": "nosuchthing"},
     )

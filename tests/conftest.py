@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import time
 from typing import Callable, Dict
 from urllib.parse import quote_plus as quote
 from urllib.parse import urljoin
@@ -26,7 +25,7 @@ from stac_fastapi.extensions.core import (
     CollectionSearchExtension,
     CollectionSearchFilterExtension,
     FieldsExtension,
-    FreeTextExtension,
+    FreeTextAdvancedExtension,
     ItemCollectionFilterExtension,
     OffsetPaginationExtension,
     SearchFilterExtension,
@@ -44,7 +43,7 @@ from stac_pydantic import Collection, Item
 from stac_fastapi.pgstac.config import PostgresSettings, Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
-from stac_fastapi.pgstac.extensions import QueryExtension
+from stac_fastapi.pgstac.extensions import FreeTextExtension, QueryExtension
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
@@ -139,6 +138,7 @@ def api_client(request):
         FieldsExtension(),
         SearchFilterExtension(client=FiltersClient()),
         TokenPaginationExtension(),
+        FreeTextExtension(),  # not recommended by PgSTAC
     ]
     application_extensions.extend(search_extensions)
 
@@ -167,6 +167,7 @@ def api_client(request):
         FieldsExtension(conformance_classes=[FieldsConformanceClasses.ITEMS]),
         ItemCollectionFilterExtension(client=FiltersClient()),
         TokenPaginationExtension(),
+        FreeTextExtension(),  # not recommended by PgSTAC
     ]
     application_extensions.extend(item_collection_extensions)
 
@@ -207,7 +208,6 @@ async def app(api_client, database):
         pgdatabase=database.dbname,
     )
     logger.info("Creating app Fixture")
-    time.time()
     app = api_client.app
     await connect_to_db(
         app,
@@ -314,7 +314,6 @@ async def app_no_ext(database):
         pgdatabase=database.dbname,
     )
     logger.info("Creating app Fixture")
-    time.time()
     await connect_to_db(
         api_client_no_ext.app,
         postgres_settings=postgres_settings,
@@ -354,7 +353,6 @@ async def app_no_transaction(database):
         pgdatabase=database.dbname,
     )
     logger.info("Creating app Fixture")
-    time.time()
     await connect_to_db(
         api.app,
         postgres_settings=postgres_settings,
@@ -400,5 +398,59 @@ async def default_app(database, monkeypatch):
 async def default_client(default_app):
     async with AsyncClient(
         transport=ASGITransport(app=default_app), base_url="http://test"
+    ) as c:
+        yield c
+
+
+@pytest.fixture(scope="function")
+async def app_advanced_freetext(database):
+    """Default stac-fastapi-pgstac application without only the transaction extensions."""
+    api_settings = Settings(testing=True)
+
+    application_extensions = [
+        TransactionExtension(client=TransactionsClient(), settings=api_settings)
+    ]
+
+    collection_extensions = [
+        FreeTextAdvancedExtension(),
+        OffsetPaginationExtension(),
+    ]
+    collection_search_extension = CollectionSearchExtension.from_extensions(
+        collection_extensions
+    )
+    application_extensions.append(collection_search_extension)
+
+    app = StacApi(
+        settings=api_settings,
+        extensions=application_extensions,
+        client=CoreCrudClient(),
+        health_check=health_check,
+        collections_get_request_model=collection_search_extension.GET,
+    )
+
+    postgres_settings = PostgresSettings(
+        pguser=database.user,
+        pgpassword=database.password,
+        pghost=database.host,
+        pgport=database.port,
+        pgdatabase=database.dbname,
+    )
+    logger.info("Creating app Fixture")
+    await connect_to_db(
+        app.app,
+        postgres_settings=postgres_settings,
+        add_write_connection_pool=True,
+    )
+    yield app.app
+    await close_db_connection(app.app)
+
+    logger.info("Closed Pools.")
+
+
+@pytest.fixture(scope="function")
+async def app_client_advanced_freetext(app_advanced_freetext):
+    logger.info("creating app_client")
+    async with AsyncClient(
+        transport=ASGITransport(app=app_advanced_freetext), base_url="http://test"
     ) as c:
         yield c

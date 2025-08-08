@@ -54,8 +54,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         sortby: Optional[str] = None,
         filter_expr: Optional[str] = None,
         filter_lang: Optional[str] = None,
-        q: Optional[List[str]] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> Collections:
         """Cross catalog search (GET).
 
@@ -86,8 +85,14 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 sortby=sortby,
                 filter_query=filter_expr,
                 filter_lang=filter_lang,
-                q=q,
+                **kwargs,
             )
+
+            # NOTE: `FreeTextExtension` - pgstac will only accept `str` so we need to
+            # join the list[str] with ` OR `
+            # ref: https://github.com/stac-utils/stac-fastapi-pgstac/pull/263
+            if q := clean_args.pop("q", None):
+                clean_args["q"] = " OR ".join(q) if isinstance(q, list) else q
 
             async with request.app.state.get_connection(request, "r") as conn:
                 q, p = render(
@@ -157,7 +162,10 @@ class CoreCrudClient(AsyncBaseCoreClient):
         )
 
     async def get_collection(
-        self, collection_id: str, request: Request, **kwargs
+        self,
+        collection_id: str,
+        request: Request,
+        **kwargs: Any,
     ) -> Collection:
         """Get collection by id.
 
@@ -202,7 +210,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
         return Collection(**collection)
 
     async def _get_base_item(
-        self, collection_id: str, request: Request
+        self,
+        collection_id: str,
+        request: Request,
     ) -> Dict[str, Any]:
         """Get the base item of a collection for use in rehydrating full item collection properties.
 
@@ -359,7 +369,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         filter_expr: Optional[str] = None,
         filter_lang: Optional[str] = None,
         token: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> ItemCollection:
         """Get all items from a specific collection.
 
@@ -391,6 +401,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             filter_lang=filter_lang,
             fields=fields,
             sortby=sortby,
+            **kwargs,
         )
 
         try:
@@ -417,7 +428,11 @@ class CoreCrudClient(AsyncBaseCoreClient):
         return ItemCollection(**item_collection)
 
     async def get_item(
-        self, item_id: str, collection_id: str, request: Request, **kwargs
+        self,
+        item_id: str,
+        collection_id: str,
+        request: Request,
+        **kwargs: Any,
     ) -> Item:
         """Get item by id.
 
@@ -445,7 +460,10 @@ class CoreCrudClient(AsyncBaseCoreClient):
         return Item(**item_collection["features"][0])
 
     async def post_search(
-        self, search_request: PgstacSearch, request: Request, **kwargs
+        self,
+        search_request: PgstacSearch,
+        request: Request,
+        **kwargs: Any,
     ) -> ItemCollection:
         """Cross catalog search (POST).
 
@@ -489,7 +507,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         filter_expr: Optional[str] = None,
         filter_lang: Optional[str] = None,
         token: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> ItemCollection:
         """Cross catalog search (GET).
 
@@ -516,6 +534,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             sortby=sortby,
             filter_query=filter_expr,
             filter_lang=filter_lang,
+            **kwargs,
         )
 
         try:
@@ -550,7 +569,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
         sortby: Optional[str] = None,
         filter_query: Optional[str] = None,
         filter_lang: Optional[str] = None,
-        q: Optional[List[str]] = None,
+        q: Optional[Union[str, List[str]]] = None,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Clean up search arguments to match format expected by pgstac"""
         if filter_query:
@@ -596,7 +616,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             base_args["fields"] = {"include": includes, "exclude": excludes}
 
         if q:
-            base_args["q"] = " OR ".join(q)
+            base_args["q"] = q
 
         # Remove None values from dict
         clean = {}
