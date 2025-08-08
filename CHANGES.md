@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [6.0.0] - 2025-08-08
+
 ### Fixed
 
 - fix root-path handling when setting via env var or on app instance
@@ -15,6 +17,7 @@
 - rename `POSTGRES_PASS` to `PGPASSWORD` in config **breaking change**
 - rename `POSTGRES_PORT` to `PGPORT` in config **breaking change**
 - rename `POSTGRES_DBNAME` to `PGDATABASE` in config **breaking change**
+
   ```python
   from stac_fastapi.pgstac.config import PostgresSettings
 
@@ -56,6 +59,7 @@
 - add `write_postgres_settings` option in `stac_fastapi.pgstac.db.connect_to_db` function to set specific settings for the `writer` DB connection pool
 - add specific error message when trying to create `Item` with null geometry (not supported by PgSTAC)
 - add support for Patch in transactions extension
+- CORS authentication setting
 
 ### removed
 
@@ -477,7 +481,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.3..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.0..main>
+[6.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.3..6.0.0>
 [5.0.3]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.2..5.0.3>
 [5.0.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.1..5.0.2>
 [5.0.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.0..5.0.1>
