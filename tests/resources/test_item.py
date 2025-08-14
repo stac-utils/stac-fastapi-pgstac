@@ -1701,8 +1701,72 @@ async def test_item_search_freetext(app_client, load_test_data, load_test_collec
         f"/collections/{test_item['collection']}/items", json=test_item
     )
     assert resp.status_code == 201
+    test_item2 = load_test_data("test_item2.json")
+    resp = await app_client.post(
+        f"/collections/{test_item['collection']}/items", json=test_item2
+    )
+    assert resp.status_code == 201
 
-    # free-text
+    # free-text basic (using POST)
+    resp = await app_client.post(
+        "/search",
+        json={"q": ["orthorectified"]},
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["features"][0]["id"] == "test-item"
+
+    resp = await app_client.post(
+        "/search",
+        json={"q": ["orthorectified", "yo"]},
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["features"][0]["id"] == "test-item"
+
+    resp = await app_client.post(
+        "/search",
+        json={"q": ["orthorectified", "Reflectance"]},
+    )
+    assert resp.json()["numberReturned"] == 2
+    assert resp.json()["features"][0]["id"] == "test-item"
+    assert resp.json()["features"][1]["id"] == "test-item2"
+
+    # free-text advanced (using POST)
+    resp = await app_client.post(
+        "/search",
+        json={"q": "orthorectified OR yo"},
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["features"][0]["id"] == "test-item"
+
+    resp = await app_client.post(
+        "/search",
+        json={"q": "orthorectified OR Reflectance"},
+    )
+    assert resp.json()["numberReturned"] == 2
+    assert resp.json()["features"][0]["id"] == "test-item"
+    assert resp.json()["features"][1]["id"] == "test-item2"
+
+    resp = await app_client.post(
+        "/search",
+        json={"q": "orthorectified AND Reflectance"},
+    )
+    assert resp.json()["numberReturned"] == 0
+
+    # free-text basic (using GET)
+    resp = await app_client.get(
+        "/search",
+        params={"q": "yo"},
+    )
+    assert resp.json()["numberReturned"] == 0
+
+    resp = await app_client.get(
+        "/search",
+        params={"q": "orthorectified,yo"},
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["features"][0]["id"] == "test-item"
+
+    # free-text advanced (using GET)
     resp = await app_client.get(
         "/search",
         params={"q": "orthorectified"},
@@ -1712,10 +1776,11 @@ async def test_item_search_freetext(app_client, load_test_data, load_test_collec
 
     resp = await app_client.get(
         "/search",
-        params={"q": "orthorectified,yo"},
+        params={"q": "orthorectified OR Reflectance"},
     )
-    assert resp.json()["numberReturned"] == 1
+    assert resp.json()["numberReturned"] == 2
     assert resp.json()["features"][0]["id"] == "test-item"
+    assert resp.json()["features"][1]["id"] == "test-item2"
 
     resp = await app_client.get(
         "/search",
