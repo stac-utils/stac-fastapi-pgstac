@@ -257,7 +257,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         search_request_json = search_request.model_dump(
             exclude_none=True, by_alias=True
         )
-        search_request_json = self._clean_search_args(**search_request_json)
+        search_request_json = self._clean_search_args({}, **search_request_json)
 
         try:
             async with request.app.state.get_connection(request, "r") as conn:
