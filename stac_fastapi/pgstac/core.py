@@ -88,12 +88,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 **kwargs,
             )
 
-            # NOTE: `FreeTextExtension` - pgstac will only accept `str` so we need to
-            # join the list[str] with ` OR `
-            # ref: https://github.com/stac-utils/stac-fastapi-pgstac/pull/263
-            if q := clean_args.pop("q", None):
-                clean_args["q"] = " OR ".join(q) if isinstance(q, list) else q
-
             async with request.app.state.get_connection(request, "r") as conn:
                 q, p = render(
                     """
@@ -260,9 +254,10 @@ class CoreCrudClient(AsyncBaseCoreClient):
         search_request.conf = search_request.conf or {}
         search_request.conf["nohydrate"] = settings.use_api_hydrate
 
-        search_request_json = search_request.model_dump_json(
+        search_request_json = search_request.model_dump(
             exclude_none=True, by_alias=True
         )
+        search_request_json = self._clean_search_args(**search_request_json)
 
         try:
             async with request.app.state.get_connection(request, "r") as conn:
@@ -270,7 +265,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                     """
                     SELECT * FROM search(:req::text::jsonb);
                     """,
-                    req=search_request_json,
+                    req=str(search_request_json),
                 )
                 items = await conn.fetchval(q, *p)
         except InvalidDatetimeFormatError as e:
@@ -616,7 +611,10 @@ class CoreCrudClient(AsyncBaseCoreClient):
             base_args["fields"] = {"include": includes, "exclude": excludes}
 
         if q:
-            base_args["q"] = q
+            # NOTE: `FreeTextExtension` - pgstac will only accept `str` so we need to
+            # join the list[str] with ` OR `
+            # ref: https://github.com/stac-utils/stac-fastapi-pgstac/pull/263
+            base_args["q"] = " OR ".join(q) if isinstance(q, list) else q
 
         # Remove None values from dict
         clean = {}
