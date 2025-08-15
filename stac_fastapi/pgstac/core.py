@@ -254,9 +254,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         search_request.conf = search_request.conf or {}
         search_request.conf["nohydrate"] = settings.use_api_hydrate
 
-        search_request_json = search_request.model_dump(
-            exclude_none=True, by_alias=True
-        )
+        search_request_json = search_request.model_dump(exclude_none=True, by_alias=True)
         search_request_json = self._clean_search_args({}, **search_request_json)
         search_request_json = orjson.dumps(search_request_json)
 
