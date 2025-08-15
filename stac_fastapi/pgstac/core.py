@@ -258,6 +258,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             exclude_none=True, by_alias=True
         )
         search_request_json = self._clean_search_args({}, **search_request_json)
+        search_request_json = orjson.dumps(search_request_json)
 
         try:
             async with request.app.state.get_connection(request, "r") as conn:
@@ -265,7 +266,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                     """
                     SELECT * FROM search(:req::text::jsonb);
                     """,
-                    req=str(search_request_json),
+                    req=search_request_json,
                 )
                 items = await conn.fetchval(q, *p)
         except InvalidDatetimeFormatError as e:
