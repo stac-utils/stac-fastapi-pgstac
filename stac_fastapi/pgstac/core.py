@@ -609,7 +609,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 else:
                     includes.add(field)
 
-            base_args["fields"] = {"include": includes, "exclude": excludes}
+            # ensure sets are converted to list to avoid JSON serialization issues
+            base_args["fields"] = {"include": list(includes), "exclude": list(excludes)}
 
         if q:
             # NOTE: `FreeTextExtension` - pgstac will only accept `str` so we need to
