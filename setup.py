@@ -29,7 +29,7 @@ extra_reqs = {
         "pytest-postgresql",
         "pytest",
         "pytest-cov",
-        "pytest-asyncio>=0.17,<1.2",
+        "pytest-asyncio>=0.17,<1.3",
         "pre-commit",
         "requests",
         "shapely",
@@ -45,7 +45,7 @@ extra_reqs = {
         "griffe-inherited-docstrings>=1.0.0",
         "mkdocstrings[python]>=0.25.1",
     ],
-    "server": ["uvicorn[standard]==0.35.0"],
+    "server": ["uvicorn[standard]==0.36.0"],
     "awslambda": ["mangum"],
     "validation": [
         "stac_pydantic[validation]",
