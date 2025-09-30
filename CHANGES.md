@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [6.0.1] - 2025-09-30
+
+- fix: ignore 'rel:items' entries when generating links ([#294](https://github.com/stac-utils/stac-fastapi-pgstac/pull/294))
+
 ## [6.0.0] - 2025-08-08
 
 ### Fixed
@@ -481,7 +485,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.0..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.1..main>
+[6.0.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.0..6.0.1>
 [6.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.3..6.0.0>
 [5.0.3]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.2..5.0.3>
 [5.0.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.1..5.0.2>
