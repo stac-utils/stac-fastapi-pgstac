@@ -1,12 +1,13 @@
 """Postgres API configuration."""
 
 import warnings
-from typing import Annotated, Any, List, Optional, Type
+from typing import Annotated, Any, List, Optional, Sequence, Type
 from urllib.parse import quote_plus as quote
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, BeforeValidator, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from stac_fastapi.types.config import ApiSettings
+from typing_extensions import Self
 
 from stac_fastapi.pgstac.types.base_item_cache import (
     BaseItemCache,
@@ -155,6 +156,12 @@ class PostgresSettings(BaseSettings):
         return f"postgresql://{self.pguser}:{quote(self.pgpassword)}@{self.pghost}:{self.pgport}/{self.pgdatabase}"
 
 
+def str_to_list(value: Any) -> Any:
+    if isinstance(value, str):
+        return [v.strip() for v in value.split(",")]
+    return value
+
+
 class Settings(ApiSettings):
     """API settings.
 
@@ -177,24 +184,26 @@ class Settings(ApiSettings):
     Implies that the `Transactions` extension is enabled.
     """
 
-    cors_origins: str = "*"
-    cors_methods: str = "GET,POST,OPTIONS"
+    cors_origins: Annotated[Sequence[str], BeforeValidator(str_to_list)] = ("*",)
+    cors_origin_regex: Optional[str] = None
+    cors_methods: Annotated[Sequence[str], BeforeValidator(str_to_list)] = (
+        "GET",
+        "POST",
+        "OPTIONS",
+    )
     cors_credentials: bool = False
-    cors_headers: str = "Content-Type"
+    cors_headers: Annotated[Sequence[str], BeforeValidator(str_to_list)] = (
+        "Content-Type",
+    )
 
     testing: bool = False
 
-    @field_validator("cors_origins")
-    def parse_cors_origin(cls, v):
-        """Parse CORS origins."""
-        return [origin.strip() for origin in v.split(",")]
-
-    @field_validator("cors_methods")
-    def parse_cors_methods(cls, v):
-        """Parse CORS methods."""
-        return [method.strip() for method in v.split(",")]
-
-    @field_validator("cors_headers")
-    def parse_cors_headers(cls, v):
-        """Parse CORS headers."""
-        return [header.strip() for header in v.split(",")]
+    @model_validator(mode="after")
+    def check_origins(self) -> Self:
+        if self.cors_origin_regex and "*" in self.cors_origins:
+            warnings.warn(
+                "Both `cors_origin_regex` and `*` found in `cors_origins`! `cors_origin_regex` will be ignored.",
+                UserWarning,
+                stacklevel=1,
+            )
+        return self
