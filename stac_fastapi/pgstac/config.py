@@ -201,9 +201,8 @@ class Settings(ApiSettings):
     @model_validator(mode="after")
     def check_origins(self) -> Self:
         if self.cors_origin_regex and "*" in self.cors_origins:
-            warnings.warn(
-                "Both `cors_origin_regex` and `*` found in `cors_origins`! `cors_origin_regex` will be ignored.",
-                UserWarning,
-                stacklevel=1,
+            raise ValueError(
+                "Conflicting options found in API settings: `cors_origin_regex` and `*` in `cors_origins`"
             )
+
         return self
