@@ -57,6 +57,7 @@ In version `6.0.0` we've renamed the PG configuration variable to match the offi
 - `STAC_FASTAPI_LANDING_ID` (string) is a unique identifier for your Landing page
 - `ROOT_PATH`: set application root-path (when using proxy)
 - `CORS_ORIGINS`: A list of origins that should be permitted to make cross-origin requests. Defaults to `*`
+- `CORS_ORIGIN_REGEX`: A regex string to match against origins that should be permitted to make cross-origin requests. eg. 'https://.*\.example\.org'.
 - `CORS_METHODS`: A list of HTTP methods that should be allowed for cross-origin requests. Defaults to `"GET,POST,OPTIONS"`
 - `CORS_CREDENTIALS`: Set to `true` to enable credentials via CORS requests. Note that you'll need to set `CORS_ORIGINS` to something other than `*`, because credentials are [disallowed](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS/Errors/CORSNotSupportingCredentials) for wildcard CORS origins.
 - `CORS_HEADERS`: If `CORS_CREDENTIALS` are true and you're using an `Authorization` header, set this to `Content-Type,Authorization`. Alternatively, you can allow all headers by setting this to `*`.
