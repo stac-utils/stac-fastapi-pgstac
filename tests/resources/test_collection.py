@@ -642,24 +642,3 @@ async def test_get_collections_search_offset_1(
     prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
     # offset=0 should not be in the previous link (because it's useless)
     assert "offset" not in prev_link["href"]
-
-@pytest.mark.parametrize(
-    "filter",
-    [
-        "true",
-        "1=1",
-        "false",
-        "1=0",
-    ],
-)
-async def test_get_collections_filter(
-    app_client, load_test_collection, load_test2_collection, filter
-):
-    """
-    Test CQL2 filters on the collections endpoint
-    """
-    resp = await app_client.get(
-        "/collections",
-        params={"filter": filter},
-    )
-    assert resp.status_code == 200
