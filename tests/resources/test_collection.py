@@ -1,3 +1,4 @@
+import json
 from typing import Callable, Optional
 
 import pystac
@@ -649,12 +650,12 @@ async def test_get_collections_search_offset_1(
     [
         ("true", "cql2-text", 1),
         ("1=1", "cql2-text", 1),
+        ("true", "cql2-json", 1),
+        (json.dumps({"op": "=", "args": [1.0, 1.0]}), "cql2-json", 1),
         ("false", "cql2-text", 0),
         ("1=0", "cql2-text", 0),
-        ("true", "cql2-json", 1),
-        ("1=1", "cql2-json", 1),
         ("false", "cql2-json", 0),
-        ("1=0", "cql2-json", 0),
+        (json.dumps({"op": "=", "args": [1.0, 1.0]}), "cql2-json", 0),
     ],
 )
 async def test_get_collections_filter(
