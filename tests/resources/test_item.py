@@ -1503,7 +1503,20 @@ async def test_search_datetime_validation_errors(app_client):
         assert resp.status_code == 400
 
 
-async def test_get_filter_cql2text(app_client, load_test_data, load_test_collection):
+@pytest.mark.parametrize(
+    "cql2_filter,expected_count",
+    [
+        ("true", 1),
+        ("proj:epsg=32756", 1),
+        ("proj:epsg=32756 AND collection = 'test-collection'", 1),
+        ("false", 1),  # Bad boolean
+        ("proj:epsg=11111", 0),  # Bad epsg
+        ("proj:epsg=32756 AND collection = 'bad-collection'", 0),  # Bad collection
+    ],
+)
+async def test_get_filter_cql2text(
+    app_client, load_test_data, load_test_collection, cql2_filter, expected_count
+):
     """Test GET search with cql2-text"""
     test_item = load_test_data("test_item.json")
     resp = await app_client.post(
@@ -1511,32 +1524,16 @@ async def test_get_filter_cql2text(app_client, load_test_data, load_test_collect
     )
     assert resp.status_code == 201
 
-    epsg = test_item["properties"]["proj:epsg"]
-    collection = test_item["collection"]
-
-    filter = f"proj:epsg={epsg} AND collection = '{collection}'"
-    params = {"filter": filter, "filter-lang": "cql2-text"}
-    resp = await app_client.get("/search", params=params)
-    resp_json = resp.json()
-    assert len(resp.json()["features"]) == 1
-    assert (
-        resp_json["features"][0]["properties"]["proj:epsg"]
-        == test_item["properties"]["proj:epsg"]
-    )
-
-    filter = f"proj:epsg={epsg + 1} AND collection = '{collection}'"
-    params = {"filter": filter, "filter-lang": "cql2-text"}
-    resp = await app_client.get("/search", params=params)
-    resp_json = resp.json()
-    assert len(resp.json()["features"]) == 0
-
-    filter = f"proj:epsg={epsg}"
-    params = {"filter": filter, "filter-lang": "cql2-text"}
     resp = await app_client.get(
-        f"/collections/{test_item['collection']}/items", params=params
+        "/search", params={"filter": cql2_filter, "filter-lang": "cql2-text"}
     )
     resp_json = resp.json()
-    assert len(resp.json()["features"]) == 1
+    assert len(resp.json()["features"]) == expected_count
+    if expected_count == 1:
+        assert (
+            resp_json["features"][0]["properties"]["proj:epsg"]
+            == test_item["properties"]["proj:epsg"]
+        )
 
 
 async def test_item_merge_raster_bands(

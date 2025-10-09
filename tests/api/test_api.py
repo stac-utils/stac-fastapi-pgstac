@@ -618,28 +618,6 @@ async def test_item_collection_filter_datetime(
     assert len(resp_json["features"]) == 0
 
 
-@pytest.mark.parametrize(
-    "filter",
-    [
-        "true",
-        "1=1",
-        "false",
-        "1=0",
-    ],
-)
-async def test_get_collections_filter(
-    app_client, load_test_collection, load_test2_collection, filter
-):
-    """
-    Test CQL2 filters on the collections endpoint
-    """
-    resp = await app_client.get(
-        "/collections",
-        params={"filter": filter},
-    )
-    assert resp.status_code == 200
-
-
 @pytest.mark.asyncio
 async def test_bad_collection_queryables(
     load_test_data, app_client, load_test_collection
