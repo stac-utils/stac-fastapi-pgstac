@@ -1744,7 +1744,7 @@ async def test_item_asset_change(app_client, load_test_data):
     resp = await app_client.get(
         f"/collections/{collection_id}/items", params={"limit": 1}
     )
-    assert resp.json()["numberReturned"] == 1
+    assert len(resp.json()["features"]) == 1
     assert resp.status_code == 200
 
     # remove item_assets in collection
@@ -1760,5 +1760,5 @@ async def test_item_asset_change(app_client, load_test_data):
     resp = await app_client.get(
         f"/collections/{collection_id}/items", params={"limit": 1}
     )
-    assert resp.json()["numberReturned"] == 1
+    assert len(resp.json()["features"]) == 1
     assert resp.status_code == 200
