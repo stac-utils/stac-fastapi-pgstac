@@ -1722,3 +1722,43 @@ async def test_item_search_freetext(app_client, load_test_data, load_test_collec
         params={"q": "yo"},
     )
     assert resp.json()["numberReturned"] == 0
+
+
+@pytest.mark.asyncio
+async def test_item_asset_change(app_client, load_test_data):
+    # load collection
+    data = load_test_data("test2_collection.json")
+    collection_id = data["id"]
+
+    resp = await app_client.post("/collections", json=data)
+    assert "item_assets" in data
+    assert resp.status_code == 201
+    assert "item_assets" in resp.json()
+
+    # load items
+    test_item = load_test_data("test2_item.json")
+    resp = await app_client.post(f"/collections/{collection_id}/items", json=test_item)
+    assert resp.status_code == 201
+
+    # check list of items
+    resp = await app_client.get(
+        f"/collections/{collection_id}/items", params={"limit": 1}
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.status_code == 200
+
+    # remove item_assets in collection
+    operations = [{"op": "remove", "path": "/item_assets"}]
+    resp = await app_client.patch(f"/collections/{collection_id}", json=operations)
+    assert resp.status_code == 200
+
+    # make sure item_assets is not in collection response
+    resp = await app_client.get(f"/collections/{collection_id}")
+    assert resp.status_code == 200
+    assert "item_assets" not in resp.json()
+
+    resp = await app_client.get(
+        f"/collections/{collection_id}/items", params={"limit": 1}
+    )
+    assert resp.json()["numberReturned"] == 1
+    assert resp.status_code == 200
