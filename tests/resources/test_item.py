@@ -1726,6 +1726,10 @@ async def test_item_search_freetext(app_client, load_test_data, load_test_collec
 
 @pytest.mark.asyncio
 async def test_item_asset_change(app_client, load_test_data):
+    """Check that changing item_assets in collection does
+    not affect existing items if hydration should not occur.
+
+    """
     # load collection
     data = load_test_data("test2_collection.json")
     collection_id = data["id"]
@@ -1746,6 +1750,72 @@ async def test_item_asset_change(app_client, load_test_data):
     )
     assert len(resp.json()["features"]) == 1
     assert resp.status_code == 200
+    # NOTE: Hydration or Not we should get the same values as original Item
+    assert (
+        test_item["assets"]["red"]["raster:bands"]
+        == resp.json()["features"][0]["assets"]["red"]["raster:bands"]
+    )
+
+    # remove item_assets in collection
+    operations = [{"op": "remove", "path": "/item_assets"}]
+    resp = await app_client.patch(f"/collections/{collection_id}", json=operations)
+    assert resp.status_code == 200
+
+    # make sure item_assets is not in collection response
+    resp = await app_client.get(f"/collections/{collection_id}")
+    assert resp.status_code == 200
+    assert "item_assets" not in resp.json()
+
+    # NOTE: Should Fail
+    # For some reason we get the part not present in the Collection's item_assets but not originaly from the Item
+    resp = await app_client.get(
+        f"/collections/{collection_id}/items", params={"limit": 1}
+    )
+    assert len(resp.json()["features"]) == 1
+    assert resp.status_code == 200
+    assert (
+        test_item["assets"]["red"]["raster:bands"]
+        == resp.json()["features"][0]["assets"]["red"]["raster:bands"]
+    )
+
+
+@pytest.mark.asyncio
+async def test_item_asset_change_hydration(app_client, load_test_data):
+    """Test hydration process."""
+    # Only test when Hydration is enabled
+    if not app_client._transport.app.state.settings.use_api_hydrate:
+        return
+
+    # load collection
+    data = load_test_data("test2_collection.json")
+    collection_id = data["id"]
+
+    resp = await app_client.post("/collections", json=data)
+    assert "item_assets" in data
+    assert resp.status_code == 201
+    assert "item_assets" in resp.json()
+
+    # load items
+    test_item = load_test_data("test2_item.json")
+    resp = await app_client.post(f"/collections/{collection_id}/items", json=test_item)
+    assert resp.status_code == 201
+
+    # check list of items
+    resp = await app_client.get(
+        f"/collections/{collection_id}/items", params={"limit": 1}
+    )
+    assert len(resp.json()["features"]) == 1
+    assert resp.status_code == 200
+    # The items should be the same
+    # When hydrated we should get the value from the collection's item_assets
+    assert (
+        resp.json()["features"][0]["assets"]["green"]["raster:bands"]
+        == data["item_assets"]["green"]["raster:bands"]
+    )
+
+    # TODO: Check if OK
+    # We don't have `"raster:bands"` for `nir08` asset in the original Items body
+    assert resp.json()["features"][0]["assets"]["nir08"]["raster:bands"]
 
     # remove item_assets in collection
     operations = [{"op": "remove", "path": "/item_assets"}]
@@ -1762,3 +1832,8 @@ async def test_item_asset_change(app_client, load_test_data):
     )
     assert len(resp.json()["features"]) == 1
     assert resp.status_code == 200
+    assert resp.json()["features"][0]["assets"]["green"]["raster:bands"] == "𒍟※"
+
+    # TODO: Check if OK
+    # We don't have `"raster:bands"` for `nir08` asset in the original Items body but for some reason we get "𒍟※"
+    assert resp.json()["features"][0]["assets"]["nir08"]["raster:bands"] == "𒍟※"
