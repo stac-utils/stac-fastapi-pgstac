@@ -64,7 +64,7 @@
           "nodata": 0,
           "offset": 2.03976,
           "data_type": "uint8",
-          "spatial_resolution": 60
+          "spatial_resolution": 80
         }
       ]
     },
@@ -83,7 +83,16 @@
         }
       ],
       "description": "Collection 2 Level-1 Green Band Top of Atmosphere Radiance",
-      "raster:bands": "𒍟※"
+      "raster:bands": [
+        {
+          "unit": "watt/steradian/square_meter/micrometer",
+          "scale": 0.88504,
+          "nodata": 0,
+          "offset": 1.51496,
+          "data_type": "uint8",
+          "spatial_resolution": 60
+        }
+      ]
     },
     "nir08": {
       "href": "https://landsateuwest.blob.core.windows.net/landsat-c2/level-1/standard/mss/1990/018/038/LM05_L1GS_018038_19901223_20200827_02_T2/LM05_L1GS_018038_19901223_20200827_02_T2_B3.TIF",
@@ -99,7 +108,17 @@
           "full_width_half_max": 0.1
         }
       ],
-      "description": "Collection 2 Level-1 Near Infrared Band 0.7 Top of Atmosphere Radiance"
+      "description": "Collection 2 Level-1 Near Infrared Band 0.7 Top of Atmosphere Radiance",
+      "raster:bands": [
+        {
+          "unit": "watt/steradian/square_meter/micrometer",
+          "scale": 0.55866,
+          "nodata": 0,
+          "offset": 4.34134,
+          "data_type": "uint8",
+          "spatial_resolution": 60
+        }
+      ]   
     },
     "nir09": {
       "href": "https://landsateuwest.blob.core.windows.net/landsat-c2/level-1/standard/mss/1990/018/038/LM05_L1GS_018038_19901223_20200827_02_T2/LM05_L1GS_018038_19901223_20200827_02_T2_B4.TIF",
@@ -153,7 +172,6 @@
       "type": "image/tiff; application=geotiff; profile=cloud-optimized",
       "roles": ["cloud"],
       "title": "Pixel Quality Assessment Band (QA_PIXEL)",
-      "description": "Collection 2 Level-1 Pixel Quality Assessment Band",
       "raster:bands": [
         {
           "unit": "bit index",

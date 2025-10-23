@@ -1750,90 +1750,43 @@ async def test_item_asset_change(app_client, load_test_data):
     )
     assert len(resp.json()["features"]) == 1
     assert resp.status_code == 200
-    # NOTE: Hydration or Not we should get the same values as original Item
+
+    # NOTE: API or PgSTAC Hydration we should get the same values as original Item
     assert (
         test_item["assets"]["red"]["raster:bands"]
         == resp.json()["features"][0]["assets"]["red"]["raster:bands"]
     )
 
-    # remove item_assets in collection
+    # NOTE: `description` is not in the item body but in the collection's item-assets
+    # because it's not in the original item it won't be hydrated
+    assert not resp.json()["features"][0]["assets"]["qa_pixel"].get("description")
+
+    ###########################################################################
+    # Remove item_assets in collection
     operations = [{"op": "remove", "path": "/item_assets"}]
     resp = await app_client.patch(f"/collections/{collection_id}", json=operations)
     assert resp.status_code == 200
 
-    # make sure item_assets is not in collection response
+    # Make sure item_assets is not in collection response
     resp = await app_client.get(f"/collections/{collection_id}")
     assert resp.status_code == 200
     assert "item_assets" not in resp.json()
-
-    # NOTE: Should Fail
-    # For some reason we get the part not present in the Collection's item_assets but not originaly from the Item
-    resp = await app_client.get(
-        f"/collections/{collection_id}/items", params={"limit": 1}
-    )
-    assert len(resp.json()["features"]) == 1
-    assert resp.status_code == 200
-    assert (
-        test_item["assets"]["red"]["raster:bands"]
-        == resp.json()["features"][0]["assets"]["red"]["raster:bands"]
-    )
-
-
-@pytest.mark.asyncio
-async def test_item_asset_change_hydration(app_client, load_test_data):
-    """Test hydration process."""
-    # Only test when Hydration is enabled
-    if not app_client._transport.app.state.settings.use_api_hydrate:
-        return
-
-    # load collection
-    data = load_test_data("test2_collection.json")
-    collection_id = data["id"]
-
-    resp = await app_client.post("/collections", json=data)
-    assert "item_assets" in data
-    assert resp.status_code == 201
-    assert "item_assets" in resp.json()
-
-    # load items
-    test_item = load_test_data("test2_item.json")
-    resp = await app_client.post(f"/collections/{collection_id}/items", json=test_item)
-    assert resp.status_code == 201
-
-    # check list of items
-    resp = await app_client.get(
-        f"/collections/{collection_id}/items", params={"limit": 1}
-    )
-    assert len(resp.json()["features"]) == 1
-    assert resp.status_code == 200
-    # The items should be the same
-    # When hydrated we should get the value from the collection's item_assets
-    assert (
-        resp.json()["features"][0]["assets"]["green"]["raster:bands"]
-        == data["item_assets"]["green"]["raster:bands"]
-    )
-
-    # TODO: Check if OK
-    # We don't have `"raster:bands"` for `nir08` asset in the original Items body
-    assert resp.json()["features"][0]["assets"]["nir08"]["raster:bands"]
-
-    # remove item_assets in collection
-    operations = [{"op": "remove", "path": "/item_assets"}]
-    resp = await app_client.patch(f"/collections/{collection_id}", json=operations)
-    assert resp.status_code == 200
-
-    # make sure item_assets is not in collection response
-    resp = await app_client.get(f"/collections/{collection_id}")
-    assert resp.status_code == 200
-    assert "item_assets" not in resp.json()
+    ###########################################################################
 
     resp = await app_client.get(
         f"/collections/{collection_id}/items", params={"limit": 1}
     )
     assert len(resp.json()["features"]) == 1
     assert resp.status_code == 200
-    assert resp.json()["features"][0]["assets"]["green"]["raster:bands"] == "𒍟※"
 
-    # TODO: Check if OK
-    # We don't have `"raster:bands"` for `nir08` asset in the original Items body but for some reason we get "𒍟※"
-    assert resp.json()["features"][0]["assets"]["nir08"]["raster:bands"] == "𒍟※"
+    # NOTE: here we should only get `scale`, `offset` and `spatial_resolution`
+    # because the other values were stripped on ingestion (dehydration is a default in PgSTAC)
+    # scale and offset are no in item-asset and spatial_resolution is different, so the value in the item body is kept
+    assert ["scale", "offset", "spatial_resolution"] == list(
+        resp.json()["features"][0]["assets"]["red"]["raster:bands"][0]
+    )
+
+    # NOTE: `description` is not in the original item but in the collection's item-assets
+    # We get "𒍟※" because PgSTAC set it when ingesting (`description`is item-assets)
+    # because we removed item-assets, pgstac cannot hydrate this field, and thus return "𒍟※"
+    assert resp.json()["features"][0]["assets"]["qa_pixel"]["description"] == "𒍟※"

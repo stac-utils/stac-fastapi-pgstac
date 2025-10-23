@@ -100,7 +100,7 @@ async def pgstac(database):
 # Run all the tests that use the api_client in both db hydrate and api hydrate mode
 @pytest.fixture(
     params=[
-        # hydratation, prefix, model_validation
+        # API hydratation, prefix, model_validation
         (False, "", False),
         (False, "/router_prefix", False),
         (True, "", False),
