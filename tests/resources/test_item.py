@@ -1722,3 +1722,71 @@ async def test_item_search_freetext(app_client, load_test_data, load_test_collec
         params={"q": "yo"},
     )
     assert resp.json()["numberReturned"] == 0
+
+
+@pytest.mark.asyncio
+async def test_item_asset_change(app_client, load_test_data):
+    """Check that changing item_assets in collection does
+    not affect existing items if hydration should not occur.
+
+    """
+    # load collection
+    data = load_test_data("test2_collection.json")
+    collection_id = data["id"]
+
+    resp = await app_client.post("/collections", json=data)
+    assert "item_assets" in data
+    assert resp.status_code == 201
+    assert "item_assets" in resp.json()
+
+    # load items
+    test_item = load_test_data("test2_item.json")
+    resp = await app_client.post(f"/collections/{collection_id}/items", json=test_item)
+    assert resp.status_code == 201
+
+    # check list of items
+    resp = await app_client.get(
+        f"/collections/{collection_id}/items", params={"limit": 1}
+    )
+    assert len(resp.json()["features"]) == 1
+    assert resp.status_code == 200
+
+    # NOTE: API or PgSTAC Hydration we should get the same values as original Item
+    assert (
+        test_item["assets"]["red"]["raster:bands"]
+        == resp.json()["features"][0]["assets"]["red"]["raster:bands"]
+    )
+
+    # NOTE: `description` is not in the item body but in the collection's item-assets
+    # because it's not in the original item it won't be hydrated
+    assert not resp.json()["features"][0]["assets"]["qa_pixel"].get("description")
+
+    ###########################################################################
+    # Remove item_assets in collection
+    operations = [{"op": "remove", "path": "/item_assets"}]
+    resp = await app_client.patch(f"/collections/{collection_id}", json=operations)
+    assert resp.status_code == 200
+
+    # Make sure item_assets is not in collection response
+    resp = await app_client.get(f"/collections/{collection_id}")
+    assert resp.status_code == 200
+    assert "item_assets" not in resp.json()
+    ###########################################################################
+
+    resp = await app_client.get(
+        f"/collections/{collection_id}/items", params={"limit": 1}
+    )
+    assert len(resp.json()["features"]) == 1
+    assert resp.status_code == 200
+
+    # NOTE: here we should only get `scale`, `offset` and `spatial_resolution`
+    # because the other values were stripped on ingestion (dehydration is a default in PgSTAC)
+    # scale and offset are no in item-asset and spatial_resolution is different, so the value in the item body is kept
+    assert ["scale", "offset", "spatial_resolution"] == list(
+        resp.json()["features"][0]["assets"]["red"]["raster:bands"][0]
+    )
+
+    # NOTE: `description` is not in the original item but in the collection's item-assets
+    # We get "𒍟※" because PgSTAC set it when ingesting (`description`is item-assets)
+    # because we removed item-assets, pgstac cannot hydrate this field, and thus return "𒍟※"
+    assert resp.json()["features"][0]["assets"]["qa_pixel"]["description"] == "𒍟※"

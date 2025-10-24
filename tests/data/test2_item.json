@@ -64,7 +64,7 @@
           "nodata": 0,
           "offset": 2.03976,
           "data_type": "uint8",
-          "spatial_resolution": 60
+          "spatial_resolution": 80
         }
       ]
     },
@@ -172,7 +172,6 @@
       "type": "image/tiff; application=geotiff; profile=cloud-optimized",
       "roles": ["cloud"],
       "title": "Pixel Quality Assessment Band (QA_PIXEL)",
-      "description": "Collection 2 Level-1 Pixel Quality Assessment Band",
       "raster:bands": [
         {
           "unit": "bit index",

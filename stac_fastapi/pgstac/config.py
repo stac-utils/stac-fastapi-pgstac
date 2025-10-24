@@ -174,6 +174,16 @@ class Settings(ApiSettings):
 
     prefix_path: str = ""
     use_api_hydrate: bool = False
+    """
+    When USE_API_HYDRATE=TRUE, PgSTAC database will receive `NO_HYDRATE=TRUE`
+
+    | use_api_hydrate | nohydrate | Hydration |
+    |             --- |       --- |       --- |
+    |           False |     False |    PgSTAC |
+    |            True |      True |       API |
+
+    ref: https://stac-utils.github.io/pgstac/pgstac/#runtime-configurations
+    """
     invalid_id_chars: List[str] = DEFAULT_INVALID_ID_CHARS
     base_item_cache: Type[BaseItemCache] = DefaultBaseItemCache
 
