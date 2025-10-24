@@ -118,7 +118,7 @@
           "data_type": "uint8",
           "spatial_resolution": 60
         }
-      ]   
+      ]
     },
     "nir09": {
       "href": "https://landsateuwest.blob.core.windows.net/landsat-c2/level-1/standard/mss/1990/018/038/LM05_L1GS_018038_19901223_20200827_02_T2/LM05_L1GS_018038_19901223_20200827_02_T2_B4.TIF",
