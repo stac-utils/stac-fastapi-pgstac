@@ -20,6 +20,7 @@ install_requires = [
     "typing_extensions>=4.9.0",
     "jsonpatch>=1.33.0",
     "json-merge-patch>=0.3.0",
+    "hydraters>=0.1.3",
 ]
 
 extra_reqs = {

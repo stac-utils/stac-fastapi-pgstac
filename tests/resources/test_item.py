@@ -1786,7 +1786,9 @@ async def test_item_asset_change(app_client, load_test_data):
         resp.json()["features"][0]["assets"]["red"]["raster:bands"][0]
     )
 
-    # NOTE: `description` is not in the original item but in the collection's item-assets
-    # We get "𒍟※" because PgSTAC set it when ingesting (`description`is item-assets)
-    # because we removed item-assets, pgstac cannot hydrate this field, and thus return "𒍟※"
-    assert resp.json()["features"][0]["assets"]["qa_pixel"]["description"] == "𒍟※"
+    # Only run this test for PgSTAC hydratation because `exclude_hydrate_markers=True` by default
+    if not app_client._transport.app.state.settings.use_api_hydrate:
+        # NOTE: `description` is not in the original item but in the collection's item-assets
+        # We get "𒍟※" because PgSTAC set it when ingesting (`description`is item-assets)
+        # because we removed item-assets, pgstac cannot hydrate this field, and thus return "𒍟※"
+        assert resp.json()["features"][0]["assets"]["qa_pixel"]["description"] == "𒍟※"
