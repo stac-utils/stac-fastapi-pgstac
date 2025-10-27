@@ -46,7 +46,7 @@ extra_reqs = {
         "griffe-inherited-docstrings>=1.0.0",
         "mkdocstrings[python]>=0.25.1",
     ],
-    "server": ["uvicorn[standard]==0.36.0"],
+    "server": ["uvicorn[standard]==0.37.0"],
     "awslambda": ["mangum"],
     "validation": [
         "stac_pydantic[validation]",
