@@ -45,7 +45,7 @@ For more than millions of records it is recommended to either set a low connecti
 
 To configure **stac-fastapi-pgstac** to [hydrate search result items at the API level](https://stac-utils.github.io/pgstac/pgstac/#runtime-configurations), set the `USE_API_HYDRATE` environment variable to `true`. If `false` (default) the hydration will be done in the database.
 
-| use_api_hydrat (API) | nohydrate (PgSTAC) | Hydration |
+| use_api_hydrate (API) | nohydrate (PgSTAC) | Hydration |
 |                  --- |                --- |       --- |
 |                False |              False |    PgSTAC |
 |                 True |               True |       API |
