@@ -9,7 +9,6 @@ import asyncpg
 import pytest
 from fastapi import APIRouter
 from httpx import ASGITransport, AsyncClient
-from pypgstac import __version__ as pgstac_version
 from pypgstac.db import PgstacDB
 from pypgstac.migrate import Migrate
 from pytest_postgresql.janitor import DatabaseJanitor
@@ -54,12 +53,6 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 logger = logging.getLogger(__name__)
 
 
-requires_pgstac_0_9_2 = pytest.mark.skipif(
-    tuple(map(int, pgstac_version.split("."))) < (0, 9, 2),
-    reason="PgSTAC>=0.9.2 required",
-)
-
-
 @pytest.fixture(scope="session")
 def database(postgresql_proc):
     with DatabaseJanitor(
@@ -79,7 +72,13 @@ def database(postgresql_proc):
         yield jan
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(
+    params=[
+        "0.8.6",
+        "0.9.8",
+    ],
+    autouse=True,
+)
 async def pgstac(database):
     connection = f"postgresql://{database.user}:{quote(database.password)}@{database.host}:{database.port}/{database.dbname}"
     yield
