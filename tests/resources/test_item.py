@@ -18,8 +18,6 @@ from starlette.requests import Request
 
 from stac_fastapi.pgstac.models.links import CollectionLinks
 
-from ..conftest import requires_pgstac_0_9_2
-
 
 async def test_create_collection(app_client, load_test_data: Callable):
     in_json = load_test_data("test_collection.json")
@@ -1693,9 +1691,13 @@ async def test_get_search_link_media(app_client):
     assert get_self_link["type"] == "application/geo+json"
 
 
-@requires_pgstac_0_9_2
 @pytest.mark.asyncio
 async def test_item_search_freetext(app_client, load_test_data, load_test_collection):
+    res = await app_client.get("/_mgmt/health")
+    pgstac_version = res.json()["pgstac"]["pgstac_version"]
+    if tuple(map(int, pgstac_version.split("."))) < (0, 9, 2):
+        pass
+
     test_item = load_test_data("test_item.json")
     resp = await app_client.post(
         f"/collections/{test_item['collection']}/items", json=test_item
