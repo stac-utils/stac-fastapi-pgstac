@@ -331,7 +331,11 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 # Exclude None values
                 base_item = {k: v for k, v in base_item.items() if v is not None}
 
-                feature = hydrate(base_item, feature)
+                feature = hydrate(
+                    base_item,
+                    feature,
+                    strip_unmatched_markers=settings.exclude_hydrate_markers,
+                )
 
                 # Grab ids needed for links that may be removed by the fields extension.
                 collection_id = feature.get("collection")

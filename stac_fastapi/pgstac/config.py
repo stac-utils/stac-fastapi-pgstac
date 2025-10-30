@@ -174,6 +174,23 @@ class Settings(ApiSettings):
 
     prefix_path: str = ""
     use_api_hydrate: bool = False
+    """
+    When USE_API_HYDRATE=TRUE, PgSTAC database will receive `NO_HYDRATE=TRUE`
+
+    | use_api_hydrate | nohydrate | Hydration |
+    |             --- |       --- |       --- |
+    |           False |     False |    PgSTAC |
+    |            True |      True |       API |
+
+    ref: https://stac-utils.github.io/pgstac/pgstac/#runtime-configurations
+    """
+    exclude_hydrate_markers: bool = True
+    """
+    In some case, PgSTAC can return `DO_NOT_MERGE_MARKER` markers (`𒍟※`).
+    If `EXCLUDE_HYDRATE_MARKERS=TRUE` and `USE_API_HYDRATE=TRUE`, stac-fastapi-pgstac
+    will exclude those values from the responses.
+    """
+
     invalid_id_chars: List[str] = DEFAULT_INVALID_ID_CHARS
     base_item_cache: Type[BaseItemCache] = DefaultBaseItemCache
 

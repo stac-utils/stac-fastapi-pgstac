@@ -4,8 +4,6 @@ import pystac
 import pytest
 from stac_pydantic import Collection
 
-from ..conftest import requires_pgstac_0_9_2
-
 
 async def test_create_collection(app_client, load_test_data: Callable):
     in_json = load_test_data("test_collection.json")
@@ -349,11 +347,15 @@ async def test_get_collections_search(
     assert len(resp.json()["collections"]) == 2
 
 
-@requires_pgstac_0_9_2
 @pytest.mark.asyncio
 async def test_collection_search_freetext(
     app_client, load_test_collection, load_test2_collection
 ):
+    res = await app_client.get("/_mgmt/health")
+    pgstac_version = res.json()["pgstac"]["pgstac_version"]
+    if tuple(map(int, pgstac_version.split("."))) < (0, 9, 2):
+        pass
+
     # free-text
     resp = await app_client.get(
         "/collections",
@@ -388,11 +390,15 @@ async def test_collection_search_freetext(
     assert len(resp.json()["collections"]) == 0
 
 
-@requires_pgstac_0_9_2
 @pytest.mark.asyncio
 async def test_collection_search_freetext_advanced(
     app_client_advanced_freetext, load_test_collection, load_test2_collection
 ):
+    res = await app_client_advanced_freetext.get("/_mgmt/health")
+    pgstac_version = res.json()["pgstac"]["pgstac_version"]
+    if tuple(map(int, pgstac_version.split("."))) < (0, 9, 2):
+        pass
+
     # free-text
     resp = await app_client_advanced_freetext.get(
         "/collections",
@@ -436,9 +442,13 @@ async def test_collection_search_freetext_advanced(
     assert len(resp.json()["collections"]) == 0
 
 
-@requires_pgstac_0_9_2
 @pytest.mark.asyncio
 async def test_all_collections_with_pagination(app_client, load_test_data):
+    res = await app_client.get("/_mgmt/health")
+    pgstac_version = res.json()["pgstac"]["pgstac_version"]
+    if tuple(map(int, pgstac_version.split("."))) < (0, 9, 2):
+        pass
+
     data = load_test_data("test_collection.json")
     collection_id = data["id"]
     for ii in range(0, 12):
@@ -468,9 +478,13 @@ async def test_all_collections_with_pagination(app_client, load_test_data):
     assert {"root", "self"} == {link["rel"] for link in links}
 
 
-@requires_pgstac_0_9_2
 @pytest.mark.asyncio
 async def test_all_collections_without_pagination(app_client_no_ext, load_test_data):
+    res = await app_client_no_ext.get("/_mgmt/health")
+    pgstac_version = res.json()["pgstac"]["pgstac_version"]
+    if tuple(map(int, pgstac_version.split("."))) < (0, 9, 2):
+        pass
+
     data = load_test_data("test_collection.json")
     collection_id = data["id"]
     for ii in range(0, 12):
@@ -491,11 +505,15 @@ async def test_all_collections_without_pagination(app_client_no_ext, load_test_d
     assert {"root", "self"} == {link["rel"] for link in links}
 
 
-@requires_pgstac_0_9_2
 @pytest.mark.asyncio
 async def test_get_collections_search_pagination(
     app_client, load_test_collection, load_test2_collection
 ):
+    res = await app_client.get("/_mgmt/health")
+    pgstac_version = res.json()["pgstac"]["pgstac_version"]
+    if tuple(map(int, pgstac_version.split("."))) < (0, 9, 2):
+        pass
+
     resp = await app_client.get("/collections")
     assert resp.json()["numberReturned"] == 2
     assert resp.json()["numberMatched"] == 2
@@ -621,12 +639,16 @@ async def test_get_collections_search_pagination(
     assert {"root", "self"} == {link["rel"] for link in links}
 
 
-@requires_pgstac_0_9_2
 @pytest.mark.xfail(strict=False)
 @pytest.mark.asyncio
 async def test_get_collections_search_offset_1(
     app_client, load_test_collection, load_test2_collection
 ):
+    res = await app_client.get("/_mgmt/health")
+    pgstac_version = res.json()["pgstac"]["pgstac_version"]
+    if tuple(map(int, pgstac_version.split("."))) < (0, 9, 2):
+        pass
+
     # BUG: pgstac doesn't return a `prev` link when limit is not set
     # offset=1, should have a `previous` link
     resp = await app_client.get(
