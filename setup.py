@@ -16,7 +16,8 @@ install_requires = [
     "buildpg",
     "brotli_asgi",
     "cql2>=0.3.6",
-    "pypgstac>=0.8,<0.10",
+    "pypgstac>=0.9,<0.10",
+    "hydraters>=0.1.3",
     "typing_extensions>=4.9.0",
     "jsonpatch>=1.33.0",
     "json-merge-patch>=0.3.0",
@@ -25,7 +26,6 @@ install_requires = [
 extra_reqs = {
     "dev": [
         "pystac[validation]",
-        "pypgstac[psycopg]==0.9.*",
         "pytest-postgresql",
         "pytest",
         "pytest-cov",
@@ -36,6 +36,8 @@ extra_reqs = {
         "httpx",
         "twine",
         "wheel",
+        "psycopg[binary]==3.1.*",
+        "psycopg-pool==3.1.*",
     ],
     "docs": [
         "black>=23.10.1",
@@ -67,6 +69,8 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
         "License :: OSI Approved :: MIT License",
     ],
     keywords="STAC FastAPI COG",
