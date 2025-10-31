@@ -31,7 +31,7 @@ do
         ;;
 
         --test)
-        TEST_PYPI="--repository testpypi"
+        TEST_PYPI="--index testpypi"
         shift
         ;;
 
@@ -51,6 +51,6 @@ fi
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     rm -rf dist
-    python setup.py sdist bdist_wheel
-    twine upload ${TEST_PYPI} dist/*
+    uv build
+    uv publish ${TEST_PYPI}
 fi

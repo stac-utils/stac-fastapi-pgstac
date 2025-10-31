@@ -42,14 +42,12 @@ run-joplin:
 
 .PHONY: install
 install:
-	pip install -e .[dev,server]
+	uv sync --dev
 
-.PHONY: docs-image
-docs-image:
-	docker compose -f docker-compose.docs.yml \
-		build
+.PHONY: pytest
+pytest: install
+	uv run pytest
 
 .PHONY: docs
-docs: docs-image
-	docker compose -f docker-compose.docs.yml \
-		run docs
+docs:
+	uv run --group docs mkdocs build -f docs/mkdocs.yml

@@ -1,0 +1,30 @@
+name: Publish docs via GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      # Rebuild website when docs have changed or code has changed
+      - "README.md"
+      - "docs/**"
+      - "**.py"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Deploy docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.*" 
+          enable-cache: true
+    
+      - name: Deploy docs
+        run: uv run --group docs mkdocs gh-deploy --force -f docs/mkdocs.yml
