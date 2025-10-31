@@ -83,7 +83,7 @@ jobs:
           uv pip install stac-api-validator==0.6.5
 
       - name: Load data and validate
-        run: python -m stac_fastapi.pgstac.app & ./scripts/wait-for-it.sh localhost:8080 && uv run ./scripts/ingest_joplin.py http://localhost:8080 && ./scripts/validate http://localhost:8080
+        run: uv run python -m stac_fastapi.pgstac.app & ./scripts/wait-for-it.sh localhost:8080 && uv run ./scripts/ingest_joplin.py http://localhost:8080 && ./scripts/validate http://localhost:8080
         env:
           PGUSER: username
           PGPASSWORD: password
