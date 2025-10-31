@@ -7,14 +7,15 @@ on:
   workflow_dispatch:
 
 env:
-  LATEST_PY_VERSION: '3.14'
+  LATEST_PY_VERSION: '3.13'
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+        # NOTE: removing python 3.14 while https://github.com/developmentseed/cql2-rs/issues/93
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13'] # , '3.14']
 
     timeout-minutes: 20
 
