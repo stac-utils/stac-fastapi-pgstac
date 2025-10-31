@@ -63,7 +63,9 @@ server  = [
 [dependency-groups]
 dev = [
         "pystac[validation]",
-        "pytest-postgresql",
+        "pytest-postgresql>=7.0",
+        # ref: https://github.com/dbfixtures/pytest-postgresql/issues/1210
+        "mirakuru>=2.0,<3.0",
         "pytest",
         "pytest-cov",
         "pytest-asyncio>=0.17,<1.3",

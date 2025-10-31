@@ -4036,7 +4036,7 @@ dev = [
     { name = "pytest" },
     { name = "pytest-asyncio", specifier = ">=0.17,<1.3" },
     { name = "pytest-cov" },
-    { name = "pytest-postgresql" },
+    { name = "pytest-postgresql", specifier = ">=7.0" },
     { name = "requests" },
     { name = "shapely" },
 ]
