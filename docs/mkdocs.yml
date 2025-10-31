@@ -4,7 +4,10 @@ site_description: STAC FastAPI - pgstac backend.
 # Repository
 repo_name: "stac-utils/stac-fastapi-pgstac"
 repo_url: "https://github.com/stac-utils/stac-fastapi-pgstac"
-edit_uri: "blob/master/docs/src/"
+edit_uri: "blob/main/docs/src/"
+
+docs_dir: 'src'
+site_dir: 'build'
 
 # Social links
 extra:
