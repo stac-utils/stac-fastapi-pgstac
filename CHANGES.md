@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [6.1.0] - 2025-11-03
+
 ### Changed
 
 - update `pypgstac` version requirement to `>=0.9,<0.10`
@@ -506,7 +508,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.2..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.0..main>
+[6.1.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.2..6.1.0>
 [6.0.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.1..6.0.2>
 [6.0.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.0..6.0.1>
 [6.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.3..6.0.0>

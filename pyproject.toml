@@ -74,6 +74,7 @@ dev = [
         "shapely",
         "httpx",
         "psycopg[pool,binary]==3.2.*",
+        "bump-my-version",
 ]
 docs = [
     "black>=23.10.1",
