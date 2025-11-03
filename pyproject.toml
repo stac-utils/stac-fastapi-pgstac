@@ -74,6 +74,7 @@ dev = [
         "shapely",
         "httpx",
         "psycopg[pool,binary]==3.2.*",
+        "bump-my-version",
 ]
 docs = [
     "black>=23.10.1",
@@ -91,7 +92,7 @@ Homepage = 'https://github.com/stac-utils/stac-fastapi-pgstac'
 path = "stac_fastapi/pgstac/version.py"
 
 [tool.hatch.build.targets.sdist]
-exclude = ["tests/"]
+only-include = ["stac_fastapi"]
 
 [tool.hatch.build.targets.wheel]
 only-include = ["stac_fastapi"]
@@ -143,7 +144,7 @@ ignore = [
 ]
 
 [tool.bumpversion]
-current_version = "6.0.2"
+current_version = "6.1.0"
 parse = """(?x)
     (?P<major>\\d+)\\.
     (?P<minor>\\d+)\\.
