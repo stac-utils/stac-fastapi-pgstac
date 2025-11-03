@@ -92,7 +92,7 @@ Homepage = 'https://github.com/stac-utils/stac-fastapi-pgstac'
 path = "stac_fastapi/pgstac/version.py"
 
 [tool.hatch.build.targets.sdist]
-exclude = ["tests/"]
+only-include = ["stac_fastapi"]
 
 [tool.hatch.build.targets.wheel]
 only-include = ["stac_fastapi"]
