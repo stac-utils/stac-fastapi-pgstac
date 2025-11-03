@@ -23,18 +23,20 @@ services:
     ports:
       - "8082:8082"
     volumes:
-      - .:/app
+      - ./scripts:/tmp/scripts
     depends_on:
       - database
-    command: bash -c "./scripts/wait-for-it.sh database:5432 && python -m stac_fastapi.pgstac.app"
+    command: bash -c "/tmp/scripts/wait-for-it.sh database:5432 && python -m stac_fastapi.pgstac.app"
+    develop:
+      watch:
+        - action: rebuild
+          path: ./stac_fastapi/pgstac
 
   tests:
     image: stac-utils/stac-fastapi-pgstac-test
     build:
       context: .
       dockerfile: Dockerfile.tests
-    volumes:
-      - .:/app
     environment:
       - ENVIRONMENT=local
       - DB_MIN_CONN_SIZE=1
@@ -43,7 +45,7 @@ services:
     command: bash -c "python -m pytest -s -vv"
 
   database:
-    image: ghcr.io/stac-utils/pgstac:v0.9.2
+    image: ghcr.io/stac-utils/pgstac:v0.9.8
     environment:
       - POSTGRES_USER=username
       - POSTGRES_PASSWORD=password
@@ -61,14 +63,14 @@ services:
     environment:
       - ENVIRONMENT=development
     volumes:
-      - ./stac_fastapi:/app/stac_fastapi
-      - ./scripts:/app/scripts
+      - ./testdata:/tmp/testdata      
+      - ./scripts:/tmp/scripts
     command: >
       /bin/sh -c "
-        ./scripts/wait-for-it.sh -t 60 app:8082 &&
+        /tmp/scripts/wait-for-it.sh -t 60 app:8082 &&
         python -m pip install pip -U &&
         python -m pip install requests &&
-        python /app/scripts/ingest_joplin.py http://app:8082
+        python /tmp/scripts/ingest_joplin.py http://app:8082
         "
     depends_on:
       - database
@@ -87,7 +89,11 @@ services:
   app-nginx:
     extends:
       service: app
-    command: bash -c "./scripts/wait-for-it.sh database:5432 && uvicorn stac_fastapi.pgstac.app:app --host 0.0.0.0 --port 8082 --proxy-headers --forwarded-allow-ips=* --root-path=/api/v1/pgstac"
+    command: >
+      bash -c "
+      /tmp/scripts/wait-for-it.sh database:5432 && 
+      uvicorn stac_fastapi.pgstac.app:app --host 0.0.0.0 --port 8082 --proxy-headers --forwarded-allow-ips=* --root-path=/api/v1/pgstac
+      "
 
 networks:
   default:

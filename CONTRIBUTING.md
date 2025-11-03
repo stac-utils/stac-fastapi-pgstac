@@ -1,19 +1,19 @@
 # Contributing
 
-Issues and pull requests are more than welcome.
+Use Github [Pull Requests](https://github.com/stac-utils/stac-fastapi-pgstac/pulls) to provide new features or to request review of draft code, and use [Issues](https://github.com/stac-utils/stac-fastapi-pgstac/issues) to report bugs or request new features.
 
 ## Development install
 
-```shell
-git clone https://github.com/stac-utils/stac-fastapi-pgstac
-cd stac-fastapi-pgstac
-make install
-```
+We recommand using [`uv`](https://docs.astral.sh/uv) as project manager for development.
 
-This repo is set to use `pre-commit` to run *isort*, *flake8*, *pydocstring*, *black* ("uncompromising Python code formatter") and mypy when committing new code.
+See https://docs.astral.sh/uv/getting-started/installation/ for installation 
 
-```shell
-pre-commit install
+**dev install**
+
+```bash
+git clone https://github.com/stac-utils/stac-fastapi-pgstac.git
+cd stac-fastapi
+uv sync
 ```
 
 To run the service on 0.0.0.0:8082 and ingest example data into the database (the "joplin" collection):
@@ -30,26 +30,33 @@ To run the tests:
 make test
 ```
 
-## Docs
+**pre-commit**
+
+This repo is set to use `pre-commit` to run *isort*, *flake8*, *pydocstring*, *black* ("uncompromising Python code formatter") and mypy when committing new code.
+
+```shell
+pre-commit install
+```
+
+### Docs
 
 ```bash
-git clone https://github.com/stac-utils/stac-fastapi-pgstac
+git clone https://github.com/stac-utils/stac-fastapi-pgstac.git
 cd stac-fastapi-pgstac
-pip install -e .[docs]
+# Build docs
+uv run --group docs mkdocs build -f docs/mkdocs.yml
 ```
 
 Hot-reloading docs:
 
 ```bash
-mkdocs serve
+uv run --group docs mkdocs serve -f docs/mkdocs.yml --livereload
 ```
 
 To manually deploy docs (note you should never need to do this because GitHub
 Actions deploys automatically for new commits.):
 
-```shell
-# Create API documentations
-make docs
+```bash
 # deploy
-mkdocs gh-deploy
+uv run --group docs mkdocs gh-deploy -f docs/mkdocs.yml
 ```

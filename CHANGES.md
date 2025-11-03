@@ -5,12 +5,19 @@
 ### Changed
 
 - update `pypgstac` version requirement to `>=0.9,<0.10`
+- switch to pyproject.toml for package metadata
+- use `uv` for project managment
+- add python 3.14 support
 
 ### Added
 
 - lower bounds for `hydraters` requirements
 - `EXCLUDE_HYDRATE_MARKERS=TRUE/FALSE` (defaults to `TRUE`) to exclude `𒍟※` markers returned by PgSTAC
 - python `3.13` and `3.14` support 
+
+### removed
+
+- aws lambda handler in `app.py`
 
 ## [6.0.2] - 2025-10-03
 
