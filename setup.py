@@ -36,8 +36,8 @@ extra_reqs = {
         "httpx",
         "twine",
         "wheel",
-        "psycopg[binary]==3.1.*",
-        "psycopg-pool==3.1.*",
+        "psycopg[binary]>=3.1,<3.3",
+        "psycopg-pool>=3.1,<3.3",
     ],
     "docs": [
         "black>=23.10.1",
