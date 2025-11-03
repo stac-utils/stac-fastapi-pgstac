@@ -13,7 +13,7 @@ See https://docs.astral.sh/uv/getting-started/installation/ for installation
 ```bash
 git clone https://github.com/stac-utils/stac-fastapi-pgstac.git
 cd stac-fastapi
-uv sync --dev
+uv sync
 ```
 
 To run the service on 0.0.0.0:8082 and ingest example data into the database (the "joplin" collection):
