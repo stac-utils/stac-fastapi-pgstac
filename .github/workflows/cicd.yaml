@@ -14,8 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # NOTE: removing python 3.14 while https://github.com/developmentseed/cql2-rs/issues/93
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13'] # , '3.14']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
 
     timeout-minutes: 20
 
