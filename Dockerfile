@@ -19,10 +19,14 @@ RUN python -m pip install -U pip
 WORKDIR /app
 
 COPY stac_fastapi/ stac_fastapi/
-COPY pyproject.toml pyproject.toml 
+COPY pyproject.toml pyproject.toml
 COPY README.md README.md
 
 RUN python -m pip install .[server]
 RUN rm -rf stac_fastapi .toml README.md
+
+RUN groupadd -g 1000 user && \
+    useradd -u 1000 -g user -s /bin/bash -m user
+USER user
 
 CMD ["uvicorn", "stac_fastapi.pgstac.app:app", "--host", "0.0.0.0", "--port", "8080"]
