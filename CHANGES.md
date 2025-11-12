@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Docker container runs as non-root user
+
 ## [6.1.0] - 2025-11-03
 
 ### Changed
@@ -15,7 +19,7 @@
 
 - lower bounds for `hydraters` requirements
 - `EXCLUDE_HYDRATE_MARKERS=TRUE/FALSE` (defaults to `TRUE`) to exclude `𒍟※` markers returned by PgSTAC
-- python `3.13` and `3.14` support 
+- python `3.13` and `3.14` support
 
 ### removed
 
