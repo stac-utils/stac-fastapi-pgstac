@@ -12,6 +12,10 @@
 - `EXCLUDE_HYDRATE_MARKERS=TRUE/FALSE` (defaults to `TRUE`) to exclude `𒍟※` markers returned by PgSTAC
 - python `3.13` and `3.14` support 
 
+### Fixed
+
+- Parsing of `CORS_ORIGINS` from environment variables ([#313](https://github.com/stac-utils/stac-fastapi-pgstac/pull/313))
+
 ## [6.0.2] - 2025-10-03
 
 - add `CORS_ORIGIN_REGEX` settings ([#298](https://github.com/stac-utils/stac-fastapi-pgstac/pull/298))
