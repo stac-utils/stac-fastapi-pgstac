@@ -4,8 +4,9 @@ import warnings
 
 import pytest
 from pydantic import ValidationError
+from pytest import MonkeyPatch
 
-from stac_fastapi.pgstac.config import PostgresSettings
+from stac_fastapi.pgstac.config import PostgresSettings, Settings
 
 
 async def test_pg_settings_with_env(monkeypatch):
@@ -74,3 +75,14 @@ async def test_pg_settings_attributes(monkeypatch):
                 postgres_dbname="pgstac",
                 _env_file=None,
             )
+
+
+def test_cors_origins(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv(
+        "CORS_ORIGINS", "http://stac-fastapi-pgstac.test,http://stac-fastapi.test"
+    )
+    settings = Settings()
+    assert settings.cors_origins == [
+        "http://stac-fastapi-pgstac.test",
+        "http://stac-fastapi.test",
+    ]

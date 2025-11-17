@@ -5,7 +5,7 @@ from typing import Annotated, Any, List, Optional, Sequence, Type
 from urllib.parse import quote_plus as quote
 
 from pydantic import BaseModel, BeforeValidator, Field, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 from stac_fastapi.types.config import ApiSettings
 from typing_extensions import Self
 
@@ -201,7 +201,9 @@ class Settings(ApiSettings):
     Implies that the `Transactions` extension is enabled.
     """
 
-    cors_origins: Annotated[Sequence[str], BeforeValidator(str_to_list)] = ("*",)
+    cors_origins: Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] = (
+        "*",
+    )
     cors_origin_regex: Optional[str] = None
     cors_methods: Annotated[Sequence[str], BeforeValidator(str_to_list)] = (
         "GET",
