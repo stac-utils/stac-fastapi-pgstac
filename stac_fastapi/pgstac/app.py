@@ -215,16 +215,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-
-
-def create_handler(app):
-    """Create a handler to use with AWS Lambda if mangum available."""
-    try:
-        from mangum import Mangum
-
-        return Mangum(app)
-    except ImportError:
-        return None
-
-
-handler = create_handler(app)

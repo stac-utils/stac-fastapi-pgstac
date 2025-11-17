@@ -4,13 +4,26 @@
 
 ### Changed
 
+- Docker container runs as non-root user
+
+## [6.1.0] - 2025-11-03
+
+### Changed
+
 - update `pypgstac` version requirement to `>=0.9,<0.10`
+- switch to pyproject.toml for package metadata
+- use `uv` for project managment
+- add python 3.14 support
 
 ### Added
 
 - lower bounds for `hydraters` requirements
 - `EXCLUDE_HYDRATE_MARKERS=TRUE/FALSE` (defaults to `TRUE`) to exclude `𒍟※` markers returned by PgSTAC
-- python `3.13` and `3.14` support 
+- python `3.13` and `3.14` support
+
+### removed
+
+- aws lambda handler in `app.py`
 
 ### Fixed
 
@@ -503,7 +516,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.2..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.0..main>
+[6.1.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.2..6.1.0>
 [6.0.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.1..6.0.2>
 [6.0.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.0..6.0.1>
 [6.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.3..6.0.0>

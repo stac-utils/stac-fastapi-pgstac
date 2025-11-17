@@ -1,7 +1,123 @@
+[project]
+name = "stac-fastapi-pgstac"
+description = "An implementation of STAC API based on the FastAPI framework and using the pgstac backend."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [
+  { name = "David Bitner", email = "david@developmentseed.org" },
+]
+maintainers = [
+  { name = "David Bitner", email = "david@developmentseed.org" },
+  { name = "Vincent Sarago", email = "vincent@developmentseed.org" },
+  { name = "Pete Gadomski", email = "pete.gadomski@gmail.com" },
+  { name = "Henry Rodman", email = "henry@developmentseed.org" },
+  { name = "Jeff Albrecht", email = "geospatialjeff@gmail.com" },
+]
+keywords = [
+    "STAC",
+    "STAC-API",
+    "FastAPI",
+    "PgSTAC",
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "License :: OSI Approved :: MIT License",
+]
+dynamic = ["version"]
+dependencies = [
+    "attrs",
+    "orjson",
+    "pydantic",
+    "stac-fastapi-api>=6.1,<7.0",
+    "stac-fastapi-extensions>=6.1,<7.0",
+    "stac-fastapi-types>=6.1,<7.0",
+    "asyncpg",
+    "buildpg",
+    "brotli_asgi",
+    "cql2>=0.3.6",
+    "pypgstac>=0.9,<0.10",
+    "hydraters>=0.1.3",
+    "typing_extensions>=4.9.0",
+    "jsonpatch>=1.33.0",
+    "json-merge-patch>=0.3.0",
+    "uvicorn[standard]==0.38.0",
+]
+
+[project.optional-dependencies]
+validation = [
+    "stac_pydantic[validation]",
+]
+server  = [
+    "uvicorn[standard]==0.38.0"
+]
+
+[dependency-groups]
+dev = [
+        "pystac[validation]",
+        "pytest-postgresql>=7.0",
+        # ref: https://github.com/dbfixtures/pytest-postgresql/issues/1210
+        "mirakuru>=2.0,<3.0",
+        "pytest",
+        "pytest-cov",
+        "pytest-asyncio>=0.17,<1.3",
+        "pre-commit",
+        "requests",
+        "shapely",
+        "httpx",
+        "psycopg[pool,binary]==3.2.*",
+        "bump-my-version",
+]
+docs = [
+    "black>=23.10.1",
+    "mkdocs>=1.4.3",
+    "mkdocs-jupyter>=0.24.5",
+    "mkdocs-material[imaging]>=9.5",
+    "griffe-inherited-docstrings>=1.0.0",
+    "mkdocstrings[python]>=0.25.1",
+]
+
+[project.urls]
+Homepage = 'https://github.com/stac-utils/stac-fastapi-pgstac'
+
+[tool.hatch.version]
+path = "stac_fastapi/pgstac/version.py"
+
+[tool.hatch.build.targets.sdist]
+only-include = ["stac_fastapi"]
+
+[tool.hatch.build.targets.wheel]
+only-include = ["stac_fastapi"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
+
+[tool.pytest.ini_options]
+addopts = "-sv"
+testpaths = [
+    "tests"
+]
+asyncio_mode = "auto"
+
 [tool.isort]
 profile = "black"
 known_first_party = "stac_fastapi.pgstac"
-known_third_party = ["rasterio", "stac-pydantic", "sqlalchemy", "geoalchemy2", "fastapi", "stac_fastapi"]
+known_third_party = ["stac-pydantic", "sqlalchemy", "geoalchemy2", "fastapi", "stac_fastapi"]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
 
 [tool.mypy]
@@ -27,9 +143,8 @@ ignore = [
     "B028",  # No explicit `stacklevel` keyword argument found
 ]
 
-
 [tool.bumpversion]
-current_version = "6.0.2"
+current_version = "6.1.0"
 parse = """(?x)
     (?P<major>\\d+)\\.
     (?P<minor>\\d+)\\.

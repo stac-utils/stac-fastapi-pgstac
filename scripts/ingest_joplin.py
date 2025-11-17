@@ -1,3 +1,9 @@
+# /// script
+# dependencies = [
+#   "requests",
+# ]
+# ///
+
 """Ingest sample data during docker-compose"""
 
 import json
