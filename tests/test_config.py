@@ -77,12 +77,58 @@ async def test_pg_settings_attributes(monkeypatch):
             )
 
 
-def test_cors_origins(monkeypatch: MonkeyPatch) -> None:
+@pytest.mark.parametrize(
+    "cors_origins",
+    [
+        "http://stac-fastapi-pgstac.test,http://stac-fastapi.test",
+        '["http://stac-fastapi-pgstac.test","http://stac-fastapi.test"]',
+    ],
+)
+def test_cors_origins(monkeypatch: MonkeyPatch, cors_origins: str) -> None:
     monkeypatch.setenv(
-        "CORS_ORIGINS", "http://stac-fastapi-pgstac.test,http://stac-fastapi.test"
+        "CORS_ORIGINS",
+        cors_origins,
     )
     settings = Settings()
     assert settings.cors_origins == [
         "http://stac-fastapi-pgstac.test",
         "http://stac-fastapi.test",
+    ]
+
+
+@pytest.mark.parametrize(
+    "cors_methods",
+    [
+        "GET,POST",
+        '["GET","POST"]',
+    ],
+)
+def test_cors_methods(monkeypatch: MonkeyPatch, cors_methods: str) -> None:
+    monkeypatch.setenv(
+        "CORS_METHODS",
+        cors_methods,
+    )
+    settings = Settings()
+    assert settings.cors_methods == [
+        "GET",
+        "POST",
+    ]
+
+
+@pytest.mark.parametrize(
+    "cors_headers",
+    [
+        "Content-Type,X-Foo",
+        '["Content-Type","X-Foo"]',
+    ],
+)
+def test_cors_headers(monkeypatch: MonkeyPatch, cors_headers: str) -> None:
+    monkeypatch.setenv(
+        "CORS_HEADERS",
+        cors_headers,
+    )
+    settings = Settings()
+    assert settings.cors_headers == [
+        "Content-Type",
+        "X-Foo",
     ]

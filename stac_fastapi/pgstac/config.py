@@ -1,5 +1,6 @@
 """Postgres API configuration."""
 
+import json
 import warnings
 from typing import Annotated, Any, List, Optional, Sequence, Type
 from urllib.parse import quote_plus as quote
@@ -158,8 +159,12 @@ class PostgresSettings(BaseSettings):
 
 def str_to_list(value: Any) -> Any:
     if isinstance(value, str):
-        return [v.strip() for v in value.split(",")]
-    return value
+        if value.startswith("["):
+            return json.loads(value)
+        else:
+            return [v.strip() for v in value.split(",")]
+    else:
+        return value
 
 
 class Settings(ApiSettings):
@@ -205,13 +210,13 @@ class Settings(ApiSettings):
         "*",
     )
     cors_origin_regex: Optional[str] = None
-    cors_methods: Annotated[Sequence[str], BeforeValidator(str_to_list)] = (
+    cors_methods: Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] = (
         "GET",
         "POST",
         "OPTIONS",
     )
     cors_credentials: bool = False
-    cors_headers: Annotated[Sequence[str], BeforeValidator(str_to_list)] = (
+    cors_headers: Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] = (
         "Content-Type",
     )
 
