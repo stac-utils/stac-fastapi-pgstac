@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Parsing of `CORS_ORIGINS`, `CORS_HEADERS`, and `CORS_METHODS` from environment variables ([#313](https://github.com/stac-utils/stac-fastapi-pgstac/pull/313))
+
 ### Changed
 
 - Docker container runs as non-root user
@@ -24,10 +28,6 @@
 ### removed
 
 - aws lambda handler in `app.py`
-
-### Fixed
-
-- Parsing of `CORS_ORIGINS` from environment variables ([#313](https://github.com/stac-utils/stac-fastapi-pgstac/pull/313))
 
 ## [6.0.2] - 2025-10-03
 
