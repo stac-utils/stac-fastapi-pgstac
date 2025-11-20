@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Parsing of `CORS_ORIGINS`, `CORS_HEADERS`, and `CORS_METHODS` from environment variables ([#313](https://github.com/stac-utils/stac-fastapi-pgstac/pull/313))
+
 ### Changed
 
 - Docker container runs as non-root user
