@@ -539,13 +539,13 @@ async def test_create_bulk_items_id_mismatch(
 #         assert item.collection == coll.id
 
 
-async def test_db_setup_works_with_env_vars(api_client, database, monkeypatch):
+async def test_db_setup_works_with_env_vars(api_client, pgstac, monkeypatch):
     """Test that the application starts successfully if the POSTGRES_* environment variables are set"""
-    monkeypatch.setenv("PGUSER", database.user)
-    monkeypatch.setenv("PGPASSWORD", database.password)
-    monkeypatch.setenv("PGHOST", database.host)
-    monkeypatch.setenv("PGPORT", str(database.port))
-    monkeypatch.setenv("PGDATABASE", database.dbname)
+    monkeypatch.setenv("PGUSER", pgstac.user)
+    monkeypatch.setenv("PGPASSWORD", pgstac.password)
+    monkeypatch.setenv("PGHOST", pgstac.host)
+    monkeypatch.setenv("PGPORT", str(pgstac.port))
+    monkeypatch.setenv("PGDATABASE", pgstac.dbname)
 
     await connect_to_db(api_client.app)
     await close_db_connection(api_client.app)
@@ -573,16 +573,16 @@ async def custom_get_connection(
 
 class TestDbConnect:
     @pytest.fixture
-    async def app(self, api_client, database):
+    async def app(self, api_client, pgstac):
         """
         app fixture override to setup app with a customized db connection getter
         """
         postgres_settings = PostgresSettings(
-            pguser=database.user,
-            pgpassword=database.password,
-            pghost=database.host,
-            pgport=database.port,
-            pgdatabase=database.dbname,
+            pguser=pgstac.user,
+            pgpassword=pgstac.password,
+            pghost=pgstac.host,
+            pgport=pgstac.port,
+            pgdatabase=pgstac.dbname,
         )
 
         logger.debug("Customizing app setup")

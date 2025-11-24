@@ -699,7 +699,7 @@ async def test_sorting_and_paging(app_client, load_test_collection, direction: s
 
 
 @pytest.mark.asyncio
-async def test_wrapped_function(load_test_data, database) -> None:
+async def test_wrapped_function(load_test_data, pgstac) -> None:
     # Ensure wrappers, e.g. Planetary Computer's rate limiting, work.
     # https://github.com/gadomski/planetary-computer-apis/blob/2719ccf6ead3e06de0784c39a2918d4d1811368b/pccommon/pccommon/redis.py#L205-L238
 
@@ -738,11 +738,11 @@ async def test_wrapped_function(load_test_data, database) -> None:
     )
 
     postgres_settings = PostgresSettings(
-        pguser=database.user,
-        pgpassword=database.password,
-        pghost=database.host,
-        pgport=database.port,
-        pgdatabase=database.dbname,
+        pguser=pgstac.user,
+        pgpassword=pgstac.password,
+        pghost=pgstac.host,
+        pgport=pgstac.port,
+        pgdatabase=pgstac.dbname,
     )
 
     extensions = [
@@ -795,7 +795,7 @@ async def test_wrapped_function(load_test_data, database) -> None:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("validation", [True, False])
 @pytest.mark.parametrize("hydrate", [True, False])
-async def test_no_extension(hydrate, validation, load_test_data, database) -> None:
+async def test_no_extension(hydrate, validation, load_test_data, pgstac) -> None:
     """test PgSTAC with no extension."""
     settings = Settings(
         testing=True,
@@ -803,11 +803,11 @@ async def test_no_extension(hydrate, validation, load_test_data, database) -> No
         enable_response_models=validation,
     )
     postgres_settings = PostgresSettings(
-        pguser=database.user,
-        pgpassword=database.password,
-        pghost=database.host,
-        pgport=database.port,
-        pgdatabase=database.dbname,
+        pguser=pgstac.user,
+        pgpassword=pgstac.password,
+        pghost=pgstac.host,
+        pgport=pgstac.port,
+        pgdatabase=pgstac.dbname,
     )
     extensions = [
         TransactionExtension(client=TransactionsClient(), settings=settings),

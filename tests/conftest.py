@@ -5,7 +5,7 @@ from typing import Callable, Dict
 from urllib.parse import quote_plus as quote
 from urllib.parse import urljoin
 
-import asyncpg
+import psycopg
 import pytest
 from fastapi import APIRouter
 from httpx import ASGITransport, AsyncClient
@@ -63,12 +63,6 @@ def database(postgresql_proc):
         version=postgresql_proc.version,
         password="a2Vw:yk=)CdSis[fek]tW=/o",
     ) as jan:
-        connection = f"postgresql://{jan.user}:{quote(jan.password)}@{jan.host}:{jan.port}/{jan.dbname}"
-        with PgstacDB(dsn=connection) as db:
-            migrator = Migrate(db)
-            version = migrator.run_migration()
-            assert version
-
         yield jan
 
 
@@ -77,24 +71,24 @@ def database(postgresql_proc):
         # "0.8.6",
         "0.9.8",
     ],
-    autouse=True,
 )
-async def pgstac(request, database):
+def pgstac(request, database):
+    pgstac_version = request.param
+
     connection = f"postgresql://{database.user}:{quote(database.password)}@{database.host}:{database.port}/{database.dbname}"
-    yield
-    conn = await asyncpg.connect(dsn=connection)
-    await conn.execute(
-        """
-        DROP SCHEMA IF EXISTS pgstac CASCADE;
-        """
-    )
-    await conn.close()
+    # Clear PgSTAC
+    with psycopg.connect(connection) as conn:
+        with conn.cursor() as cur:
+            cur.execute("DROP SCHEMA IF EXISTS pgstac CASCADE;")
+
     with PgstacDB(dsn=connection) as db:
         migrator = Migrate(db)
-        version = migrator.run_migration(toversion=request.param)
+        version = migrator.run_migration(toversion=pgstac_version)
 
     assert version == request.param
     logger.info(f"PGStac Migrated to {version}")
+
+    yield database
 
 
 # Run all the tests that use the api_client in both db hydrate and api hydrate mode
@@ -199,13 +193,13 @@ def api_client(request):
 
 
 @pytest.fixture(scope="function")
-async def app(api_client, database):
+async def app(api_client, pgstac):
     postgres_settings = PostgresSettings(
-        pguser=database.user,
-        pgpassword=database.password,
-        pghost=database.host,
-        pgport=database.port,
-        pgdatabase=database.dbname,
+        pguser=pgstac.user,
+        pgpassword=pgstac.password,
+        pghost=pgstac.host,
+        pgport=pgstac.port,
+        pgdatabase=pgstac.dbname,
     )
     logger.info("Creating app Fixture")
     app = api_client.app
@@ -294,7 +288,7 @@ async def load_test2_item(app_client, load_test_data, load_test2_collection):
 
 
 @pytest.fixture(scope="function")
-async def app_no_ext(database):
+async def app_no_ext(pgstac):
     """Default stac-fastapi-pgstac application without only the transaction extensions."""
     api_settings = Settings(testing=True)
     api_client_no_ext = StacApi(
@@ -307,11 +301,11 @@ async def app_no_ext(database):
     )
 
     postgres_settings = PostgresSettings(
-        pguser=database.user,
-        pgpassword=database.password,
-        pghost=database.host,
-        pgport=database.port,
-        pgdatabase=database.dbname,
+        pguser=pgstac.user,
+        pgpassword=pgstac.password,
+        pghost=pgstac.host,
+        pgport=pgstac.port,
+        pgdatabase=pgstac.dbname,
     )
     logger.info("Creating app Fixture")
     await connect_to_db(
@@ -335,7 +329,7 @@ async def app_client_no_ext(app_no_ext):
 
 
 @pytest.fixture(scope="function")
-async def app_no_transaction(database):
+async def app_no_transaction(pgstac):
     """Default stac-fastapi-pgstac application without any extensions."""
     api_settings = Settings(testing=True)
     api = StacApi(
@@ -346,11 +340,11 @@ async def app_no_transaction(database):
     )
 
     postgres_settings = PostgresSettings(
-        pguser=database.user,
-        pgpassword=database.password,
-        pghost=database.host,
-        pgport=database.port,
-        pgdatabase=database.dbname,
+        pguser=pgstac.user,
+        pgpassword=pgstac.password,
+        pghost=pgstac.host,
+        pgport=pgstac.port,
+        pgdatabase=pgstac.dbname,
     )
     logger.info("Creating app Fixture")
     await connect_to_db(
@@ -374,13 +368,13 @@ async def app_client_no_transaction(app_no_transaction):
 
 
 @pytest.fixture(scope="function")
-async def default_app(database, monkeypatch):
+async def default_app(pgstac, monkeypatch):
     """Test default stac-fastapi-pgstac application."""
-    monkeypatch.setenv("PGUSER", database.user)
-    monkeypatch.setenv("PGPASSWORD", database.password)
-    monkeypatch.setenv("PGHOST", database.host)
-    monkeypatch.setenv("PGPORT", str(database.port))
-    monkeypatch.setenv("PGDATABASE", database.dbname)
+    monkeypatch.setenv("PGUSER", pgstac.user)
+    monkeypatch.setenv("PGPASSWORD", pgstac.password)
+    monkeypatch.setenv("PGHOST", pgstac.host)
+    monkeypatch.setenv("PGPORT", str(pgstac.port))
+    monkeypatch.setenv("PGDATABASE", pgstac.dbname)
     monkeypatch.delenv("ENABLED_EXTENSIONS", raising=False)
 
     monkeypatch.setenv("ENABLE_TRANSACTIONS_EXTENSIONS", "TRUE")
@@ -403,7 +397,7 @@ async def default_client(default_app):
 
 
 @pytest.fixture(scope="function")
-async def app_advanced_freetext(database):
+async def app_advanced_freetext(pgstac):
     """Default stac-fastapi-pgstac application without only the transaction extensions."""
     api_settings = Settings(testing=True)
 
@@ -429,11 +423,11 @@ async def app_advanced_freetext(database):
     )
 
     postgres_settings = PostgresSettings(
-        pguser=database.user,
-        pgpassword=database.password,
-        pghost=database.host,
-        pgport=database.port,
-        pgdatabase=database.dbname,
+        pguser=pgstac.user,
+        pgpassword=pgstac.password,
+        pghost=pgstac.host,
+        pgport=pgstac.port,
+        pgdatabase=pgstac.dbname,
     )
     logger.info("Creating app Fixture")
     await connect_to_db(
@@ -457,7 +451,7 @@ async def app_client_advanced_freetext(app_advanced_freetext):
 
 
 @pytest.fixture(scope="function")
-async def app_transaction_validation_ext(database):
+async def app_transaction_validation_ext(pgstac):
     """Default stac-fastapi-pgstac application with extension validation in transaction."""
     api_settings = Settings(testing=True, validate_extensions=True)
     api = StacApi(
@@ -473,11 +467,11 @@ async def app_transaction_validation_ext(database):
     )
 
     postgres_settings = PostgresSettings(
-        pguser=database.user,
-        pgpassword=database.password,
-        pghost=database.host,
-        pgport=database.port,
-        pgdatabase=database.dbname,
+        pguser=pgstac.user,
+        pgpassword=pgstac.password,
+        pghost=pgstac.host,
+        pgport=pgstac.port,
+        pgdatabase=pgstac.dbname,
     )
     logger.info("Creating app Fixture")
     await connect_to_db(
