@@ -11,8 +11,8 @@ from asyncpg.exceptions import InvalidDatetimeFormatError
 from buildpg import render
 from cql2 import Expr
 from fastapi import HTTPException, Request
+from hydraters import hydrate
 from pydantic import ValidationError
-from pypgstac.hydration import hydrate
 from stac_fastapi.api.models import JSONResponse
 from stac_fastapi.types.core import AsyncBaseCoreClient, Relations
 from stac_fastapi.types.errors import InvalidQueryParameter, NotFoundError

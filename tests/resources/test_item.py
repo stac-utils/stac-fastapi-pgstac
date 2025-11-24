@@ -1696,7 +1696,7 @@ async def test_item_search_freetext(app_client, load_test_data, load_test_collec
     res = await app_client.get("/_mgmt/health")
     pgstac_version = res.json()["pgstac"]["pgstac_version"]
     if tuple(map(int, pgstac_version.split("."))) < (0, 9, 2):
-        pass
+        pytest.skip("Need PgSTAC > 0.9.2")
 
     test_item = load_test_data("test_item.json")
     resp = await app_client.post(
