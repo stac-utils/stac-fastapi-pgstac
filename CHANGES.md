@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [6.1.2] - 2025-11-24
+
 ### Changed
 
 - remove pygstac dependency
