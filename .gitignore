@@ -126,6 +126,7 @@ build.out
 
 # Virtualenv
 venv
+.venv
 
 # IDE
 .vscode
