@@ -74,12 +74,12 @@ def database(postgresql_proc):
 
 @pytest.fixture(
     params=[
-        "0.8.6",
+        # "0.8.6",
         "0.9.8",
     ],
     autouse=True,
 )
-async def pgstac(database):
+async def pgstac(request, database):
     connection = f"postgresql://{database.user}:{quote(database.password)}@{database.host}:{database.port}/{database.dbname}"
     yield
     conn = await asyncpg.connect(dsn=connection)
@@ -91,8 +91,9 @@ async def pgstac(database):
     await conn.close()
     with PgstacDB(dsn=connection) as db:
         migrator = Migrate(db)
-        version = migrator.run_migration()
+        version = migrator.run_migration(toversion=request.param)
 
+    assert version == request.param
     logger.info(f"PGStac Migrated to {version}")
 
 

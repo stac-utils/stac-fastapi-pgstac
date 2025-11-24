@@ -7,8 +7,6 @@ import orjson
 import pytest
 from fastapi import Request
 from httpx import ASGITransport, AsyncClient
-from pypgstac.db import PgstacDB
-from pypgstac.load import Loader
 from pystac import Collection, Extent, Item, SpatialExtent, TemporalExtent
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.models import create_get_request_model, create_post_request_model
@@ -797,16 +795,8 @@ async def test_wrapped_function(load_test_data, database) -> None:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("validation", [True, False])
 @pytest.mark.parametrize("hydrate", [True, False])
-async def test_no_extension(
-    hydrate, validation, load_test_data, database, pgstac
-) -> None:
+async def test_no_extension(hydrate, validation, load_test_data, database) -> None:
     """test PgSTAC with no extension."""
-    connection = f"postgresql://{database.user}:{quote_plus(database.password)}@{database.host}:{database.port}/{database.dbname}"
-    with PgstacDB(dsn=connection) as db:
-        loader = Loader(db=db)
-        loader.load_collections(os.path.join(DATA_DIR, "test_collection.json"))
-        loader.load_items(os.path.join(DATA_DIR, "test_item.json"))
-
     settings = Settings(
         testing=True,
         use_api_hydrate=hydrate,
@@ -819,7 +809,9 @@ async def test_no_extension(
         pgport=database.port,
         pgdatabase=database.dbname,
     )
-    extensions = []
+    extensions = [
+        TransactionExtension(client=TransactionsClient(), settings=settings),
+    ]
     post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
     api = StacApi(
         client=CoreCrudClient(pgstac_search_model=post_request_model),
@@ -835,6 +827,17 @@ async def test_no_extension(
     )
     try:
         async with AsyncClient(transport=ASGITransport(app=app)) as client:
+            response = await client.post(
+                "http://test/collections",
+                json=load_test_data("test_collection.json"),
+            )
+            assert response.status_code == 201
+            response = await client.post(
+                "http://test/collections/test-collection/items",
+                json=load_test_data("test_item.json"),
+            )
+            assert response.status_code == 201
+
             landing = await client.get("http://test/")
             assert landing.status_code == 200, landing.text
             assert "Queryables" not in [
