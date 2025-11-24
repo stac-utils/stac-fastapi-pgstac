@@ -5,9 +5,6 @@
 ### Changed
 
 - remove pygstac dependency
-
-### Changed
-
 - refactor tests fixtures to test multiple version of PgSTAC
 
 ## [6.1.1] - 2025-11-20
