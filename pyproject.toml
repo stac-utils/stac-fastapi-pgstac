@@ -44,7 +44,6 @@ dependencies = [
     "buildpg",
     "brotli_asgi",
     "cql2>=0.3.6",
-    "pypgstac>=0.9,<0.10",
     "hydraters>=0.1.3",
     "typing_extensions>=4.9.0",
     "jsonpatch>=1.33.0",
@@ -69,11 +68,12 @@ dev = [
         "pytest",
         "pytest-cov",
         "pytest-asyncio>=0.17,<1.3",
-        "pre-commit",
+        "pypgstac>=0.9,<0.10",
         "requests",
         "shapely",
         "httpx",
         "psycopg[pool,binary]==3.2.*",
+        "pre-commit",
         "bump-my-version",
 ]
 docs = [

@@ -354,7 +354,7 @@ async def test_collection_search_freetext(
     res = await app_client.get("/_mgmt/health")
     pgstac_version = res.json()["pgstac"]["pgstac_version"]
     if tuple(map(int, pgstac_version.split("."))) < (0, 9, 2):
-        pass
+        pytest.skip("Need PgSTAC > 0.9.2")
 
     # free-text
     resp = await app_client.get(
@@ -397,7 +397,7 @@ async def test_collection_search_freetext_advanced(
     res = await app_client_advanced_freetext.get("/_mgmt/health")
     pgstac_version = res.json()["pgstac"]["pgstac_version"]
     if tuple(map(int, pgstac_version.split("."))) < (0, 9, 2):
-        pass
+        pytest.skip("Need PgSTAC > 0.9.2")
 
     # free-text
     resp = await app_client_advanced_freetext.get(
@@ -447,7 +447,7 @@ async def test_all_collections_with_pagination(app_client, load_test_data):
     res = await app_client.get("/_mgmt/health")
     pgstac_version = res.json()["pgstac"]["pgstac_version"]
     if tuple(map(int, pgstac_version.split("."))) < (0, 9, 2):
-        pass
+        pytest.skip("Need PgSTAC > 0.9.2")
 
     data = load_test_data("test_collection.json")
     collection_id = data["id"]
@@ -483,7 +483,7 @@ async def test_all_collections_without_pagination(app_client_no_ext, load_test_d
     res = await app_client_no_ext.get("/_mgmt/health")
     pgstac_version = res.json()["pgstac"]["pgstac_version"]
     if tuple(map(int, pgstac_version.split("."))) < (0, 9, 2):
-        pass
+        pytest.skip("Need PgSTAC > 0.9.2")
 
     data = load_test_data("test_collection.json")
     collection_id = data["id"]
@@ -512,7 +512,7 @@ async def test_get_collections_search_pagination(
     res = await app_client.get("/_mgmt/health")
     pgstac_version = res.json()["pgstac"]["pgstac_version"]
     if tuple(map(int, pgstac_version.split("."))) < (0, 9, 2):
-        pass
+        pytest.skip("Need PgSTAC > 0.9.2")
 
     resp = await app_client.get("/collections")
     assert resp.json()["numberReturned"] == 2
@@ -647,7 +647,7 @@ async def test_get_collections_search_offset_1(
     res = await app_client.get("/_mgmt/health")
     pgstac_version = res.json()["pgstac"]["pgstac_version"]
     if tuple(map(int, pgstac_version.split("."))) < (0, 9, 2):
-        pass
+        pytest.skip("Need PgSTAC > 0.9.2")
 
     # BUG: pgstac doesn't return a `prev` link when limit is not set
     # offset=1, should have a `previous` link
