@@ -1794,3 +1794,62 @@ async def test_item_asset_change(app_client, load_test_data):
         # We get "𒍟※" because PgSTAC set it when ingesting (`description`is item-assets)
         # because we removed item-assets, pgstac cannot hydrate this field, and thus return "𒍟※"
         assert resp.json()["features"][0]["assets"]["qa_pixel"]["description"] == "𒍟※"
+
+
+@pytest.mark.asyncio
+async def test_item_asset_change_two(app_client_no_ext, load_test_data):
+    """Check what happens after changing item_assets in collection"""
+    # load collection without item_assets
+    data = load_test_data("test2_collection.json")
+    collection_id = data["id"]
+    _ = data.pop("item_assets")
+
+    resp = await app_client_no_ext.post("/collections", json=data)
+    assert resp.status_code == 201
+    assert "item_assets" not in resp.json()
+
+    # load items
+    test_item = load_test_data("test2_item.json")
+    red = test_item["assets"].pop("red")
+    # add only one asset
+    test_item["assets"] = {"red": red}
+
+    resp = await app_client_no_ext.post(
+        f"/collections/{collection_id}/items", json=test_item
+    )
+    assert resp.status_code == 201
+
+    # check list of items
+    resp = await app_client_no_ext.get(
+        f"/collections/{collection_id}/items", params={"limit": 1}
+    )
+    assert resp.status_code == 200
+    assert len(resp.json()["features"]) == 1
+    assert list(resp.json()["features"][0]["assets"]) == ["red"]
+
+    # Patch the collection to add item_assets
+    item_assets = {
+        "blue": {"description": "30m Cloud free composite of the HLS blue band."}
+    }
+
+    operations = [{"op": "add", "path": "/item_assets", "value": item_assets}]
+    resp = await app_client_no_ext.patch(f"/collections/{collection_id}", json=operations)
+    assert resp.status_code == 200
+
+    # Make sure item_assets IS in collection response
+    resp = await app_client_no_ext.get(f"/collections/{collection_id}")
+    assert resp.status_code == 200
+    assert "item_assets" in resp.json()
+
+    resp = await app_client_no_ext.get(
+        f"/collections/{collection_id}/items", params={"limit": 1}
+    )
+    assert len(resp.json()["features"]) == 1
+    assert resp.status_code == 200
+
+    # Because we now have `blue` in item_assets, it will be added in the item
+    assert list(resp.json()["features"][0]["assets"]) == ["red", "blue"]
+    assert (
+        resp.json()["features"][0]["assets"]["blue"]["description"]
+        == "30m Cloud free composite of the HLS blue band."
+    )
