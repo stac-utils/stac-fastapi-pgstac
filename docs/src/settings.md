@@ -52,8 +52,8 @@ In version `6.0.0` we've renamed the PG configuration variable to match the offi
 ### Misc
 
 - `STAC_FASTAPI_VERSION` (string) is the version number of your API instance (this is not the STAC version)
-- `STAC FASTAPI_TITLE` (string) should be a self-explanatory title for your API
-- `STAC FASTAPI_DESCRIPTION` (string) should be a good description for your API. It can contain CommonMark
+- `STAC_FASTAPI_TITLE` (string) should be a self-explanatory title for your API
+- `STAC_FASTAPI_DESCRIPTION` (string) should be a good description for your API. It can contain CommonMark
 - `STAC_FASTAPI_LANDING_ID` (string) is a unique identifier for your Landing page
 - `ROOT_PATH`: set application root-path (when using proxy)
 - `CORS_ORIGINS`: A list of origins that should be permitted to make cross-origin requests. Defaults to `*`
