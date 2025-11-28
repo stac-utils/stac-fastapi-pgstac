@@ -271,6 +271,18 @@ async def test_app_query_extension_gte(load_test_data, app_client, load_test_col
     assert len(resp_json["features"]) == 1
 
 
+async def test_app_collection_fields_extension(
+    load_test_data, app_client, load_test_collection
+):
+    fields = ["id", "title"]
+    resp = await app_client.get("/collections", params={"fields": ",".join(fields)})
+    assert resp.status_code == 200
+    resp_json = resp.json()
+    resp_collections = resp_json["collections"]
+    assert len(resp_collections) > 0
+    assert all(set(collection.keys()) == set(fields) for collection in resp_collections)
+
+
 async def test_app_sort_extension(load_test_data, app_client, load_test_collection):
     coll = load_test_collection
     first_item = load_test_data("test_item.json")
