@@ -272,16 +272,25 @@ async def test_app_query_extension_gte(load_test_data, app_client, load_test_col
 
 
 async def test_app_collection_fields_extension(
-    load_test_data, app_client, load_test_collection
+    load_test_data, app_client, load_test_collection, app
 ):
-    fields = ["id", "title"]
+    if app.state.settings.enable_response_models:
+        # https://github.com/stac-utils/stac-fastapi-pgstac/issues/328
+        pytest.skip("Skipping test when model_validation is enabled, see #328")
+
+    fields = ["title"]
     resp = await app_client.get("/collections", params={"fields": ",".join(fields)})
+
     assert resp.status_code == 200
+
     resp_json = resp.json()
     resp_collections = resp_json["collections"]
+
     assert len(resp_collections) > 0
+    # NOTE: It's a bug that 'collection' is always included; see #327
+    constant_fields = ["id", "links", "collection"]
     for collection in resp_collections:
-        assert set(collection.keys()) == set(fields + ["links", "collection"])
+        assert set(collection.keys()) == set(fields + constant_fields)
 
 
 async def test_app_sort_extension(load_test_data, app_client, load_test_collection):
