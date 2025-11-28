@@ -293,6 +293,27 @@ async def test_app_collection_fields_extension(
         assert set(collection.keys()) == set(fields + constant_fields)
 
 
+async def test_app_item_fields_extension(
+    load_test_data, app_client, load_test_collection, load_test_item, app
+):
+    coll = load_test_collection
+    fields = ["id", "geometry"]
+    resp = await app_client.get(
+        f"/collections/{coll['id']}/items", params={"fields": ",".join(fields)}
+    )
+
+    assert resp.status_code == 200
+
+    resp_json = resp.json()
+    features = resp_json["features"]
+
+    assert len(features) > 0
+    # These fields are always included in items
+    constant_fields = ["type", "links", "assets", "collection", "stac_version"]
+    for item in features:
+        assert set(item.keys()) == set(fields + constant_fields)
+
+
 async def test_app_sort_extension(load_test_data, app_client, load_test_collection):
     coll = load_test_collection
     first_item = load_test_data("test_item.json")
