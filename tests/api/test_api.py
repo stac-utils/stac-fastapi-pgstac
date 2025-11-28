@@ -280,7 +280,8 @@ async def test_app_collection_fields_extension(
     resp_json = resp.json()
     resp_collections = resp_json["collections"]
     assert len(resp_collections) > 0
-    assert all(set(collection.keys()) == set(fields) for collection in resp_collections)
+    for collection in resp_collections:
+        assert set(collection.keys()) == set(fields + ["links", "collection"])
 
 
 async def test_app_sort_extension(load_test_data, app_client, load_test_collection):
