@@ -617,7 +617,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 else:
                     includes.add(field)
 
-            base_args["fields"] = {"include": includes, "exclude": excludes}
+            base_args["fields"] = {"include": list(includes), "exclude": list(excludes)}
 
         if q:
             base_args["q"] = q
