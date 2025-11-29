@@ -310,6 +310,8 @@ async def test_app_item_fields_extension(
     assert len(features) > 0
     # These fields are always included in items
     constant_fields = ["id", "links"]
+    if not app.state.settings.use_api_hydrate:
+        constant_fields.append("collection")
     for item in features:
         assert set(item.keys()) == set(fields + constant_fields)
 
