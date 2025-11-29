@@ -68,7 +68,7 @@ def database(postgresql_proc):
 
 @pytest.fixture(
     params=[
-        # "0.8.6",
+        "0.8.6",
         "0.9.8",
     ],
 )
@@ -96,11 +96,11 @@ def pgstac(request, database):
     params=[
         # API hydratation, prefix, model_validation
         (False, "", False),
-        # (False, "/router_prefix", False),
-        # (True, "", False),
-        # (True, "/router_prefix", False),
-        # (False, "", True),
-        # (True, "", True),
+        (False, "/router_prefix", False),
+        (True, "", False),
+        (True, "/router_prefix", False),
+        (False, "", True),
+        (True, "", True),
     ],
     scope="session",
 )
