@@ -274,10 +274,6 @@ async def test_app_query_extension_gte(load_test_data, app_client, load_test_col
 async def test_app_collection_fields_extension(
     load_test_data, app_client, load_test_collection, app
 ):
-    if app.state.settings.enable_response_models:
-        # https://github.com/stac-utils/stac-fastapi-pgstac/issues/328
-        pytest.skip("Skipping test when model_validation is enabled, see #328")
-
     fields = ["title"]
     resp = await app_client.get("/collections", params={"fields": ",".join(fields)})
 
