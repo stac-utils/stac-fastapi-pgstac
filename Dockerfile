@@ -19,6 +19,7 @@ RUN python -m pip install -U pip
 WORKDIR /app
 
 COPY stac_fastapi/ stac_fastapi/
+COPY scripts/wait-for-it.sh scripts/wait-for-it.sh
 COPY pyproject.toml pyproject.toml
 COPY README.md README.md
 

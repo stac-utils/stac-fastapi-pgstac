@@ -150,7 +150,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             prev=prev_link,
         ).get_links()
 
-        return Collections(
+        collections = Collections(
             collections=linked_collections or [],
             links=links,
             numberMatched=collections_result.get(
@@ -160,6 +160,14 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 "numberReturned", len(linked_collections)
             ),
         )
+
+        # If we have the `fields` extension enabled
+        # we need to avoid Pydantic validation because the
+        # Items might not be a valid STAC Item objects
+        if fields:
+            return JSONResponse(collections)  # type: ignore
+
+        return collections
 
     async def get_collection(
         self,
@@ -617,7 +625,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 else:
                     includes.add(field)
 
-            base_args["fields"] = {"include": includes, "exclude": excludes}
+            base_args["fields"] = {"include": list(includes), "exclude": list(excludes)}
 
         if q:
             base_args["q"] = q

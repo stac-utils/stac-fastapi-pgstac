@@ -22,11 +22,9 @@ services:
       - ENABLE_TRANSACTIONS_EXTENSIONS=TRUE
     ports:
       - "8082:8082"
-    volumes:
-      - ./scripts:/tmp/scripts
     depends_on:
       - database
-    command: bash -c "/tmp/scripts/wait-for-it.sh database:5432 && python -m stac_fastapi.pgstac.app"
+    command: bash -c "scripts/wait-for-it.sh database:5432 && python -m stac_fastapi.pgstac.app"
     develop:
       watch:
         - action: rebuild
@@ -67,7 +65,7 @@ services:
       - ./scripts:/tmp/scripts
     command: >
       /bin/sh -c "
-        /tmp/scripts/wait-for-it.sh -t 60 app:8082 &&
+        scripts/wait-for-it.sh -t 60 app:8082 &&
         python -m pip install pip -U &&
         python -m pip install requests &&
         python /tmp/scripts/ingest_joplin.py http://app:8082
@@ -91,7 +89,7 @@ services:
       service: app
     command: >
       bash -c "
-      /tmp/scripts/wait-for-it.sh database:5432 && 
+      scripts/wait-for-it.sh database:5432 && 
       uvicorn stac_fastapi.pgstac.app:app --host 0.0.0.0 --port 8082 --proxy-headers --forwarded-allow-ips=* --root-path=/api/v1/pgstac
       "
 
