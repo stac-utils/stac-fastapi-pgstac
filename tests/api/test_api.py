@@ -271,6 +271,47 @@ async def test_app_query_extension_gte(load_test_data, app_client, load_test_col
     assert len(resp_json["features"]) == 1
 
 
+async def test_app_collection_fields_extension(
+    load_test_data, app_client, load_test_collection, app
+):
+    fields = ["title"]
+    resp = await app_client.get("/collections", params={"fields": ",".join(fields)})
+
+    assert resp.status_code == 200
+
+    resp_json = resp.json()
+    resp_collections = resp_json["collections"]
+
+    assert len(resp_collections) > 0
+    # NOTE: It's a bug that 'collection' is always included; see #327
+    constant_fields = ["id", "links", "collection"]
+    for collection in resp_collections:
+        assert set(collection.keys()) == set(fields + constant_fields)
+
+
+async def test_app_item_fields_extension(
+    load_test_data, app_client, load_test_collection, load_test_item, app
+):
+    coll = load_test_collection
+    fields = ["id", "geometry"]
+    resp = await app_client.get(
+        f"/collections/{coll['id']}/items", params={"fields": ",".join(fields)}
+    )
+
+    assert resp.status_code == 200
+
+    resp_json = resp.json()
+    features = resp_json["features"]
+
+    assert len(features) > 0
+    # These fields are always included in items
+    constant_fields = ["id", "links"]
+    if not app.state.settings.use_api_hydrate:
+        constant_fields.append("collection")
+    for item in features:
+        assert set(item.keys()) == set(fields + constant_fields)
+
+
 async def test_app_sort_extension(load_test_data, app_client, load_test_collection):
     coll = load_test_collection
     first_item = load_test_data("test_item.json")
