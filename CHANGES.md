@@ -5,6 +5,7 @@
 ### Fixed
 
 - avoid pydantic validation for `/collections` response when using `fields` extension ([#326](https://github.com/stac-utils/stac-fastapi-pgstac/pull/326))
+- Close readpool only if it exists ([#331](https://github.com/stac-utils/stac-fastapi-pgstac/pull/331))
 
 ## [6.1.2] - 2025-11-24
 

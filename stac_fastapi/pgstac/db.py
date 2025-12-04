@@ -83,7 +83,8 @@ async def connect_to_db(
 
 async def close_db_connection(app: FastAPI) -> None:
     """Close connection."""
-    await app.state.readpool.close()
+    if pool := getattr(app.state, "readpool", None):
+        await pool.close()
     if pool := getattr(app.state, "writepool", None):
         await pool.close()
 
