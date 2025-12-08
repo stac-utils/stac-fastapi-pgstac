@@ -48,7 +48,6 @@ dependencies = [
     "typing_extensions>=4.9.0",
     "jsonpatch>=1.33.0",
     "json-merge-patch>=0.3.0",
-    "uvicorn[standard]==0.38.0",
 ]
 
 [project.optional-dependencies]

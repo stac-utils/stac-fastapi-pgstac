@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- remove uvicorn from dependencies
+
 ## [6.1.3] - 2025-12-06
 
 ### Fixed

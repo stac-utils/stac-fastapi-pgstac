@@ -78,7 +78,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync
+          uv sync --extra server
           uv pip install stac-api-validator==0.6.5
 
       - name: Load data and validate
