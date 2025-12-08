@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [6.1.4] - 2025-12-08
+
 ### Fixed
 
 - remove uvicorn from dependencies
@@ -536,7 +538,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.3..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.4..main>
+[6.1.4]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.3..6.1.4>
 [6.1.3]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.2..6.1.3>
 [6.1.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.1..6.1.2>
 [6.1.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.0..6.1.1>
