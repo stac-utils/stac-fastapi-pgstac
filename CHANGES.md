@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Update pydantic and pydantic-settings versions requirements
+
 ## [6.1.4] - 2025-12-08
 
 ### Fixed
