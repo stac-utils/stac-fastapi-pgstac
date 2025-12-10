@@ -16,7 +16,7 @@ jobs:
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
 
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Check out repository code

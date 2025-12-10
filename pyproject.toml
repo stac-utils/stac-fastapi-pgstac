@@ -36,7 +36,8 @@ dynamic = ["version"]
 dependencies = [
     "attrs",
     "orjson",
-    "pydantic",
+    "pydantic>=2.4,<3.0",
+    "pydantic-settings>=2.7,<3.0",
     "stac-fastapi-api>=6.1,<7.0",
     "stac-fastapi-extensions>=6.1,<7.0",
     "stac-fastapi-types>=6.1,<7.0",
