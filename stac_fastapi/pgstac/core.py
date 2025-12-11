@@ -121,12 +121,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                     or []
                 )
 
-                collections = Collections(
-                    collections=cols,
-                    numberMatched=len(cols),
-                    numberReturned=len(cols),
-                    links=[],
-                )
+                collections = Collections(collections=cols, links=[])
 
         for collection in collections["collections"]:
             collection["links"] = await CollectionLinks(
@@ -150,6 +145,13 @@ class CoreCrudClient(AsyncBaseCoreClient):
         collections["links"] = await CollectionSearchPagingLinks(
             request=request, next=next_link, prev=prev_link
         ).get_links()
+
+        # Make sure Collections Body has numberMatched and numberReturned
+        total_collections = len(collections["collections"])
+        collections["numberMatched"] = collections.get("numberMatched", total_collections)
+        collections["numberReturned"] = collections.get(
+            "numberReturned", total_collections
+        )
 
         # If we have the `fields` extension enabled
         # we need to avoid Pydantic validation because the
