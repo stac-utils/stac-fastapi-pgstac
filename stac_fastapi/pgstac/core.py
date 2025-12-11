@@ -312,6 +312,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                     request=request,
                 ).get_links(extra_links=feature.get("links"))
 
+        items: List[Item] = []
         if settings.use_api_hydrate:
 
             async def _get_base_item(collection_id: str) -> Dict[str, Any]:
@@ -338,11 +339,14 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
                 item = filter_fields(item, include, exclude)
                 await _add_item_links(item, collection_id, item_id)
+                items.append(item)
 
         else:
             for item in item_collection.get("features", []):
                 await _add_item_links(item)
+                items.append(item)
 
+        item_collection["features"] = items
         item_collection["links"] = await PagingLinks(
             request=request,
             next=next,
