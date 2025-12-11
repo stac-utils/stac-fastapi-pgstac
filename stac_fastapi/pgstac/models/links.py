@@ -42,6 +42,7 @@ class BaseLinks:
     """Create inferred links common to collections and items."""
 
     request: Request = attr.ib()
+    _body: dict = attr.ib(init=False, factory=dict)
 
     @property
     def base_url(self):
@@ -112,7 +113,8 @@ class BaseLinks:
         """
         # TODO: Pass request.json() into function so this doesn't need to be coroutine
         if self.request.method == "POST":
-            self.request.postbody = await self.request.json()
+            self._body = await self.request.json()
+
         # join passed in links with generated links
         # and update relative paths
         links = self.create_links()
@@ -162,7 +164,7 @@ class PagingLinks(BaseLinks):
                     "type": MimeTypes.geojson.value,
                     "method": method,
                     "href": self.url,
-                    "body": {**self.request.postbody, "token": f"next:{self.next}"},
+                    "body": {**self._body, "token": f"next:{self.next}"},
                 }
 
         return None
@@ -186,7 +188,7 @@ class PagingLinks(BaseLinks):
                     "type": MimeTypes.geojson.value,
                     "method": method,
                     "href": self.url,
-                    "body": {**self.request.postbody, "token": f"prev:{self.prev}"},
+                    "body": {**self._body, "token": f"prev:{self.prev}"},
                 }
         return None
 

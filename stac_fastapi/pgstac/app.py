@@ -7,6 +7,7 @@ If the variable is not set, enables all extensions.
 
 import os
 from contextlib import asynccontextmanager
+from typing import Dict, List, Set, Type
 
 from brotli_asgi import BrotliMiddleware
 from fastapi import APIRouter, FastAPI
@@ -36,6 +37,8 @@ from stac_fastapi.extensions.core.free_text import FreeTextConformanceClasses
 from stac_fastapi.extensions.core.query import QueryConformanceClasses
 from stac_fastapi.extensions.core.sort import SortConformanceClasses
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
+from stac_fastapi.types.extension import ApiExtension
+from stac_fastapi.types.search import APIRequest, BaseSearchGetRequest
 from starlette.middleware import Middleware
 
 from stac_fastapi.pgstac.config import Settings
@@ -49,7 +52,7 @@ from stac_fastapi.pgstac.types.search import PgstacSearch
 settings = Settings()
 
 # search extensions
-search_extensions_map = {
+search_extensions_map: Dict[str, ApiExtension] = {
     "query": QueryExtension(),
     "sort": SortExtension(),
     "fields": FieldsExtension(),
@@ -58,7 +61,7 @@ search_extensions_map = {
 }
 
 # collection_search extensions
-cs_extensions_map = {
+cs_extensions_map: Dict[str, ApiExtension] = {
     "query": QueryExtension(conformance_classes=[QueryConformanceClasses.COLLECTIONS]),
     "sort": SortExtension(conformance_classes=[SortConformanceClasses.COLLECTIONS]),
     "fields": FieldsExtension(conformance_classes=[FieldsConformanceClasses.COLLECTIONS]),
@@ -70,7 +73,7 @@ cs_extensions_map = {
 }
 
 # item_collection extensions
-itm_col_extensions_map = {
+itm_col_extensions_map: Dict[str, ApiExtension] = {
     "query": QueryExtension(
         conformance_classes=[QueryConformanceClasses.ITEMS],
     ),
@@ -82,7 +85,7 @@ itm_col_extensions_map = {
     "pagination": TokenPaginationExtension(),
 }
 
-enabled_extensions = {
+enabled_extensions: Set[str] = {
     *search_extensions_map.keys(),
     *cs_extensions_map.keys(),
     *itm_col_extensions_map.keys(),
@@ -92,7 +95,7 @@ enabled_extensions = {
 if ext := os.environ.get("ENABLED_EXTENSIONS"):
     enabled_extensions = set(ext.split(","))
 
-application_extensions = []
+application_extensions: List[ApiExtension] = []
 
 with_transactions = os.environ.get("ENABLE_TRANSACTIONS_EXTENSIONS", "").lower() in [
     "yes",
@@ -118,12 +121,16 @@ search_extensions = [
     for key, extension in search_extensions_map.items()
     if key in enabled_extensions
 ]
-post_request_model = create_post_request_model(search_extensions, base_model=PgstacSearch)
-get_request_model = create_get_request_model(search_extensions)
+post_request_model: Type[PgstacSearch] = create_post_request_model(
+    search_extensions, base_model=PgstacSearch
+)  # type: ignore [assignment]
+get_request_model: Type[BaseSearchGetRequest] = create_get_request_model(
+    search_extensions
+)  # type: ignore [assignment]
 application_extensions.extend(search_extensions)
 
 # /collections/{collectionId}/items model
-items_get_request_model = ItemCollectionUri
+items_get_request_model: Type[APIRequest] = ItemCollectionUri
 itm_col_extensions = [
     extension
     for key, extension in itm_col_extensions_map.items()
@@ -135,11 +142,11 @@ if itm_col_extensions:
         base_model=ItemCollectionUri,
         extensions=itm_col_extensions,
         request_type="GET",
-    )
+    )  # type: ignore [assignment]
     application_extensions.extend(itm_col_extensions)
 
 # /collections model
-collections_get_request_model = EmptyRequest
+collections_get_request_model: Type[APIRequest] = EmptyRequest
 if "collection_search" in enabled_extensions:
     cs_extensions = [
         extension
@@ -191,7 +198,7 @@ api = StacApi(
             allow_headers=settings.cors_headers,
         ),
     ],
-    health_check=health_check,
+    health_check=health_check,  # type: ignore [arg-type]
 )
 app = api.app
 

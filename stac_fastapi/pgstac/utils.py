@@ -1,12 +1,12 @@
 """stac-fastapi utility methods."""
 
-from typing import Any, Dict, Optional, Set, Union
+from typing import Any, Dict, Optional, Set, cast
 
 from stac_fastapi.types.stac import Item
 
 
 def filter_fields(  # noqa: C901
-    item: Union[Item, Dict[str, Any]],
+    item: Item,
     include: Optional[Set[str]] = None,
     exclude: Optional[Set[str]] = None,
 ) -> Item:
@@ -58,6 +58,7 @@ def filter_fields(  # noqa: C901
                 # The key, or root key of a multi-part key, is not present in the item,
                 # so it is ignored
                 pass
+
         return clean_item
 
     # For an item built up for included fields, remove excluded fields. This
@@ -82,19 +83,16 @@ def filter_fields(  # noqa: C901
                 # The key to remove does not exist on the source, so it is ignored
                 pass
 
-    # Coalesce incoming type to a dict
-    item = dict(item)
-
-    clean_item = include_fields(item, include)
+    clean_item = include_fields(dict(item), include)
 
     # If, after including all the specified fields, there are no included properties,
     # return just id and collection.
     if not clean_item:
-        return Item({"id": item["id"], "collection": item["collection"]})
+        return Item({"id": item["id"], "collection": item["collection"]})  # type: ignore
 
     exclude_fields(clean_item, exclude)
 
-    return Item(**clean_item)
+    return cast(Item, clean_item)
 
 
 def dict_deep_update(merge_to: Dict[str, Any], merge_from: Dict[str, Any]) -> None:
