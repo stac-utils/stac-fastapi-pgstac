@@ -182,7 +182,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 """,
                 id=collection_id,
             )
-            collection: Collection | None = await conn.fetchval(q, *p)
+            collection: Optional[Collection] = await conn.fetchval(q, *p)
 
         if collection is None:
             raise NotFoundError(f"Collection {collection_id} does not exist.")
