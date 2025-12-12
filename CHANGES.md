@@ -2,11 +2,12 @@
 
 ## [Unreleased]
 
+## [6.1.5] - 2025-12-12
+
 ### Fixed
 
 - Update pydantic and pydantic-settings versions requirements
 - Improve type hints
-
 
 ## [6.1.4] - 2025-12-08
 
@@ -544,7 +545,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.4..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.5..main>
+[6.1.5]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.4..6.1.5>
 [6.1.4]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.3..6.1.4>
 [6.1.3]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.2..6.1.3>
 [6.1.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.1..6.1.2>
