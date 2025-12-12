@@ -1,0 +1,4433 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="STAC FastAPI - pgstac backend.">
+      
+      
+      
+      
+        <link rel="prev" href="../contributing/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>Release Notes - stac-fastapi-pgstac</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.618322db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,300i,400,400i,700,700i%7CFira+Code:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Nunito Sans";--md-code-font:"Fira Code"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#changelog" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="stac-fastapi-pgstac" class="md-header__button md-logo" aria-label="stac-fastapi-pgstac" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            stac-fastapi-pgstac
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Release Notes
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/stac-utils/stac-fastapi-pgstac" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    stac-utils/stac-fastapi-pgstac
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="stac-fastapi-pgstac" class="md-nav__button md-logo" aria-label="stac-fastapi-pgstac" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+
+    </a>
+    stac-fastapi-pgstac
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/stac-utils/stac-fastapi-pgstac" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    stac-utils/stac-fastapi-pgstac
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    stac_fastapi.pgstac
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    stac_fastapi.pgstac
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/stac_fastapi/pgstac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/stac_fastapi/pgstac/app/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    app
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/stac_fastapi/pgstac/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/stac_fastapi/pgstac/core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    core
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/stac_fastapi/pgstac/db/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    db
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1_6" id="__nav_3_1_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    extensions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_1_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    extensions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/stac_fastapi/pgstac/extensions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/stac_fastapi/pgstac/extensions/filter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    filter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/stac_fastapi/pgstac/extensions/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    query
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1_7" id="__nav_3_1_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    models
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_1_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    models
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/stac_fastapi/pgstac/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/stac_fastapi/pgstac/models/links/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    links
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/stac_fastapi/pgstac/transactions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    transactions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/stac_fastapi/pgstac/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    utils
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development - Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Notes
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unreleased
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#615-2025-12-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1.5 - 2025-12-12
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.1.5 - 2025-12-12">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#614-2025-12-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1.4 - 2025-12-08
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.1.4 - 2025-12-08">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#613-2025-12-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1.3 - 2025-12-06
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.1.3 - 2025-12-06">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#612-2025-11-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1.2 - 2025-11-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.1.2 - 2025-11-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#611-2025-11-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1.1 - 2025-11-20
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.1.1 - 2025-11-20">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#610-2025-11-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1.0 - 2025-11-03
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.1.0 - 2025-11-03">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#602-2025-10-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.0.2 - 2025-10-03
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#601-2025-09-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.0.1 - 2025-09-30
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#600-2025-08-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.0.0 - 2025-08-08
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.0.0 - 2025-08-08">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#503-2025-07-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.0.3 - 2025-07-23
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.0.3 - 2025-07-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#502-2025-04-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.0.2 - 2025-04-07
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.0.2 - 2025-04-07">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#501-2025-03-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.0.1 - 2025-03-27
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.0.1 - 2025-03-27">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#500-2025-03-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.0.0 - 2025-03-10
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.0.0 - 2025-03-10">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#403-2025-03-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.0.3 - 2025-03-10
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.0.3 - 2025-03-10">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#402-2025-02-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.0.2 - 2025-02-18
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.0.2 - 2025-02-18">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#401-2025-02-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.0.1 - 2025-02-06
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.0.1 - 2025-02-06">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#400-2025-02-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.0.0 - 2025-02-03
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.0.0 - 2025-02-03">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#301-2024-11-14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0.1 - 2024-11-14
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#300-2024-08-02" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0.0 - 2024-08-02
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#300a4-2024-07-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0.0a4 - 2024-07-10
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#300a3-2024-07-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0.0a3 - 2024-07-01
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#300a2-2024-06-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0.0a2 - 2024-06-18
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#300a1-2024-05-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0.0a1 - 2024-05-22
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#300a0-2024-05-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0.0a0 - 2024-05-10
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.0.0a0 - 2024-05-10">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#250-2024-04-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5.0 - 2024-04-25
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.5.0 - 2024-04-25">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2411-2023-12-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.11 - 2023-12-01
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.11 - 2023-12-01">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2410-2023-08-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.10 - 2023-08-18
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.10 - 2023-08-18">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#249-2023-06-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.9 - 2023-06-21
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.9 - 2023-06-21">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#248-2023-06-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.8 - 2023-06-08
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.8 - 2023-06-08">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#247-2023-05-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.7 - 2023-05-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.7 - 2023-05-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#246-2023-05-11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.6 - 2023-05-11
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.6 - 2023-05-11">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#245-2023-04-04" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.5 - 2023-04-04
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.5 - 2023-04-04">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#244-2023-03-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.4 - 2023-03-09
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.4 - 2023-03-09">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deprecated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deprecated
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#243-2022-11-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.3 - 2022-11-25
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.3 - 2022-11-25">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#242-2022-11-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.2 - 2022-11-25
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.2 - 2022-11-25">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#241-2022-08-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.1 - 2022-08-05
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.1 - 2022-08-05">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#240-2022-08-04" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.0 - 2022-08-04
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.0 - 2022-08-04">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#230-2022-01-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3.0 - 2022-01-18
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.3.0 - 2022-01-18">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#220-2021-10-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2.0 - 2021-10-19
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.2.0 - 2021-10-19">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#211-2021-09-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1.1 - 2021-09-23
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.1.1 - 2021-09-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#210-2021-08-26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1.0 - 2021-08-26
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.1.0 - 2021-08-26">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#200-2021-07-26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.0.0 - 2021-07-26
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#110-2021-01-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1.0 - 2021-01-28
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#100-2020-09-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.0.0 - 2020-09-28
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unreleased
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#615-2025-12-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1.5 - 2025-12-12
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.1.5 - 2025-12-12">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#614-2025-12-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1.4 - 2025-12-08
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.1.4 - 2025-12-08">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#613-2025-12-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1.3 - 2025-12-06
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.1.3 - 2025-12-06">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#612-2025-11-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1.2 - 2025-11-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.1.2 - 2025-11-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#611-2025-11-20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1.1 - 2025-11-20
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.1.1 - 2025-11-20">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#610-2025-11-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1.0 - 2025-11-03
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.1.0 - 2025-11-03">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#602-2025-10-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.0.2 - 2025-10-03
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#601-2025-09-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.0.1 - 2025-09-30
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#600-2025-08-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.0.0 - 2025-08-08
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.0.0 - 2025-08-08">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#503-2025-07-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.0.3 - 2025-07-23
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.0.3 - 2025-07-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#502-2025-04-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.0.2 - 2025-04-07
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.0.2 - 2025-04-07">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#501-2025-03-27" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.0.1 - 2025-03-27
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.0.1 - 2025-03-27">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#500-2025-03-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.0.0 - 2025-03-10
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.0.0 - 2025-03-10">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#403-2025-03-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.0.3 - 2025-03-10
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.0.3 - 2025-03-10">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#402-2025-02-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.0.2 - 2025-02-18
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.0.2 - 2025-02-18">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#401-2025-02-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.0.1 - 2025-02-06
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.0.1 - 2025-02-06">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#400-2025-02-03" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.0.0 - 2025-02-03
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.0.0 - 2025-02-03">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#301-2024-11-14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0.1 - 2024-11-14
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#300-2024-08-02" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0.0 - 2024-08-02
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#300a4-2024-07-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0.0a4 - 2024-07-10
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#300a3-2024-07-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0.0a3 - 2024-07-01
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#300a2-2024-06-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0.0a2 - 2024-06-18
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#300a1-2024-05-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0.0a1 - 2024-05-22
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#300a0-2024-05-10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.0.0a0 - 2024-05-10
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.0.0a0 - 2024-05-10">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#250-2024-04-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5.0 - 2024-04-25
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.5.0 - 2024-04-25">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2411-2023-12-01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.11 - 2023-12-01
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.11 - 2023-12-01">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2410-2023-08-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.10 - 2023-08-18
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.10 - 2023-08-18">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#249-2023-06-21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.9 - 2023-06-21
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.9 - 2023-06-21">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#248-2023-06-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.8 - 2023-06-08
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.8 - 2023-06-08">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#247-2023-05-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.7 - 2023-05-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.7 - 2023-05-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#246-2023-05-11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.6 - 2023-05-11
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.6 - 2023-05-11">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#245-2023-04-04" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.5 - 2023-04-04
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.5 - 2023-04-04">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#244-2023-03-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.4 - 2023-03-09
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.4 - 2023-03-09">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deprecated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deprecated
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#243-2022-11-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.3 - 2022-11-25
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.3 - 2022-11-25">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#242-2022-11-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.2 - 2022-11-25
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.2 - 2022-11-25">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#241-2022-08-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.1 - 2022-08-05
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.1 - 2022-08-05">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#240-2022-08-04" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4.0 - 2022-08-04
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.4.0 - 2022-08-04">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#230-2022-01-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3.0 - 2022-01-18
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.3.0 - 2022-01-18">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#220-2021-10-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2.0 - 2021-10-19
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.2.0 - 2021-10-19">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#211-2021-09-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1.1 - 2021-09-23
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.1.1 - 2021-09-23">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_20" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#210-2021-08-26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1.0 - 2021-08-26
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.1.0 - 2021-08-26">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#200-2021-07-26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.0.0 - 2021-07-26
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#110-2021-01-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1.0 - 2021-01-28
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#100-2020-09-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.0.0 - 2020-09-28
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
+<h2 id="unreleased"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.5..main">Unreleased</a><a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<h2 id="615-2025-12-12"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.4..6.1.5">6.1.5</a> - 2025-12-12<a class="headerlink" href="#615-2025-12-12" title="Permanent link">&para;</a></h2>
+<h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Update pydantic and pydantic-settings versions requirements</li>
+<li>Improve type hints</li>
+</ul>
+<h2 id="614-2025-12-08"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.3..6.1.4">6.1.4</a> - 2025-12-08<a class="headerlink" href="#614-2025-12-08" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_1">Fixed<a class="headerlink" href="#fixed_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>remove uvicorn from dependencies</li>
+</ul>
+<h2 id="613-2025-12-06"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.2..6.1.3">6.1.3</a> - 2025-12-06<a class="headerlink" href="#613-2025-12-06" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_2">Fixed<a class="headerlink" href="#fixed_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>avoid pydantic validation for <code>/collections</code> response when using <code>fields</code> extension (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/326">#326</a>)</li>
+<li>Close readpool only if it exists (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/331">#331</a>)</li>
+</ul>
+<h2 id="612-2025-11-24"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.1..6.1.2">6.1.2</a> - 2025-11-24<a class="headerlink" href="#612-2025-11-24" title="Permanent link">&para;</a></h2>
+<h3 id="changed">Changed<a class="headerlink" href="#changed" title="Permanent link">&para;</a></h3>
+<ul>
+<li>remove pygstac dependency</li>
+<li>refactor tests fixtures to test multiple version of PgSTAC</li>
+</ul>
+<h2 id="611-2025-11-20"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.0..6.1.1">6.1.1</a> - 2025-11-20<a class="headerlink" href="#611-2025-11-20" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_3">Fixed<a class="headerlink" href="#fixed_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Parsing of <code>CORS_ORIGINS</code>, <code>CORS_HEADERS</code>, and <code>CORS_METHODS</code> from environment variables (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/313">#313</a>)</li>
+</ul>
+<h3 id="changed_1">Changed<a class="headerlink" href="#changed_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Docker container runs as non-root user</li>
+</ul>
+<h2 id="610-2025-11-03"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.2..6.1.0">6.1.0</a> - 2025-11-03<a class="headerlink" href="#610-2025-11-03" title="Permanent link">&para;</a></h2>
+<h3 id="changed_2">Changed<a class="headerlink" href="#changed_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>update <code>pypgstac</code> version requirement to <code>&gt;=0.9,&lt;0.10</code></li>
+<li>switch to pyproject.toml for package metadata</li>
+<li>use <code>uv</code> for project managment</li>
+<li>add python 3.14 support</li>
+</ul>
+<h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
+<ul>
+<li>lower bounds for <code>hydraters</code> requirements</li>
+<li><code>EXCLUDE_HYDRATE_MARKERS=TRUE/FALSE</code> (defaults to <code>TRUE</code>) to exclude <code>𒍟※</code> markers returned by PgSTAC</li>
+<li>python <code>3.13</code> and <code>3.14</code> support</li>
+</ul>
+<h3 id="removed">removed<a class="headerlink" href="#removed" title="Permanent link">&para;</a></h3>
+<ul>
+<li>aws lambda handler in <code>app.py</code></li>
+</ul>
+<h2 id="602-2025-10-03"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.1..6.0.2">6.0.2</a> - 2025-10-03<a class="headerlink" href="#602-2025-10-03" title="Permanent link">&para;</a></h2>
+<ul>
+<li>add <code>CORS_ORIGIN_REGEX</code> settings (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/298">#298</a>)</li>
+</ul>
+<h2 id="601-2025-09-30"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.0..6.0.1">6.0.1</a> - 2025-09-30<a class="headerlink" href="#601-2025-09-30" title="Permanent link">&para;</a></h2>
+<ul>
+<li>fix: ignore 'rel:items' entries when generating links (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/294">#294</a>)</li>
+</ul>
+<h2 id="600-2025-08-08"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.3..6.0.0">6.0.0</a> - 2025-08-08<a class="headerlink" href="#600-2025-08-08" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_4">Fixed<a class="headerlink" href="#fixed_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>fix root-path handling when setting via env var or on app instance</li>
+<li>Allow <code>q</code> parameter to be a <code>str</code> not a <code>list[str]</code> for Advanced Free-Text extension</li>
+<li>do not <code>unquote</code> parameters for next/prev links</li>
+</ul>
+<h3 id="changed_3">Changed<a class="headerlink" href="#changed_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>rename <code>POSTGRES_HOST_READER</code> to <code>PGHOST</code> in config <strong>breaking change</strong></li>
+<li>rename <code>POSTGRES_USER</code> to <code>PGUSER</code> in config <strong>breaking change</strong></li>
+<li>rename <code>POSTGRES_PASS</code> to <code>PGPASSWORD</code> in config <strong>breaking change</strong></li>
+<li>rename <code>POSTGRES_PORT</code> to <code>PGPORT</code> in config <strong>breaking change</strong></li>
+<li>rename <code>POSTGRES_DBNAME</code> to <code>PGDATABASE</code> in config <strong>breaking change</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">stac_fastapi.pgstac.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostgresSettings</span>
+
+<span class="c1"># before</span>
+<span class="n">settings</span> <span class="o">=</span> <span class="n">PostgresSettings</span><span class="p">(</span>
+    <span class="n">postgres_user</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span>
+    <span class="n">postgres_pass</span><span class="o">=</span><span class="s2">&quot;password&quot;</span><span class="p">,</span>
+    <span class="n">postgres_host_reader</span><span class="o">=</span><span class="s2">&quot;0.0.0.0&quot;</span><span class="p">,</span>
+    <span class="n">postgres_host_writer</span><span class="o">=</span><span class="s2">&quot;0.0.0.0&quot;</span><span class="p">,</span>
+    <span class="n">postgres_port</span><span class="o">=</span><span class="mi">1111</span><span class="p">,</span>
+    <span class="n">postgres_dbname</span><span class="o">=</span><span class="s2">&quot;pgstac&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># now</span>
+<span class="n">settings</span> <span class="o">=</span> <span class="n">PostgresSettings</span><span class="p">(</span>
+    <span class="n">pguser</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span>
+    <span class="n">pgpassword</span><span class="o">=</span><span class="s2">&quot;password&quot;</span><span class="p">,</span>
+    <span class="n">pghost</span><span class="o">=</span><span class="s2">&quot;0.0.0.0&quot;</span><span class="p">,</span>
+    <span class="n">pgport</span><span class="o">=</span><span class="mi">1111</span><span class="p">,</span>
+    <span class="n">pgdatabase</span><span class="o">=</span><span class="s2">&quot;pgstac&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<ul>
+<li>rename <code>reader_connection_string</code> to <code>connection_string</code> in <code>PostgresSettings</code> class <strong>breaking change</strong></li>
+<li>add <code>ENABLE_TRANSACTIONS_EXTENSIONS</code> env variable to enable <code>transaction</code> extensions</li>
+<li>disable transaction and bulk_transactions extensions by default <strong>breaking change</strong></li>
+<li>update <code>stac-fastapi-*</code> version requirements to <code>&gt;=5.2,&lt;6.0</code></li>
+<li>add pgstac health-check in <code>/_mgmt/health</code></li>
+<li>switch from using <code>pygeofilter</code> to <code>cql2</code></li>
+<li>publish arm64 Docker images</li>
+</ul>
+<h3 id="added_1">Added<a class="headerlink" href="#added_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>add <code>validate_extensions</code> setting that enables validation of <code>stac_extensions</code> from submitted STAC objects
+  using the <code>stac_pydantic.extensions.validate_extensions</code> utility. Applicable only when <code>TransactionExtension</code>
+  is active.</li>
+<li>add <code>validation</code> extra requirement to install dependencies of <code>stac_pydantic</code> required for extension validation</li>
+<li>add <code>write_connection_pool</code> option in <code>stac_fastapi.pgstac.db.connect_to_db</code> function</li>
+<li>add <code>write_postgres_settings</code> option in <code>stac_fastapi.pgstac.db.connect_to_db</code> function to set specific settings for the <code>writer</code> DB connection pool</li>
+<li>add specific error message when trying to create <code>Item</code> with null geometry (not supported by PgSTAC)</li>
+<li>add support for Patch in transactions extension</li>
+<li>CORS authentication setting</li>
+</ul>
+<h3 id="removed_1">removed<a class="headerlink" href="#removed_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>stac_fastapi.pgstac.db.DB</code> class</li>
+<li><code>POSTGRES_HOST_WRITER</code> in config</li>
+<li><code>writer_connection_string</code> in <code>PostgresSettings</code> class</li>
+<li><code>testing_connection_string</code> in <code>PostgresSettings</code> class</li>
+</ul>
+<h2 id="503-2025-07-23"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.2..5.0.3">5.0.3</a> - 2025-07-23<a class="headerlink" href="#503-2025-07-23" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_5">Fixed<a class="headerlink" href="#fixed_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>fix root-path handling when setting via env var or on app instance (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/270">#270</a>)</li>
+</ul>
+<h2 id="502-2025-04-07"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.1..5.0.2">5.0.2</a> - 2025-04-07<a class="headerlink" href="#502-2025-04-07" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_6">Fixed<a class="headerlink" href="#fixed_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>fix root-path handling when setting in uvicorn command</li>
+<li>reduce <code>db_min_conn_size</code> to <code>1</code> to avoid creating too many db connections when starting the application</li>
+</ul>
+<h2 id="501-2025-03-27"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/5.0.0..5.0.1">5.0.1</a> - 2025-03-27<a class="headerlink" href="#501-2025-03-27" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_7">Fixed<a class="headerlink" href="#fixed_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>fix media type for <code>self</code> links in <code>/search</code> responses</li>
+</ul>
+<h2 id="500-2025-03-10"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.3..5.0.0">5.0.0</a> - 2025-03-10<a class="headerlink" href="#500-2025-03-10" title="Permanent link">&para;</a></h2>
+<h3 id="changed_4">Changed<a class="headerlink" href="#changed_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>move Postgres settings into separate <code>PostgresSettings</code> class and defer loading until connecting to database (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/209">#209</a>)</li>
+<li>update <code>stac-fastapi-*</code> version requirements to <code>&gt;=5.1,&lt;6.0</code></li>
+</ul>
+<h2 id="403-2025-03-10"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.2..4.0.3">4.0.3</a> - 2025-03-10<a class="headerlink" href="#403-2025-03-10" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_8">Fixed<a class="headerlink" href="#fixed_8" title="Permanent link">&para;</a></h3>
+<ul>
+<li>fix links when app is mounted behind proxy or has router-prefix (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/195">#195</a>)</li>
+</ul>
+<h2 id="402-2025-02-18"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.1..4.0.2">4.0.2</a> - 2025-02-18<a class="headerlink" href="#402-2025-02-18" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_9">Fixed<a class="headerlink" href="#fixed_9" title="Permanent link">&para;</a></h3>
+<ul>
+<li>use Relation's <code>value</code> for <code>POST</code> prev/next links</li>
+<li>return <code>JSONResponse</code> directly from <code>/items</code> endpoint when <code>fields</code> parameter is pass and avoid Pydantic validation</li>
+</ul>
+<h3 id="changed_5">Changed<a class="headerlink" href="#changed_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>avoid re-use of internal <code>CoreCrudClient.post_search</code> in <code>CoreCrudClient.get_search</code> method to allow customization</li>
+</ul>
+<h2 id="401-2025-02-06"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.0..4.0.1">4.0.1</a> - 2025-02-06<a class="headerlink" href="#401-2025-02-06" title="Permanent link">&para;</a></h2>
+<h3 id="added_2">Added<a class="headerlink" href="#added_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>add <code>numberReturned</code> and <code>numberMatched</code> in <code>/collections</code> response</li>
+</ul>
+<h2 id="400-2025-02-03"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.1..4.0.0">4.0.0</a> - 2025-02-03<a class="headerlink" href="#400-2025-02-03" title="Permanent link">&para;</a></h2>
+<h3 id="changed_6">Changed<a class="headerlink" href="#changed_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>remove <code>python 3.8</code> support</li>
+<li>update <code>stac-fastapi-*</code> requirement to <code>~=5.0</code></li>
+<li>keep <code>/search</code> and <code>/collections</code> extensions separate (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/158">#158</a>)</li>
+<li>update <code>pypgstac</code> requirement to <code>&gt;=0.8,&lt;0.10</code></li>
+<li>set <code>pypgstac==0.9.*</code> for test requirements</li>
+<li>renamed <code>post_request_model</code> attribute to <code>pgstac_search_model</code> in <code>CoreCrudClient</code> class</li>
+<li>changed <code>datetime</code> input type to <code>string</code> in GET endpoint methods</li>
+<li>renamed <code>filter</code> to <code>filter_expr</code> input attributes in GET endpoint methods</li>
+<li>delete <code>utils.format_datetime_range</code> function</li>
+</ul>
+<h3 id="fixed_10">Fixed<a class="headerlink" href="#fixed_10" title="Permanent link">&para;</a></h3>
+<ul>
+<li>handle <code>next</code> and <code>prev</code> tokens now returned as links from pgstac&gt;=0.9.0 (author @zstatmanweil, <a class="magiclink magiclink-github magiclink-pull" href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/140" title="GitHub Pull Request: stac-utils/stac-fastapi-pgstac #140">stac-utils/stac-fastapi-pgstac!140</a>)</li>
+<li>fix Docker compose file, so example data can be loaded into database (author @zstatmanweil, <a class="magiclink magiclink-github magiclink-pull" href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/142" title="GitHub Pull Request: stac-utils/stac-fastapi-pgstac #142">stac-utils/stac-fastapi-pgstac!142</a>)</li>
+<li>fix <code>filter</code> extension implementation in <code>CoreCrudClient</code></li>
+</ul>
+<h3 id="added_3">Added<a class="headerlink" href="#added_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>add <a href="https://github.com/stac-api-extensions/collection-search">collection search extension</a> support (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/139">#139</a>)</li>
+<li>add <a href="https://github.com/stac-api-extensions/freetext-search">free-text extension</a> to collection search extensions (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/162">#162</a>)</li>
+<li>add <a href="https://github.com/stac-api-extensions/filter">filter extension</a> support to Item Collection endpoint</li>
+<li>add <a href="https://github.com/stac-api-extensions/sort">sort extension</a> support to Item Collection endpoint (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/192">#192</a>)</li>
+<li>add <a href="https://github.com/stac-api-extensions/query">query extension</a> support to Item Collection endpoint (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/192">#162</a>)</li>
+<li>add <a href="https://github.com/stac-api-extensions/fields">fields extension</a> support to Item Collection endpoint (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/192">#162</a>)</li>
+</ul>
+<h2 id="301-2024-11-14"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/3.0.0..3.0.1">3.0.1</a> - 2024-11-14<a class="headerlink" href="#301-2024-11-14" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Enable runtime <code>CORS</code> configuration using environment variables (<code>CORS_ORIGINS="https://...,https://..."</code>, <code>CORS_METHODS="PUT,OPTIONS"</code>) (<a class="magiclink magiclink-github magiclink-pull" href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/168" title="GitHub Pull Request: stac-utils/stac-fastapi-pgstac #168">stac-utils/stac-fastapi-pgstac!168</a>)</li>
+</ul>
+<h2 id="300-2024-08-02"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.5.0..3.0.0">3.0.0</a> - 2024-08-02<a class="headerlink" href="#300-2024-08-02" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Enable filter extension for <code>GET /items</code> requests and add <code>Queryables</code> links in <code>/collections</code> and <code>/collections/{collection_id}</code> responses (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/89">#89</a>)</li>
+<li>Allow to omit <code>collection</code> in bulk item insertions. Same identifier checks as with single insertions (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/113">#113</a>)</li>
+<li>Set <code>stac-fastapi-*</code> requirements to <strong>~=3.0</strong></li>
+</ul>
+<h2 id="300a4-2024-07-10">3.0.0a4 - 2024-07-10<a class="headerlink" href="#300a4-2024-07-10" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Update stac-fastapi libraries to <code>~=3.0.0b2</code></li>
+</ul>
+<h2 id="300a3-2024-07-01">3.0.0a3 - 2024-07-01<a class="headerlink" href="#300a3-2024-07-01" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Use <code>quote_plus</code> instead of <code>quote</code> to encode database's password (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/122">#122</a>)</li>
+<li>Update stac-fastapi libraries to <code>~=3.0.0a4</code></li>
+</ul>
+<h2 id="300a2-2024-06-18">3.0.0a2 - 2024-06-18<a class="headerlink" href="#300a2-2024-06-18" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Update stac-fastapi libraries to <code>~=3.0.0a3</code></li>
+<li>make sure the application can work without any extension</li>
+</ul>
+<h2 id="300a1-2024-05-22">3.0.0a1 - 2024-05-22<a class="headerlink" href="#300a1-2024-05-22" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Update stac-fastapi libraries to <code>~=3.0.0a1</code></li>
+<li>Update stac-pydantic dependency to <code>==3.1.*</code></li>
+</ul>
+<h2 id="300a0-2024-05-10">3.0.0a0 - 2024-05-10<a class="headerlink" href="#300a0-2024-05-10" title="Permanent link">&para;</a></h2>
+<h3 id="changed_7">Changed<a class="headerlink" href="#changed_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Update stac-fastapi libraries to v3.0.0a0 (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/108">#108</a>)</li>
+<li>Update pgstac version to <code>0.8.x</code></li>
+</ul>
+<h2 id="250-2024-04-25"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.11..2.5.0">2.5.0</a> - 2024-04-25<a class="headerlink" href="#250-2024-04-25" title="Permanent link">&para;</a></h2>
+<h3 id="changed_8">Changed<a class="headerlink" href="#changed_8" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Updated stac-fastapi libraries to v2.5.5 (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/101">#101</a>)</li>
+</ul>
+<h3 id="added_4">Added<a class="headerlink" href="#added_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Ability to configure the database runtime parameters (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/92">#92</a>)</li>
+</ul>
+<h2 id="2411-2023-12-01"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.10..2.4.11">2.4.11</a> - 2023-12-01<a class="headerlink" href="#2411-2023-12-01" title="Permanent link">&para;</a></h2>
+<h3 id="changed_9">Changed<a class="headerlink" href="#changed_9" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Add <code>method</code> parameter to Bulk Transactions requests in order to support upserting bulk data (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/64">#64</a>)</li>
+</ul>
+<h2 id="2410-2023-08-18"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.9..2.4.10">2.4.10</a> - 2023-08-18<a class="headerlink" href="#2410-2023-08-18" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_11">Fixed<a class="headerlink" href="#fixed_11" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added back the <code>CMD</code> to the Dockerfile that was dropped during the repo split (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/52">#52</a>)</li>
+</ul>
+<h2 id="249-2023-06-21"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.8..2.4.9">2.4.9</a> - 2023-06-21<a class="headerlink" href="#249-2023-06-21" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_12">Fixed<a class="headerlink" href="#fixed_12" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Pass <code>request</code> by name when calling endpoints from other endpoints (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/44">#44</a>)</li>
+</ul>
+<h2 id="248-2023-06-08"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.7..2.4.8">2.4.8</a> - 2023-06-08<a class="headerlink" href="#248-2023-06-08" title="Permanent link">&para;</a></h2>
+<h3 id="changed_10">Changed<a class="headerlink" href="#changed_10" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Updated <strong>stac-fastapi</strong> to v2.4.8, which updates our STAC API version to v1.0.0 (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/40">#40</a>)</li>
+</ul>
+<h2 id="247-2023-05-17"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.6..2.4.7">2.4.7</a> - 2023-05-17<a class="headerlink" href="#247-2023-05-17" title="Permanent link">&para;</a></h2>
+<h3 id="added_5">Added<a class="headerlink" href="#added_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Support for <code>ItemCollections</code> in the transaction extension (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/35">#35</a>)</li>
+</ul>
+<h2 id="246-2023-05-11"><a href="https://github.com/stac-utils/stac-fastapi-pgstac/compare/2.4.5..2.4.6">2.4.6</a> - 2023-05-11<a class="headerlink" href="#246-2023-05-11" title="Permanent link">&para;</a></h2>
+<p>As a part of this release, this repository was extracted from the main
+<a href="https://github.com/stac-utils/stac-fastapi">stac-fastapi</a> repository.</p>
+<h3 id="added_6">Added<a class="headerlink" href="#added_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Ability to customize the database connection (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/22">#22</a>)</li>
+<li>Ability to add ItemCollections through the Transaction API, with more validation (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/35">#35</a>)</li>
+</ul>
+<h3 id="changed_11">Changed<a class="headerlink" href="#changed_11" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Quieter tests (<a href="https://github.com/stac-utils/stac-fastapi-pgstac/pull/22">#22</a>)</li>
+</ul>
+<h2 id="245-2023-04-04"><a href="https://github.com/stac-utils/stac-fastapi/compare/2.4.4..2.4.5">2.4.5</a> - 2023-04-04<a class="headerlink" href="#245-2023-04-04" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_13">Fixed<a class="headerlink" href="#fixed_13" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use <code>V()</code> instead of f-strings for pgstac queries (<a href="https://github.com/stac-utils/stac-fastapi/pull/554">#554</a>)</li>
+</ul>
+<h2 id="244-2023-03-09"><a href="https://github.com/stac-utils/stac-fastapi/compare/2.4.3..2.4.4">2.4.4</a> - 2023-03-09<a class="headerlink" href="#244-2023-03-09" title="Permanent link">&para;</a></h2>
+<h3 id="added_7">Added<a class="headerlink" href="#added_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Nginx service as second docker-compose stack to demonstrate proxy (<a href="https://github.com/stac-utils/stac-fastapi/pull/503">#503</a>)</li>
+<li>Validation checks in CI using <a href="https://github.com/stac-utils/stac-api-validator">stac-api-validator</a> (<a href="https://github.com/stac-utils/stac-fastapi/pull/508">#508</a>)</li>
+<li>Required links to the sqlalchemy ItemCollection endpoint (<a href="https://github.com/stac-utils/stac-fastapi/pull/508">#508</a>)</li>
+<li>Publication of docker images to GHCR (<a href="https://github.com/stac-utils/stac-fastapi/pull/525">#525</a>)</li>
+</ul>
+<h3 id="changed_12">Changed<a class="headerlink" href="#changed_12" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Updated CI to test against <a href="https://github.com/stac-utils/pgstac/releases/tag/v0.6.12">pgstac v0.6.12</a> (<a href="https://github.com/stac-utils/stac-fastapi/pull/511">#511</a>)</li>
+<li>Reworked <code>update_openapi</code> and added a test for it (<a href="https://github.com/stac-utils/stac-fastapi/pull/523">#523</a>)</li>
+<li>Limit values above 10,000 are now replaced with 10,000 instead of returning a 400 error (<a href="https://github.com/stac-utils/stac-fastapi/pull/526">#526</a>)</li>
+<li>Updated pgstac to v0.7.1 (<a href="https://github.com/stac-utils/stac-fastapi/pull/535">#535</a>)</li>
+</ul>
+<h3 id="removed_2">Removed<a class="headerlink" href="#removed_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Incorrect context STAC extension url from the landing page (<a href="https://github.com/stac-utils/stac-fastapi/pull/508">#508</a>)</li>
+</ul>
+<h3 id="fixed_14">Fixed<a class="headerlink" href="#fixed_14" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Allow url encoded values for <code>query</code> in GET requests (<a href="https://github.com/stac-utils/stac-fastapi/pull/504">#504</a>)</li>
+<li>Fix path in <code>register_update_item</code> docstring (<a href="https://github.com/stac-utils/stac-fastapi/pull/507">#507</a>)</li>
+<li><code>self</code> link rel for <code>/collections/{c_id}/items</code> (<a href="https://github.com/stac-utils/stac-fastapi/pull/508">#508</a>)</li>
+<li>Media type of the item collection endpoint (<a href="https://github.com/stac-utils/stac-fastapi/pull/508">#508</a>)</li>
+<li>Manually exclude non-truthy optional values from sqlalchemy serialization of Collections (<a href="https://github.com/stac-utils/stac-fastapi/pull/508">#508</a>)</li>
+<li>Support <code>intersects</code> in GET requests (<a href="https://github.com/stac-utils/stac-fastapi/pull/521">#521</a>)</li>
+<li>Deleting items that had repeated ids in other collections (<a href="https://github.com/stac-utils/stac-fastapi/pull/520">#520</a>)</li>
+<li>404 for missing collection on /items for sqlalchemy (<a href="https://github.com/stac-utils/stac-fastapi/pull/528">#528</a>)</li>
+<li>Conformance URIs for the filter extension (<a href="https://github.com/stac-utils/stac-fastapi/pull/540">#540</a>)</li>
+</ul>
+<h3 id="deprecated">Deprecated<a class="headerlink" href="#deprecated" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Deprecated <code>VndOaiResponse</code> and <code>config_openapi</code>, will be removed in v3.0 (<a href="https://github.com/stac-utils/stac-fastapi/pull/523">#523</a>)</li>
+</ul>
+<h2 id="243-2022-11-25"><a href="https://github.com/stac-utils/stac-fastapi/compare/2.4.2..2.4.3">2.4.3</a> - 2022-11-25<a class="headerlink" href="#243-2022-11-25" title="Permanent link">&para;</a></h2>
+<h3 id="added_8">Added<a class="headerlink" href="#added_8" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Add the <code>ENABLED_EXTENSIONS</code> environment variable determining which extensions are enabled in the pgstac application, all extensions are enabled by default (<a href="https://github.com/stac-utils/stac-fastapi/pull/495">#495</a>)</li>
+</ul>
+<h3 id="changed_13">Changed<a class="headerlink" href="#changed_13" title="Permanent link">&para;</a></h3>
+<h3 id="removed_3">Removed<a class="headerlink" href="#removed_3" title="Permanent link">&para;</a></h3>
+<h3 id="fixed_15">Fixed<a class="headerlink" href="#fixed_15" title="Permanent link">&para;</a></h3>
+<h2 id="242-2022-11-25"><a href="https://github.com/stac-utils/stac-fastapi/compare/2.4.1..2.4.2">2.4.2</a> - 2022-11-25<a class="headerlink" href="#242-2022-11-25" title="Permanent link">&para;</a></h2>
+<h3 id="added_9">Added<a class="headerlink" href="#added_9" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Add support in pgstac backend for /queryables and /collections/{collection_id}/queryables endpoints with functions exposed in pgstac 0.6.8 (<a href="https://github.com/stac-utils/stac-fastapi/pull/474">#474</a>)</li>
+<li>Add <code>bbox</code> and <code>datetime</code> query parameters to <code>/collections/{collection_id}/items</code>. (<a href="https://github.com/stac-utils/stac-fastapi/issues/476">#476</a>, <a href="https://github.com/stac-utils/stac-fastapi/issues/380">#380</a>)</li>
+<li>Update pgstac requirement to 0.6.10</li>
+<li>Add <code>servers</code> and <code>description</code> to OpenAPI (<a href="https://github.com/stac-utils/stac-fastapi/pull/459">#459</a>)</li>
+</ul>
+<h3 id="changed_14">Changed<a class="headerlink" href="#changed_14" title="Permanent link">&para;</a></h3>
+<h3 id="removed_4">Removed<a class="headerlink" href="#removed_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Removed <code>stac_fastapi.api.routes.create_sync_endpoint</code> function to reduce code duplication (<a href="https://github.com/stac-utils/stac-fastapi/pull/471">#471</a>)</li>
+</ul>
+<h3 id="fixed_16">Fixed<a class="headerlink" href="#fixed_16" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Quote password in pgsql strings to accomodate special characters. (<a href="https://github.com/stac-utils/stac-fastapi/issues/455">#455</a>)</li>
+<li>Fix pgstac backend for /queryables endpoint to return 404 for non-existent collections (<a href="https://github.com/stac-utils/stac-fastapi/pull/482">#482</a>)</li>
+<li><code>/collection/{collection_id}/items</code> endpoints now return geojson media type (<a href="https://github.com/stac-utils/stac-fastapi/pull/488">#488</a>)</li>
+</ul>
+<h2 id="241-2022-08-05"><a href="https://github.com/stac-utils/stac-fastapi/compare/2.4.0..2.4.1">2.4.1</a> - 2022-08-05<a class="headerlink" href="#241-2022-08-05" title="Permanent link">&para;</a></h2>
+<h3 id="added_10">Added<a class="headerlink" href="#added_10" title="Permanent link">&para;</a></h3>
+<h3 id="changed_15">Changed<a class="headerlink" href="#changed_15" title="Permanent link">&para;</a></h3>
+<h3 id="removed_5">Removed<a class="headerlink" href="#removed_5" title="Permanent link">&para;</a></h3>
+<h3 id="fixed_17">Fixed<a class="headerlink" href="#fixed_17" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>ciso8601</code> fails to build in some environments, instead use <code>pyiso8601</code> to parse datetimes.</li>
+</ul>
+<h2 id="240-2022-08-04"><a href="https://github.com/stac-utils/stac-fastapi/compare/2.3.0..2.4.0">2.4.0</a> - 2022-08-04<a class="headerlink" href="#240-2022-08-04" title="Permanent link">&para;</a></h2>
+<h3 id="added_11">Added<a class="headerlink" href="#added_11" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Add hook to allow adding dependencies to routes. (<a href="https://github.com/stac-utils/stac-fastapi/pull/295">#295</a>)</li>
+<li>Ability to POST an ItemCollection to the collections/{collectionId}/items route. (<a href="https://github.com/stac-utils/stac-fastapi/pull/367">#367</a>)</li>
+<li>Add STAC API - Collections conformance class. (<a href="https://github.com/stac-utils/stac-fastapi/pull/383">383</a>)</li>
+<li>Bulk item inserts for pgstac implementation. (<a href="https://github.com/stac-utils/stac-fastapi/pull/411">411</a>)</li>
+<li>Add APIRouter prefix support for pgstac implementation. (<a href="https://github.com/stac-utils/stac-fastapi/pull/429">429</a>)</li>
+<li>Respect <code>Forwarded</code> or <code>X-Forwarded-*</code> request headers when building links to better accommodate load balancers and proxies.</li>
+</ul>
+<h3 id="changed_16">Changed<a class="headerlink" href="#changed_16" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Update FastAPI requirement to allow version &gt;=0.73 (<a href="https://github.com/stac-utils/stac-fastapi/pull/337">#337</a>)</li>
+<li>Bump version of PGStac to 0.4.5  (<a href="https://github.com/stac-utils/stac-fastapi/pull/346">#346</a>)</li>
+<li>Add support for PGStac Backend to use PyGeofilter to convert Get Request with cql2-text into cql2-json to send to PGStac backend (<a href="https://github.com/stac-utils/stac-fastapi/pull/346">#346</a>)</li>
+<li>Updated all conformance classes to 1.0.0-rc.1. (<a href="https://github.com/stac-utils/stac-fastapi/pull/383">383</a>)</li>
+<li>Bulk Transactions object Items iterator now returns the Item objects rather than the string IDs of the Item objects
+  (<a href="https://github.com/stac-utils/stac-fastapi/issues/355">#355</a>)</li>
+<li>docker-compose now runs uvicorn with hot-reloading enabled</li>
+<li>Bump version of PGStac to 0.6.2 that includes support for hydrating results in the API backed (<a href="https://github.com/stac-utils/stac-fastapi/pull/397">#397</a>)</li>
+<li>Make item geometry and bbox nullable in sqlalchemy backend. (<a href="https://github.com/stac-utils/stac-fastapi/pull/398">#398</a>)</li>
+<li>Transactions Extension update Item endpoint Item is now <code>/collections/{collection_id}/items/{item_id}</code> instead of
+  <code>/collections/{collection_id}/items</code> to align with <a href="https://github.com/radiantearth/stac-api-spec/tree/main/ogcapi-features/extensions/transaction#methods">STAC API
+  spec</a> (<a href="https://github.com/stac-utils/stac-fastapi/pull/425">#425</a>)</li>
+</ul>
+<h3 id="removed_6">Removed<a class="headerlink" href="#removed_6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Remove the unused <code>router_middleware</code> function (<a href="https://github.com/stac-utils/stac-fastapi/pull/439">#439</a>)</li>
+</ul>
+<h3 id="fixed_18">Fixed<a class="headerlink" href="#fixed_18" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Bumped uvicorn version to 0.17 (from &gt;=0.12, &lt;=0.14) to resolve security vulnerability related to websockets dependency version (<a href="https://github.com/stac-utils/stac-fastapi/pull/343">#343</a>)</li>
+<li><code>AttributeError</code> and/or missing properties when requesting the complete <code>properties</code>-field in searches. Added test. (<a href="https://github.com/stac-utils/stac-fastapi/pull/339">#339</a>)</li>
+<li>Fixes issues (and adds tests) for issues caused by regression in pgstac (<a href="https://github.com/stac-utils/stac-fastapi/issues/345">#345</a></li>
+<li>Update error response payloads to match the API spec. (<a href="https://github.com/stac-utils/stac-fastapi/pull/361">#361</a>)</li>
+<li>Fixed stray <code>/</code> before the <code>#</code> in several extension conformance class strings (<a href="https://github.com/stac-utils/stac-fastapi/pull/383">383</a>)</li>
+<li>SQLAlchemy backend bulk item insert now works (<a href="https://github.com/stac-utils/stac-fastapi/issues/356">#356</a>)</li>
+<li>PGStac Backend has stricter implementation of Fields Extension syntax (<a href="https://github.com/stac-utils/stac-fastapi/pull/397">#397</a>)</li>
+<li><code>/queryables</code> endpoint now has type <code>application/schema+json</code> instead of <code>application/json</code> (<a href="https://github.com/stac-utils/stac-fastapi/pull/421">#421</a>)</li>
+<li>Transactions Extension update Item endpoint validates that the <code>{collection_id}</code> path parameter matches the Item <code>"collection"</code> property
+  from the request body, if present, and falls back to using the path parameter if no <code>"collection"</code> property is found in the body
+  (<a href="https://github.com/stac-utils/stac-fastapi/pull/425">#425</a>)</li>
+<li>PGStac Backend Transactions endpoints return added Item/Collection instead of Item/Collection from request (<a href="https://github.com/stac-utils/stac-fastapi/pull/424">#424</a>)</li>
+<li>Application no longer breaks on startup when pagination extension is not included (<a href="https://github.com/stac-utils/stac-fastapi/pull/444">#444</a>)</li>
+</ul>
+<h2 id="230-2022-01-18"><a href="https://github.com/stac-utils/stac-fastapi/compare/2.2.0..2.3.0">2.3.0</a> - 2022-01-18<a class="headerlink" href="#230-2022-01-18" title="Permanent link">&para;</a></h2>
+<h3 id="added_12">Added<a class="headerlink" href="#added_12" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Add link with rel-type of 'service-doc', pointing to HTML API documentation (<a href="https://github.com/stac-utils/stac-fastapi/pull/298">#298</a>)</li>
+</ul>
+<h3 id="changed_17">Changed<a class="headerlink" href="#changed_17" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Refactor to remove hardcoded search request models. Request models are now dynamically created based on the enabled extensions.
+  (<a href="https://github.com/stac-utils/stac-fastapi/pull/213">#213</a>)</li>
+<li>Change example data to use correct <code>type</code> for the example Joplin collection (<a href="https://github.com/stac-utils/stac-fastapi/pull/314">#314</a>)</li>
+<li>Changed the geometry type in the Item model from Polygon to Geometry.</li>
+<li>Upgrade pgstac backend to use version 0.4.2 (<a href="https://github.com/stac-utils/stac-fastapi/pull/321">#321</a>)</li>
+<li>STAC 1.0.0-beta.4 conformance classes updated (<a href="https://github.com/stac-utils/stac-fastapi/pull/298">#298</a>)</li>
+<li>Upgrade pgstac backend to use version 0.4.3 (<a href="https://github.com/stac-utils/stac-fastapi/pull/326">#326</a>)</li>
+</ul>
+<h3 id="removed_7">Removed<a class="headerlink" href="#removed_7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The tiles extension and all tiles links, added for demonstration purposes, have been removed. (<a href="https://github.com/stac-utils/stac-fastapi/pull/309">#309</a>)</li>
+</ul>
+<h3 id="fixed_19">Fixed<a class="headerlink" href="#fixed_19" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Import error using <code>importlib.util</code> (<a href="https://github.com/stac-utils/stac-fastapi/pull/325">#325</a>)</li>
+<li>Add environment variables required by upgraded pgstac container (<a href="https://github.com/stac-utils/stac-fastapi/pull/313">#313</a>)</li>
+<li>Enabled <code>ContextExtension</code> by default (<a href="https://github.com/stac-utils/stac-fastapi/issues/207">#207</a>)</li>
+<li>Content-type response headers for the /search endpoint now reflect the geojson response expected in the STAC api spec (<a href="https://github.com/stac-utils/stac-fastapi/issues/220">#220</a>)</li>
+<li>The minimum <code>limit</code> value for searches is now 1 (<a href="https://github.com/stac-utils/stac-fastapi/pull/296">#296</a>)</li>
+<li>Links stored with Collections and Items (e.g. license links) are now returned with those STAC objects (<a href="https://github.com/stac-utils/stac-fastapi/pull/282">#282</a>)</li>
+<li>Content-type response headers for the /api endpoint now reflect those expected in the STAC api spec (<a href="https://github.com/stac-utils/stac-fastapi/pull/287">#287</a>)</li>
+<li>Changed type options for datetime in BaseSearchGetRequest (<a href="https://github.com/stac-utils/stac-fastapi/pull/318">#318</a>)</li>
+<li>Expanded on tests to ensure properly testing get and post searches (<a href="https://github.com/stac-utils/stac-fastapi/pull/318">#318</a>)</li>
+<li>Ensure invalid datetimes result in 400s (<a href="https://github.com/stac-utils/stac-fastapi/pull/323">#323</a>)</li>
+</ul>
+<h2 id="220-2021-10-19"><a href="https://github.com/stac-utils/stac-fastapi/compare/2.1.1..2.2.0">2.2.0</a> - 2021-10-19<a class="headerlink" href="#220-2021-10-19" title="Permanent link">&para;</a></h2>
+<h3 id="added_13">Added<a class="headerlink" href="#added_13" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Add CQL2 support (<a href="https://github.com/stac-utils/stac-fastapi/pull/308">#308</a>)</li>
+<li>Add ability to override ItemCollectionUri and SearchGetRequest models (<a href="https://github.com/stac-utils/stac-fastapi/pull/271">#271</a>)</li>
+<li>Added <code>collections</code> attribute to list of default fields to include, so that we satisfy the STAC API spec, which requires a <code>collections</code> attribute to be output when an item is part of a collection (<a href="https://github.com/stac-utils/stac-fastapi/pull/276">#276</a>)</li>
+</ul>
+<h3 id="changed_18">Changed<a class="headerlink" href="#changed_18" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Update pgstac to 0.4.0 (<a href="https://github.com/stac-utils/stac-fastapi/pull/308">#308</a>)</li>
+<li>Update get_item in sqlalchemy backend to allow for querying for items with same ids but in different collections. (<a href="https://github.com/stac-utils/stac-fastapi/pull/275">#275</a>)</li>
+</ul>
+<h2 id="211-2021-09-23"><a href="https://github.com/stac-utils/stac-fastapi/compare/2.1.0..2.1.1">2.1.1</a> - 2021-09-23<a class="headerlink" href="#211-2021-09-23" title="Permanent link">&para;</a></h2>
+<h3 id="added_14">Added<a class="headerlink" href="#added_14" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Add <code>middlewares</code> option in <code>stac_fastapi.api.StacApi</code> to allow custom middleware configuration (<a href="https://github.com/stac-utils/stac-fastapi/pull/267">#267</a>)</li>
+<li>Support non-interval datetime queries on sqlalchemy backend (<a href="https://github.com/stac-utils/stac-fastapi/pull/262">#262</a>)</li>
+<li>Restrict <code>limit</code> parameter in sqlalchemy backend to between 1 and 10,000. (<a href="https://github.com/stac-utils/stac-fastapi/pull/251">#251</a>)</li>
+<li>Fix OAS conformance URL (<a href="https://github.com/stac-utils/stac-fastapi/pull/263">#263</a>)</li>
+<li>Links to children collections from the landing pagge always have a title (<a href="https://github.com/stac-utils/stac-fastapi/pull/260">#260</a>)</li>
+<li>Fix collection links in the <code>all_collections</code> method in <code>pgstac</code> (<a href="https://github.com/stac-utils/stac-fastapi/pull/269">#269</a>)</li>
+</ul>
+<h3 id="fixed_20">Fixed<a class="headerlink" href="#fixed_20" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Pin FastAPI to 0.67 to avoid issues with rendering OpenAPI documentation (<a href="https://github.com/stac-utils/stac-fastapi/pull/246">#246</a>)</li>
+<li>Add <code>stac_version</code> to default search attributes (<a href="https://github.com/stac-utils/stac-fastapi/pull/268">#268</a>)</li>
+<li>pgstac backend specifies collection_id when fetching a single item (<a href="https://github.com/stac-utils/stac-fastapi/pull/270">#279</a>)</li>
+</ul>
+<h2 id="210-2021-08-26"><a href="https://github.com/stac-utils/stac-fastapi/compare/2.1.0..main">2.1.0</a> - 2021-08-26<a class="headerlink" href="#210-2021-08-26" title="Permanent link">&para;</a></h2>
+<h3 id="added_15">Added<a class="headerlink" href="#added_15" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Added filter extension. (<a href="https://github.com/stac-utils/stac-fastapi/pull/165">#165</a>)</li>
+<li>Add Support for CQL JSON to PGStac Backend (<a href="https://github.com/stac-utils/stac-fastapi/pull/209">#209</a>)</li>
+<li>Added item_serializer and item_table to BulkTransactionsClient in sqlalchemy backend (<a href="https://github.com/stac-utils/stac-fastapi/pull/210">#210</a>)</li>
+<li>Enable conformance class configuration (<a href="https://github.com/stac-utils/stac-fastapi/pull/214">#214</a>)</li>
+<li>Add/fix landing page links (<a href="https://github.com/stac-utils/stac-fastapi/pull/229">#229</a>)</li>
+<li>Correct response codes for bad/unusable bboxes (<a href="https://github.com/stac-utils/stac-fastapi/pull/235">#235</a>)</li>
+<li>Add a "method" field for search links (<a href="https://github.com/stac-utils/stac-fastapi/pull/236">#236</a>)</li>
+<li>Add extension schemas to landing (<a href="https://github.com/stac-utils/stac-fastapi/pull/237">#237</a>)</li>
+</ul>
+<h3 id="removed_8">Removed<a class="headerlink" href="#removed_8" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Remove shapely from stac_fastapi.pgstac requirements (<a href="https://github.com/stac-utils/stac-fastapi/pull/225">#225</a>)</li>
+</ul>
+<h3 id="changed_19">Changed<a class="headerlink" href="#changed_19" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Update to STAC API 1.0.0-beta.3 (<a href="https://github.com/stac-utils/stac-fastapi/pull/239">#239</a>)</li>
+</ul>
+<h3 id="fixed_21">Fixed<a class="headerlink" href="#fixed_21" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Make collection title optional in landing page links (<a href="https://github.com/stac-utils/stac-fastapi/pull/198">#198</a>)</li>
+<li>Preserve relative paths on link generation (<a href="https://github.com/stac-utils/stac-fastapi/pull/199">#199</a>)</li>
+<li>Fix collection endpoint return value to match spec (fixes regression) (<a href="https://github.com/stac-utils/stac-fastapi/pull/232">#232</a>)</li>
+<li>Return empty item collection instead of error when searching (<a href="https://github.com/stac-utils/stac-fastapi/pull/233">#233</a>)</li>
+<li>Correct response codes for bad/unusable bboxes (<a href="https://github.com/stac-utils/stac-fastapi/pull/235">#235</a>)</li>
+<li>Update pgstac to return 400 on invalid date parameter (<a href="https://github.com/stac-utils/stac-fastapi/pull/240">#240</a>)</li>
+</ul>
+<h2 id="200-2021-07-26"><a href="https://github.com/stac-utils/stac-fastapi/compare/1.1.0..2.0.0">2.0.0</a> - 2021-07-26<a class="headerlink" href="#200-2021-07-26" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Refactor stac-fastapi into submodules (<a href="https://github.com/">#106</a>stac-utils/stac-fastapi/pull/106)</li>
+<li>Add pgstac backend (<a href="https://github.com/stac-utils/stac-fastapi/pull/126">#126</a>)</li>
+<li>Upgrade to stac-pydantic 2.0.0 and stac-spec 1.0.0 (<a href="https://github.com/stac-utils/stac-fastapi/pull/181">#181</a>)</li>
+</ul>
+<h2 id="110-2021-01-28"><a href="https://github.com/stac-utils/stac-fastapi/compare/1.0.0..1.1.0">1.1.0</a> - 2021-01-28<a class="headerlink" href="#110-2021-01-28" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Improve how the library declares API extensions (<a href="https://github.com/stac-utils/arturo-stac-api/pull/54">#54</a>)</li>
+<li>Add postgres bulk transactions client (<a href="https://github.com/stac-utils/arturo-stac-api/pull/59">#59</a>)</li>
+<li>Update TiTiler version (<a href="https://github.com/stac-utils/arturo-stac-api/pull/61">#61</a>)</li>
+<li>Use attrs instead of dataclasses (<a href="https://github.com/stac-utils/arturo-stac-api/pull/73">#73</a>)</li>
+<li>Remove postgres database connection from API layer (<a href="https://github.com/stac-utils/arturo-stac-api/pull/74">#74</a>)</li>
+<li>Fix <code>pre-commit</code> config (<a href="https://github.com/stac-utils/arturo-stac-api/pull/75">#75</a>)</li>
+</ul>
+<h2 id="100-2020-09-28"><a href="https://github.com/stac-utils/stac-fastapi/tree/1.0.0">1.0.0</a> - 2020-09-28<a class="headerlink" href="#100-2020-09-28" title="Permanent link">&para;</a></h2>
+<ul>
+<li>First PyPi release!</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/stac-utils" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+    
+  </body>
+</html>
