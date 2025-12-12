@@ -68,7 +68,8 @@ async def connect_to_db(
 ) -> None:
     """Create connection pools & connection retriever on application."""
     if not postgres_settings:
-        postgres_settings = PostgresSettings()
+        # NOTE: for some reason mypy fails to recognize that attributes can be set by Env
+        postgres_settings = PostgresSettings()  # type: ignore
 
     app.state.readpool = await _create_pool(postgres_settings)
 

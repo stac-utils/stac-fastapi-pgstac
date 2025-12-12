@@ -11,7 +11,7 @@ from stac_fastapi.types.errors import NotFoundError
 class FiltersClient(AsyncBaseFiltersClient):
     """Defines a pattern for implementing the STAC filter extension."""
 
-    async def get_queryables(
+    async def get_queryables(  # type: ignore[override]
         self,
         request: Request,
         collection_id: Optional[str] = None,

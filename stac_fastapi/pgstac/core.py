@@ -41,7 +41,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
     pgstac_search_model: Type[PgstacSearch] = attr.ib(default=PgstacSearch)
 
-    async def all_collections(  # noqa: C901
+    async def all_collections(  # type: ignore [override] # noqa: C901
         self,
         request: Request,
         # Extensions
@@ -68,7 +68,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         next_link: Optional[Dict[str, Any]] = None
         prev_link: Optional[Dict[str, Any]] = None
-        collections_result: Collections
+        collections: Collections
 
         if self.extension_is_enabled("CollectionSearchExtension"):
             base_args = {
@@ -101,9 +101,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
                     """,
                     req=json.dumps(clean_args),
                 )
-                collections_result = await conn.fetchval(q, *p)
+                collections = await conn.fetchval(q, *p)
 
-            if links := collections_result.get("links"):
+            if links := collections.get("links"):
                 for link in links:
                     if link["rel"] == "next":
                         next_link = link
@@ -112,53 +112,45 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         else:
             async with request.app.state.get_connection(request, "r") as conn:
-                cols = await conn.fetchval(
-                    """
+                cols: List[Collection] = (
+                    await conn.fetchval(
+                        """
                     SELECT * FROM all_collections();
                     """
-                )
-                collections_result = {"collections": cols, "links": []}
-
-        linked_collections: List[Collection] = []
-        collections = collections_result["collections"]
-        if collections is not None and len(collections) > 0:
-            for c in collections:
-                coll = Collection(**c)
-                coll["links"] = await CollectionLinks(
-                    collection_id=coll["id"], request=request
-                ).get_links(extra_links=coll.get("links"))
-
-                if self.extension_is_enabled(
-                    "FilterExtension"
-                ) or self.extension_is_enabled("ItemCollectionFilterExtension"):
-                    coll["links"].append(
-                        {
-                            "rel": Relations.queryables.value,
-                            "type": MimeTypes.jsonschema.value,
-                            "title": "Queryables",
-                            "href": urljoin(
-                                base_url, f"collections/{coll['id']}/queryables"
-                            ),
-                        }
                     )
+                    or []
+                )
 
-                linked_collections.append(coll)
+                collections = Collections(collections=cols, links=[])
 
-        links = await CollectionSearchPagingLinks(
-            request=request,
-            next=next_link,
-            prev=prev_link,
+        for collection in collections["collections"]:
+            collection["links"] = await CollectionLinks(
+                collection_id=collection["id"], request=request
+            ).get_links(extra_links=collection.get("links"))
+
+            if self.extension_is_enabled("FilterExtension") or self.extension_is_enabled(
+                "ItemCollectionFilterExtension"
+            ):
+                collection["links"].append(
+                    {
+                        "rel": Relations.queryables.value,
+                        "type": MimeTypes.jsonschema.value,
+                        "title": "Queryables",
+                        "href": urljoin(
+                            base_url, f"collections/{collection['id']}/queryables"
+                        ),
+                    }
+                )
+
+        collections["links"] = await CollectionSearchPagingLinks(
+            request=request, next=next_link, prev=prev_link
         ).get_links()
 
-        collections = Collections(
-            collections=linked_collections or [],
-            links=links,
-            numberMatched=collections_result.get(
-                "numberMatched", len(linked_collections)
-            ),
-            numberReturned=collections_result.get(
-                "numberReturned", len(linked_collections)
-            ),
+        # Make sure Collections Body has numberMatched and numberReturned
+        total_collections = len(collections["collections"])
+        collections["numberMatched"] = collections.get("numberMatched", total_collections)
+        collections["numberReturned"] = collections.get(
+            "numberReturned", total_collections
         )
 
         # If we have the `fields` extension enabled
@@ -169,7 +161,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         return collections
 
-    async def get_collection(
+    async def get_collection(  # type: ignore [override]
         self,
         collection_id: str,
         request: Request,
@@ -185,8 +177,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
         Returns:
             Collection.
         """
-        collection: Optional[Dict[str, Any]]
-
         async with request.app.state.get_connection(request, "r") as conn:
             q, p = render(
                 """
@@ -194,7 +184,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 """,
                 id=collection_id,
             )
-            collection = await conn.fetchval(q, *p)
+            collection: Optional[Collection] = await conn.fetchval(q, *p)
+
         if collection is None:
             raise NotFoundError(f"Collection {collection_id} does not exist.")
 
@@ -215,7 +206,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 }
             )
 
-        return Collection(**collection)
+        return collection
 
     async def _get_base_item(
         self,
@@ -246,7 +237,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         return item
 
-    async def _search_base(  # noqa: C901
+    async def _search_base(  # noqa: C901  # type: ignore [override]
         self,
         search_request: PgstacSearch,
         request: Request,
@@ -261,8 +252,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
         Returns:
             ItemCollection containing items which match the search criteria.
         """
-        items: Dict[str, Any]
-
         settings: Settings = request.app.state.settings
 
         search_request.conf = search_request.conf or {}
@@ -280,7 +269,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
                     """,
                     req=search_request_json,
                 )
-                items = await conn.fetchval(q, *p)
+                item_collection: ItemCollection = await conn.fetchval(q, *p)
+
         except InvalidDatetimeFormatError as e:
             raise InvalidQueryParameter(
                 f"Datetime parameter {search_request.datetime} is invalid."
@@ -289,15 +279,16 @@ class CoreCrudClient(AsyncBaseCoreClient):
         # Starting in pgstac 0.9.0, the `next` and `prev` tokens are returned in spec-compliant links with method GET
         next_from_link: Optional[str] = None
         prev_from_link: Optional[str] = None
-        for link in items.get("links", []):
-            if link.get("rel") == "next":
-                next_from_link = link.get("href").split("token=next:")[1]
-            if link.get("rel") == "prev":
-                prev_from_link = link.get("href").split("token=prev:")[1]
 
-        next: Optional[str] = items.pop("next", next_from_link)
-        prev: Optional[str] = items.pop("prev", prev_from_link)
-        collection = ItemCollection(**items)
+        for link in item_collection.get("links", []):
+            if link.get("rel") == "next":
+                next_from_link = link["href"].split("token=next:")[1]
+            if link.get("rel") == "prev":
+                prev_from_link = link["href"].split("token=prev:")[1]
+
+        # NOTE: Old version of pgstac returned `next` and `prev` links directly in the response
+        next: Optional[str] = item_collection.pop("next", next_from_link)  # type: ignore [typeddict-item]
+        prev: Optional[str] = item_collection.pop("prev", prev_from_link)  # type: ignore [typeddict-item]
 
         fields = getattr(search_request, "fields", None)
         include: Set[str] = fields.include if fields and fields.include else set()
@@ -323,8 +314,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                     request=request,
                 ).get_links(extra_links=feature.get("links"))
 
-        cleaned_features: List[Item] = []
-
+        items: List[Item] = []
         if settings.use_api_hydrate:
 
             async def _get_base_item(collection_id: str) -> Dict[str, Any]:
@@ -334,40 +324,40 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 fetch_base_item=_get_base_item, request=request
             )
 
-            for feature in collection.get("features") or []:
-                base_item = await base_item_cache.get(feature.get("collection"))
+            for item in item_collection.get("features", []):
+                base_item = await base_item_cache.get(item.get("collection"))
                 # Exclude None values
                 base_item = {k: v for k, v in base_item.items() if v is not None}
 
-                feature = hydrate(
+                item = hydrate(  # type: ignore
                     base_item,
-                    feature,
+                    dict(item),
                     strip_unmatched_markers=settings.exclude_hydrate_markers,
                 )
 
                 # Grab ids needed for links that may be removed by the fields extension.
-                collection_id = feature.get("collection")
-                item_id = feature.get("id")
+                collection_id = item.get("collection")
+                item_id = item.get("id")
 
-                feature = filter_fields(feature, include, exclude)
-                await _add_item_links(feature, collection_id, item_id)
+                item = filter_fields(item, include, exclude)
+                await _add_item_links(item, collection_id, item_id)
+                items.append(item)
 
-                cleaned_features.append(feature)
         else:
-            for feature in collection.get("features") or []:
-                await _add_item_links(feature)
-                cleaned_features.append(feature)
+            for item in item_collection.get("features", []):
+                await _add_item_links(item)
+                items.append(item)
 
-        collection["features"] = cleaned_features
-        collection["links"] = await PagingLinks(
+        item_collection["features"] = items
+        item_collection["links"] = await PagingLinks(
             request=request,
             next=next,
             prev=prev,
         ).get_links()
 
-        return collection
+        return item_collection
 
-    async def item_collection(
+    async def item_collection(  # type: ignore [override]
         self,
         collection_id: str,
         request: Request,
@@ -439,7 +429,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         return ItemCollection(**item_collection)
 
-    async def get_item(
+    async def get_item(  # type: ignore [override]
         self,
         item_id: str,
         collection_id: str,
@@ -469,9 +459,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 f"Item {item_id} in Collection {collection_id} does not exist."
             )
 
-        return Item(**item_collection["features"][0])
+        return item_collection["features"][0]
 
-    async def post_search(
+    async def post_search(  # type: ignore [override]
         self,
         search_request: PgstacSearch,
         request: Request,
@@ -501,9 +491,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
         )
         item_collection["links"] = links
 
-        return ItemCollection(**item_collection)
+        return item_collection
 
-    async def get_search(
+    async def get_search(  # type: ignore [override]
         self,
         request: Request,
         collections: Optional[List[str]] = None,
@@ -570,7 +560,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             if fields.include or fields.exclude:
                 return JSONResponse(item_collection)  # type: ignore
 
-        return ItemCollection(**item_collection)
+        return item_collection
 
     def _clean_search_args(  # noqa: C901
         self,
