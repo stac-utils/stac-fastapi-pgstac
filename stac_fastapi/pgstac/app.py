@@ -7,7 +7,7 @@ If the variable is not set, enables all extensions.
 
 import os
 from contextlib import asynccontextmanager
-from typing import Dict, List, Set, Type
+from typing import Dict, List, Set, Type, cast
 
 from brotli_asgi import BrotliMiddleware
 from fastapi import APIRouter, FastAPI
@@ -38,7 +38,7 @@ from stac_fastapi.extensions.core.query import QueryConformanceClasses
 from stac_fastapi.extensions.core.sort import SortConformanceClasses
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
 from stac_fastapi.types.extension import ApiExtension
-from stac_fastapi.types.search import APIRequest, BaseSearchGetRequest
+from stac_fastapi.types.search import APIRequest
 from starlette.middleware import Middleware
 
 from stac_fastapi.pgstac.config import Settings
@@ -121,12 +121,8 @@ search_extensions = [
     for key, extension in search_extensions_map.items()
     if key in enabled_extensions
 ]
-post_request_model: Type[PgstacSearch] = create_post_request_model(
-    search_extensions, base_model=PgstacSearch
-)  # type: ignore [assignment]
-get_request_model: Type[BaseSearchGetRequest] = create_get_request_model(
-    search_extensions
-)  # type: ignore [assignment]
+post_request_model = create_post_request_model(search_extensions, base_model=PgstacSearch)
+get_request_model = create_get_request_model(search_extensions)
 application_extensions.extend(search_extensions)
 
 # /collections/{collectionId}/items model
@@ -137,12 +133,16 @@ itm_col_extensions = [
     if key in enabled_extensions
 ]
 if itm_col_extensions:
-    items_get_request_model = create_request_model(
-        model_name="ItemCollectionUri",
-        base_model=ItemCollectionUri,
-        extensions=itm_col_extensions,
-        request_type="GET",
-    )  # type: ignore [assignment]
+    items_get_request_model = cast(
+        Type[APIRequest],
+        create_request_model(
+            model_name="ItemCollectionUri",
+            base_model=ItemCollectionUri,
+            extensions=itm_col_extensions,
+            request_type="GET",
+        ),
+    )
+
     application_extensions.extend(itm_col_extensions)
 
 # /collections model

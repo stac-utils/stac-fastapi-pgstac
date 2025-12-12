@@ -5,6 +5,8 @@
 ### Fixed
 
 - Update pydantic and pydantic-settings versions requirements
+- Improve type hints
+
 
 ## [6.1.4] - 2025-12-08
 
