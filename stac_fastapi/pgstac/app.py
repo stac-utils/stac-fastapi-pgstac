@@ -180,7 +180,7 @@ api = StacApi(
     router=APIRouter(prefix=settings.prefix_path),
     settings=settings,
     extensions=application_extensions,
-    client=CoreCrudClient(pgstac_search_model=post_request_model),
+    client=CoreCrudClient(pgstac_search_model=post_request_model),  # type: ignore [arg-type]
     response_class=JSONResponse,
     items_get_request_model=items_get_request_model,
     search_get_request_model=get_request_model,
