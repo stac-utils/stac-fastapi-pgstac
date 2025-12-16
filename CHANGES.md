@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix multi-platform Docker builds by adding QEMU emulation and correcting workflow_dispatch trigger
+
 ## [6.1.5] - 2025-12-12
 
 ### Fixed
