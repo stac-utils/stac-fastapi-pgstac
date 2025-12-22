@@ -56,7 +56,7 @@ validation = [
     "stac_pydantic[validation]",
 ]
 server  = [
-    "uvicorn[standard]==0.38.0"
+    "uvicorn[standard]==0.39.0"
 ]
 
 [dependency-groups]
