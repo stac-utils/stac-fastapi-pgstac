@@ -44,7 +44,6 @@ dependencies = [
     "brotli_asgi",
     "cql2>=0.3.6",
     "hydraters>=0.1.3",
-    "typing_extensions>=4.9.0",
     "jsonpatch>=1.33.0",
     "json-merge-patch>=0.3.0",
 ]

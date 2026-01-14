@@ -2,13 +2,13 @@
 
 import json
 import warnings
-from typing import Annotated, Any, List, Optional, Sequence, Type
+from collections.abc import Sequence
+from typing import Annotated, Any, Self
 from urllib.parse import quote_plus as quote
 
 from pydantic import BaseModel, BeforeValidator, Field, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 from stac_fastapi.types.config import ApiSettings
-from typing_extensions import Self
 
 from stac_fastapi.pgstac.types.base_item_cache import (
     BaseItemCache,
@@ -64,40 +64,40 @@ class PostgresSettings(BaseSettings):
     """
 
     postgres_user: Annotated[
-        Optional[str],
+        str | None,
         Field(
             deprecated="`postgres_user` is deprecated, please use `pguser`", default=None
         ),
     ]
     postgres_pass: Annotated[
-        Optional[str],
+        str | None,
         Field(
             deprecated="`postgres_pass` is deprecated, please use `pgpassword`",
             default=None,
         ),
     ]
     postgres_host_reader: Annotated[
-        Optional[str],
+        str | None,
         Field(
             deprecated="`postgres_host_reader` is deprecated, please use `pghost`",
             default=None,
         ),
     ]
     postgres_host_writer: Annotated[
-        Optional[str],
+        str | None,
         Field(
             deprecated="`postgres_host_writer` is deprecated, please use `pghost`",
             default=None,
         ),
     ]
     postgres_port: Annotated[
-        Optional[int],
+        int | None,
         Field(
             deprecated="`postgres_port` is deprecated, please use `pgport`", default=None
         ),
     ]
     postgres_dbname: Annotated[
-        Optional[str],
+        str | None,
         Field(
             deprecated="`postgres_dbname` is deprecated, please use `pgdatabase`",
             default=None,
@@ -196,8 +196,8 @@ class Settings(ApiSettings):
     will exclude those values from the responses.
     """
 
-    invalid_id_chars: List[str] = DEFAULT_INVALID_ID_CHARS
-    base_item_cache: Type[BaseItemCache] = DefaultBaseItemCache
+    invalid_id_chars: list[str] = DEFAULT_INVALID_ID_CHARS
+    base_item_cache: type[BaseItemCache] = DefaultBaseItemCache
 
     validate_extensions: bool = False
     """
@@ -209,7 +209,7 @@ class Settings(ApiSettings):
     cors_origins: Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] = (
         "*",
     )
-    cors_origin_regex: Optional[str] = None
+    cors_origin_regex: str | None = None
     cors_methods: Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] = (
         "GET",
         "POST",
