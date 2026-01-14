@@ -4,6 +4,10 @@
 
 ## [6.2.0] - TBD
 
+### Fixed
+
+- update type hints for python 3.11
+
 ### Removed
 
 - support for python 3.9 and 3.10
