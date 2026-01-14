@@ -2,7 +2,7 @@
 name = "stac-fastapi-pgstac"
 description = "An implementation of STAC API based on the FastAPI framework and using the pgstac backend."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = "MIT"
 authors = [
   { name = "David Bitner", email = "david@developmentseed.org" },
@@ -24,8 +24,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
     "Intended Audience :: Science/Research",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
