@@ -51,7 +51,21 @@ class BaseLinks:
     @property
     def url(self):
         """Get the current request url."""
-        url = urljoin(str(self.request.base_url), self.request.url.path.lstrip("/"))
+        base_url = self.request.base_url
+        path = self.request.url.path
+
+        # root path can be set in the request scope in two different ways:
+        # - by uvicorn when running with --root-path
+        # - by FastAPI when running with FastAPI(root_path="...")
+        #
+        # We need to remove the root path prefix from the path before
+        # joining the base_url and path to get the full url to avoid
+        # having root_path twice in the url
+        if root_path := self.request.scope.get("root_path"):
+            if path.startswith(root_path):
+                path = path[len(root_path) :]
+
+        url = urljoin(str(base_url), path.lstrip("/"))
         if qs := self.request.url.query:
             url += f"?{qs}"
 
@@ -263,6 +277,19 @@ class CollectionLinks(CollectionLinksBase):
             "rel": "items",
             "type": MimeTypes.geojson.value,
             "href": self.resolve(f"collections/{self.collection_id}/items"),
+        }
+
+
+@attr.s
+class SearchLinks(BaseLinks):
+    """Create inferred links specific to collections."""
+
+    def link_self(self) -> Dict:
+        """Return the self link."""
+        return {
+            "rel": Relations.self.value,
+            "type": MimeTypes.geojson.value,
+            "href": self.resolve("search"),
         }
 
 
