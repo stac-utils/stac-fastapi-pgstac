@@ -1662,3 +1662,22 @@ async def test_get_filter_extension(app_client, load_test_data, load_test_collec
     fc = resp.json()
     assert len(fc["features"]) == 1
     assert fc["features"][0]["id"] == search_id
+
+
+async def test_get_search_link_media(app_client):
+    """Test Search request returned links"""
+    # GET
+    resp = await app_client.get("/search")
+    assert resp.status_code == 200
+    links = resp.json()["links"]
+    assert len(links) == 2
+    get_self_link = next((link for link in links if link["rel"] == "self"), None)
+    assert get_self_link["type"] == "application/geo+json"
+
+    # POST
+    resp = await app_client.post("/search", json={})
+    assert resp.status_code == 200
+    links = resp.json()["links"]
+    assert len(links) == 2
+    get_self_link = next((link for link in links if link["rel"] == "self"), None)
+    assert get_self_link["type"] == "application/geo+json"

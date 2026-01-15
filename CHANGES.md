@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [4.0.4] - 2026-01-15
+
+### Fixed
+
+- fix root-path handling when setting via env var or on app instance ([#270](https://github.com/stac-utils/stac-fastapi-pgstac/pull/270)) **backported form 5.0.3**
+- fix media type for `self` links in `/search` responses **backported form 5.0.1**
+
 ## [4.0.3] - 2025-03-10
 
 ### Fixed
@@ -389,7 +396,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.3..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.4..main>
+[4.0.4]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.3..4.0.4>
 [4.0.3]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.2..4.0.3>
 [4.0.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.1..4.0.2>
 [4.0.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/4.0.0..4.0.1>
