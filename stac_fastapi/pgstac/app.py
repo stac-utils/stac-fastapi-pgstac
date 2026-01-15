@@ -7,7 +7,7 @@ If the variable is not set, enables all extensions.
 
 import os
 from contextlib import asynccontextmanager
-from typing import Dict, List, Set, Type, cast
+from typing import cast
 
 from brotli_asgi import BrotliMiddleware
 from fastapi import APIRouter, FastAPI
@@ -52,7 +52,7 @@ from stac_fastapi.pgstac.types.search import PgstacSearch
 settings = Settings()
 
 # search extensions
-search_extensions_map: Dict[str, ApiExtension] = {
+search_extensions_map: dict[str, ApiExtension] = {
     "query": QueryExtension(),
     "sort": SortExtension(),
     "fields": FieldsExtension(),
@@ -61,7 +61,7 @@ search_extensions_map: Dict[str, ApiExtension] = {
 }
 
 # collection_search extensions
-cs_extensions_map: Dict[str, ApiExtension] = {
+cs_extensions_map: dict[str, ApiExtension] = {
     "query": QueryExtension(conformance_classes=[QueryConformanceClasses.COLLECTIONS]),
     "sort": SortExtension(conformance_classes=[SortConformanceClasses.COLLECTIONS]),
     "fields": FieldsExtension(conformance_classes=[FieldsConformanceClasses.COLLECTIONS]),
@@ -73,7 +73,7 @@ cs_extensions_map: Dict[str, ApiExtension] = {
 }
 
 # item_collection extensions
-itm_col_extensions_map: Dict[str, ApiExtension] = {
+itm_col_extensions_map: dict[str, ApiExtension] = {
     "query": QueryExtension(
         conformance_classes=[QueryConformanceClasses.ITEMS],
     ),
@@ -85,7 +85,7 @@ itm_col_extensions_map: Dict[str, ApiExtension] = {
     "pagination": TokenPaginationExtension(),
 }
 
-enabled_extensions: Set[str] = {
+enabled_extensions: set[str] = {
     *search_extensions_map.keys(),
     *cs_extensions_map.keys(),
     *itm_col_extensions_map.keys(),
@@ -95,7 +95,7 @@ enabled_extensions: Set[str] = {
 if ext := os.environ.get("ENABLED_EXTENSIONS"):
     enabled_extensions = set(ext.split(","))
 
-application_extensions: List[ApiExtension] = []
+application_extensions: list[ApiExtension] = []
 
 with_transactions = os.environ.get("ENABLE_TRANSACTIONS_EXTENSIONS", "").lower() in [
     "yes",
@@ -126,7 +126,7 @@ get_request_model = create_get_request_model(search_extensions)
 application_extensions.extend(search_extensions)
 
 # /collections/{collectionId}/items model
-items_get_request_model: Type[APIRequest] = ItemCollectionUri
+items_get_request_model: type[APIRequest] = ItemCollectionUri
 itm_col_extensions = [
     extension
     for key, extension in itm_col_extensions_map.items()
@@ -134,7 +134,7 @@ itm_col_extensions = [
 ]
 if itm_col_extensions:
     items_get_request_model = cast(
-        Type[APIRequest],
+        type[APIRequest],
         create_request_model(
             model_name="ItemCollectionUri",
             base_model=ItemCollectionUri,
@@ -146,7 +146,7 @@ if itm_col_extensions:
     application_extensions.extend(itm_col_extensions)
 
 # /collections model
-collections_get_request_model: Type[APIRequest] = EmptyRequest
+collections_get_request_model: type[APIRequest] = EmptyRequest
 if "collection_search" in enabled_extensions:
     cs_extensions = [
         extension

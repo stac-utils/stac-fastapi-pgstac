@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [6.2.0] - TBD
+
+### Fixed
+
+- update type hints for python 3.11
+
+### Removed
+
+- support for python 3.9 and 3.10
+
 ## [6.1.5] - 2025-12-12
 
 ### Fixed
@@ -545,7 +555,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.5..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.0..main>
+[6.2.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.5..6.2.0>
 [6.1.5]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.4..6.1.5>
 [6.1.4]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.3..6.1.4>
 [6.1.3]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.2..6.1.3>

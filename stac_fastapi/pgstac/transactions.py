@@ -2,7 +2,7 @@
 
 import logging
 import re
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, cast
 
 import attr
 import jsonpatch
@@ -47,9 +47,10 @@ class ClientValidateMixIn:
 
     def _validate_extensions(
         self,
-        stac_object: Union[
-            stac_types.Item, stac_types.Collection, stac_types.Catalog, Dict[str, Any]
-        ],
+        stac_object: stac_types.Item
+        | stac_types.Collection
+        | stac_types.Catalog
+        | dict[str, Any],
         settings: Settings,
     ) -> None:
         """Validate extensions of the STAC object data."""
@@ -80,7 +81,7 @@ class ClientValidateMixIn:
         request: Request,
         item: stac_types.Item,
         collection_id: str,
-        expected_item_id: Optional[str] = None,
+        expected_item_id: str | None = None,
     ) -> None:
         """Validate item."""
         body_collection_id = item.get("collection")
@@ -115,19 +116,19 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
     async def create_item(  # type: ignore [override]
         self,
         collection_id: str,
-        item: Union[Item, ItemCollection],
+        item: Item | ItemCollection,
         request: Request,
         **kwargs,
-    ) -> Optional[Union[stac_types.Item, Response]]:
+    ) -> stac_types.Item | Response | None:
         """Create item."""
         item_dict = cast(
-            Union[stac_types.Item, stac_types.ItemCollection],
+            stac_types.Item | stac_types.ItemCollection,
             item.model_dump(mode="json"),
         )
 
         # Item Collection
         if item_dict["type"] == "FeatureCollection":
-            valid_items: List[stac_types.Item] = []
+            valid_items: list[stac_types.Item] = []
             for feature in item_dict["features"]:  # noqa: B020
                 self._validate_item(request, feature, collection_id)
                 feature["collection"] = collection_id
@@ -258,7 +259,7 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
         self,
         collection_id: str,
         item_id: str,
-        patch: Union[PartialItem, List[PatchOperation]],
+        patch: PartialItem | list[PatchOperation],
         request: Request,
         **kwargs,
     ) -> stac_types.Item:
@@ -273,7 +274,7 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
                 item_id=item_id,
                 collection_id=collection_id,
             )
-            existing: Optional[stac_types.Item] = await conn.fetchval(q, *p)
+            existing: stac_types.Item | None = await conn.fetchval(q, *p)
 
         if existing is None:
             raise NotFoundError(
@@ -308,7 +309,7 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
     async def patch_collection(  # type: ignore [override]
         self,
         collection_id: str,
-        patch: Union[PartialCollection, List[PatchOperation]],
+        patch: PartialCollection | list[PatchOperation],
         request: Request,
         **kwargs,
     ) -> stac_types.Collection:
@@ -322,7 +323,7 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
                 """,
                 id=collection_id,
             )
-            existing: Optional[stac_types.Collection] = await conn.fetchval(q, *p)
+            existing: stac_types.Collection | None = await conn.fetchval(q, *p)
 
         if existing is None:
             raise NotFoundError(f"Collection {collection_id} does not exist.")

@@ -1,9 +1,10 @@
 """Pgstac query customisation."""
 
 import operator
+from collections.abc import Callable
 from enum import auto
 from types import DynamicClassAttribute
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 from pydantic import BaseModel
 from stac_fastapi.extensions.core.query import QueryExtension as QueryExtensionBase
@@ -34,7 +35,7 @@ class Operator(str, AutoValueEnum):
 class QueryExtensionPostRequest(BaseModel):
     """Query Extension POST request model."""
 
-    query: Optional[Dict[str, Dict[Operator, Any]]] = None
+    query: dict[str, dict[Operator, Any]] | None = None
 
 
 class QueryExtension(QueryExtensionBase):
