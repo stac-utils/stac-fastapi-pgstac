@@ -2752,7 +2752,6 @@ dependencies = [
     { name = "stac-fastapi-api" },
     { name = "stac-fastapi-extensions" },
     { name = "stac-fastapi-types" },
-    { name = "typing-extensions" },
 ]
 
 [package.optional-dependencies]
@@ -2805,7 +2804,6 @@ requires-dist = [
     { name = "stac-fastapi-extensions", specifier = ">=6.1,<7.0" },
     { name = "stac-fastapi-types", specifier = ">=6.1,<7.0" },
     { name = "stac-pydantic", extras = ["validation"], marker = "extra == 'validation'" },
-    { name = "typing-extensions", specifier = ">=4.9.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'server'", specifier = "==0.38.0" },
 ]
 provides-extras = ["server", "validation"]
