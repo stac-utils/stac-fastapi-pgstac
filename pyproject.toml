@@ -71,7 +71,6 @@ dev = [
         "httpx",
         "psycopg[pool,binary]==3.2.*",
         "pre-commit",
-        "bump-my-version",
 ]
 docs = [
     "black>=23.10.1",
@@ -141,7 +140,7 @@ ignore = [
 ]
 
 [tool.bumpversion]
-current_version = "6.2.0"
+current_version = "6.2.1"
 parse = """(?x)
     (?P<major>\\d+)\\.
     (?P<minor>\\d+)\\.
