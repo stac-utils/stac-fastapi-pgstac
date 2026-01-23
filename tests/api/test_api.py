@@ -274,6 +274,9 @@ async def test_app_query_extension_gte(load_test_data, app_client, load_test_col
 async def test_app_collection_fields_extension(
     load_test_data, app_client, load_test_collection, app
 ):
+    res = await app_client.get("/_mgmt/health")
+    pgstac_version = res.json()["pgstac"]["pgstac_version"]
+
     fields = ["title"]
     resp = await app_client.get("/collections", params={"fields": ",".join(fields)})
 
@@ -284,7 +287,11 @@ async def test_app_collection_fields_extension(
 
     assert len(resp_collections) > 0
     # NOTE: It's a bug that 'collection' is always included; see #327
-    constant_fields = ["id", "links", "collection"]
+    if tuple(map(int, pgstac_version.split("."))) < (0, 9, 9):
+        constant_fields = ["id", "links", "collection"]
+    else:
+        constant_fields = ["id", "links"]
+
     for collection in resp_collections:
         assert set(collection.keys()) == set(fields + constant_fields)
 
