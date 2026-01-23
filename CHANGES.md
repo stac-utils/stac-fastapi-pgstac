@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Set default values for deprecated `postgres_*` settings to `None` ([#343](https://github.com/stac-utils/stac-fastapi-pgstac/pull/343))
+
 ## [6.2.0] - 2026-01-15
 
 ### Fixed
