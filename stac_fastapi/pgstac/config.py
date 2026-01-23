@@ -68,41 +68,41 @@ class PostgresSettings(BaseSettings):
         Field(
             deprecated="`postgres_user` is deprecated, please use `pguser`", default=None
         ),
-    ]
+    ] = None
     postgres_pass: Annotated[
         str | None,
         Field(
             deprecated="`postgres_pass` is deprecated, please use `pgpassword`",
             default=None,
         ),
-    ]
+    ] = None
     postgres_host_reader: Annotated[
         str | None,
         Field(
             deprecated="`postgres_host_reader` is deprecated, please use `pghost`",
             default=None,
         ),
-    ]
+    ] = None
     postgres_host_writer: Annotated[
         str | None,
         Field(
             deprecated="`postgres_host_writer` is deprecated, please use `pghost`",
             default=None,
         ),
-    ]
+    ] = None
     postgres_port: Annotated[
         int | None,
         Field(
             deprecated="`postgres_port` is deprecated, please use `pgport`", default=None
         ),
-    ]
+    ] = None
     postgres_dbname: Annotated[
         str | None,
         Field(
             deprecated="`postgres_dbname` is deprecated, please use `pgdatabase`",
             default=None,
         ),
-    ]
+    ] = None
 
     pguser: str
     pgpassword: str
