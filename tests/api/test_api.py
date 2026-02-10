@@ -5,10 +5,12 @@ from urllib.parse import quote_plus
 
 import orjson
 import pytest
+from brotli_asgi import BrotliMiddleware
 from fastapi import Request
 from httpx import ASGITransport, AsyncClient
 from pystac import Collection, Extent, Item, SpatialExtent, TemporalExtent
 from stac_fastapi.api.app import StacApi
+from stac_fastapi.api.middleware import ProxyHeaderMiddleware
 from stac_fastapi.api.models import create_get_request_model, create_post_request_model
 from stac_fastapi.extensions.core import (
     CollectionSearchExtension,
@@ -17,6 +19,8 @@ from stac_fastapi.extensions.core import (
 )
 from stac_fastapi.extensions.core.fields import FieldsConformanceClasses
 from stac_fastapi.types import stac as stac_types
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 
 from stac_fastapi.pgstac.config import PostgresSettings
 from stac_fastapi.pgstac.core import CoreCrudClient, Settings
@@ -813,6 +817,19 @@ async def test_wrapped_function(load_test_data, pgstac) -> None:
         search_post_request_model=post_request_model,
         search_get_request_model=get_request_model,
         collections_get_request_model=collection_search_extension.GET,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=settings.cors_origins,
+                allow_origin_regex=settings.cors_origin_regex,
+                allow_methods=settings.cors_methods,
+                allow_credentials=settings.cors_credentials,
+                allow_headers=settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
     app = api.app
     await connect_to_db(
@@ -866,6 +883,19 @@ async def test_no_extension(hydrate, validation, load_test_data, pgstac) -> None
         settings=settings,
         extensions=extensions,
         search_post_request_model=post_request_model,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=settings.cors_origins,
+                allow_origin_regex=settings.cors_origin_regex,
+                allow_methods=settings.cors_methods,
+                allow_credentials=settings.cors_credentials,
+                allow_headers=settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
     app = api.app
     await connect_to_db(

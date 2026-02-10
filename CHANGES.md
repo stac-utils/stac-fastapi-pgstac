@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [6.2.2] - 2026-01-09
+
+### Fixed
+
+- use `CORSMiddleware` from starlette instead of the one from stac-fastapi to avoid breaking changes
+
 ## [6.2.1] - 2026-01-23
 
 ### Fixed

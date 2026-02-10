@@ -12,7 +12,7 @@ from typing import cast
 from brotli_asgi import BrotliMiddleware
 from fastapi import APIRouter, FastAPI
 from stac_fastapi.api.app import StacApi
-from stac_fastapi.api.middleware import CORSMiddleware, ProxyHeaderMiddleware
+from stac_fastapi.api.middleware import ProxyHeaderMiddleware
 from stac_fastapi.api.models import (
     EmptyRequest,
     ItemCollectionUri,
@@ -40,6 +40,7 @@ from stac_fastapi.extensions.third_party import BulkTransactionExtension
 from stac_fastapi.types.extension import ApiExtension
 from stac_fastapi.types.search import APIRequest
 from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
@@ -196,6 +197,7 @@ api = StacApi(
             allow_methods=settings.cors_methods,
             allow_credentials=settings.cors_credentials,
             allow_headers=settings.cors_headers,
+            max_age=600,
         ),
     ],
     health_check=health_check,  # type: ignore [arg-type]
