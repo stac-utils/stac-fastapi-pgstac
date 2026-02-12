@@ -69,6 +69,7 @@ def database(postgresql_proc):
     ) as jan:
         yield jan
 
+
 # Use of pgstac version 0.8.6 is deprecated, please use version 0.9.x and above
 # If you want to test with pgstac version 0.8.6, you need postgres version 16 or lower installed
 @pytest.fixture(
