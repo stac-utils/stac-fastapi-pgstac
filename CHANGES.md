@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- deprecate pgstac 0.8.6 in tests and update documentation
+
 ## [6.2.2] - 2026-01-09
 
 ### Fixed
