@@ -1,3 +1,4 @@
+import json
 from typing import Callable, Optional
 
 import pystac
@@ -664,3 +665,35 @@ async def test_get_collections_search_offset_1(
     prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
     # offset=0 should not be in the previous link (because it's useless)
     assert "offset" not in prev_link["href"]
+
+
+@pytest.mark.parametrize(
+    "filter, filter_lang, expected_count",
+    [
+        ("true", "cql2-text", 1),
+        ("1=1", "cql2-text", 1),
+        ("true", "cql2-json", 1),
+        (json.dumps({"op": "=", "args": [1.0, 1.0]}), "cql2-json", 1),
+        ("false", "cql2-text", 0),
+        ("1=0", "cql2-text", 0),
+        ("false", "cql2-json", 0),
+        (json.dumps({"op": "=", "args": [1.0, 1.0]}), "cql2-json", 0),
+    ],
+)
+async def test_get_collections_filter(
+    app_client,
+    load_test_collection,
+    load_test2_collection,
+    filter,
+    filter_lang,
+    expected_count,
+):
+    """
+    Test CQL2 filters on the collections endpoint
+    """
+    resp = await app_client.get(
+        "/collections",
+        params={"filter": filter, "filter-lang": filter_lang},
+    )
+    assert resp.status_code == 200
+    assert len(resp.json()["collections"]) == expected_count
