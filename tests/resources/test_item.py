@@ -1794,3 +1794,120 @@ async def test_item_asset_change(app_client, load_test_data):
         # We get "𒍟※" because PgSTAC set it when ingesting (`description`is item-assets)
         # because we removed item-assets, pgstac cannot hydrate this field, and thus return "𒍟※"
         assert resp.json()["features"][0]["assets"]["qa_pixel"]["description"] == "𒍟※"
+
+@pytest.mark.parametrize("usecase", ("ok1", "ok2", "ko"))
+async def test_pagination_different_collections(app_client, load_test_data, usecase):
+    """
+    This test demonstrates an error case ("ko" use case): when the same item exists in two collections, the
+    /search endpoint without 'limit' parameter returns the expected result = all items from all collections.
+    But when we add a 'limit' parameter, the /search endpoint fails: it returns only items from the first collection,
+    with a 'next' link that should allow to get items from the next collections, but this 'next' link doesn't work: 
+    it returns nothing.
+
+    This test also implements two nominal use cases that work as expected ("ok1" and "ok2"): when two different items
+    exist in the same collection, and when two different items exist in two different collections.
+    """
+
+    col1_data = load_test_data("test_collection.json")
+    col2_data = load_test_data("test2_collection.json")
+
+    item1_data = load_test_data("test_item.json")
+    item2_data = load_test_data("test_item2.json")
+
+    # KO use case: the same item exists in two different collections
+    if usecase == "ko":
+        assert (await app_client.post("/collections", json=col1_data)).status_code == 201
+        assert (await app_client.post("/collections", json=col2_data)).status_code == 201
+
+        for col_data in col1_data, col2_data:
+            item1_data["collection"] = col_data["id"]
+            assert (await app_client.post(f"/collections/{col_data['id']}/items", json=item1_data)).status_code == 201
+
+    # First OK use case: two different items in the same collection
+    elif usecase == "ok1":
+        assert (await app_client.post("/collections", json=col1_data)).status_code == 201
+
+        for item_data in item1_data, item2_data:
+            item_data["collection"] = col1_data["id"]
+            assert (await app_client.post(f"/collections/{col1_data['id']}/items", json=item_data)).status_code == 201
+
+    # Second OK use case: two different items in two different collections
+    elif usecase == "ok2":
+        assert (await app_client.post("/collections", json=col1_data)).status_code == 201
+        assert (await app_client.post("/collections", json=col2_data)).status_code == 201
+        
+        item1_data["collection"] = col1_data["id"]
+        assert (await app_client.post(f"/collections/{col1_data['id']}/items", json=item1_data)).status_code == 201
+        
+        item2_data["collection"] = col2_data["id"]
+        assert (await app_client.post(f"/collections/{col2_data['id']}/items", json=item2_data)).status_code == 201
+
+    # Call the /search endpoint without parameters. 
+    # The result is always as expected in all use cases: two features are returned.
+    resp = await app_client.get("/search")
+    assert resp.status_code == 200
+    contents = resp.json()
+    assert contents["numberReturned"] == 2
+    all_features = contents["features"] # save returned features
+
+    # Call the /search endpoint again, but this time return only one feature per page
+    resp = await app_client.get("/search", params={"limit": 1})
+    contents = None
+
+    # Loop on all pages/features. For each page, we will: 
+    # - check the returned feature contents
+    # - check the previous link contents, if any
+    # - get the next feature
+    for page, expected_feature in enumerate(all_features):
+        page += 1
+        is_first_page = (page == 1)
+        is_last_page = (page == len(all_features))
+
+        # Get returned feature contents, save old feature contents
+        previous_contents = contents
+        assert resp.status_code == 200
+        contents = resp.json()
+
+        # Get the previous and next links
+        links = contents["links"]
+        previous_urls = [link["href"] for link in links if link["rel"] == "previous"]
+        next_urls = [link["href"] for link in links if link["rel"] == "next"]
+
+        # Check that they are present, except for:
+        # - the first page has no previous link
+        # - the last page has no next link
+        if is_first_page:
+            assert len(previous_urls) == 0
+            previous_url = None
+        else:
+            assert len(previous_urls) == 1
+            # NOTE: in the "ko" use case, the "previous" url seems invalid: http://test/search?limit=1&token=prev%3A%3A
+            # It should be like: http://test/search?limit=1&token=prev%3Atest-collection%3Atest-item
+            previous_url = previous_urls[0]
+
+        if is_last_page:
+            assert len(next_urls) == 0
+            next_url = None
+        else:
+            assert len(next_urls) == 1
+            next_url = next_urls[0]
+
+        print(f"""
+page: {page}
+previous url: {previous_url}
+next url: {next_url}
+numberReturned: {contents['numberReturned']}""")
+
+        # A single feature should always be returned. Check its contents.
+        assert contents["numberReturned"] == 1
+        feature = contents["features"][0]
+        print(f"returned feature: {feature['collection']}:{feature['id']}")
+        assert expected_feature == feature
+
+        # Check the previous link contents
+        if not is_first_page:
+            assert previous_contents == (await app_client.get(previous_url)).json()
+
+        # Get the next feature
+        if not is_last_page:
+            resp = await app_client.get(next_url)
