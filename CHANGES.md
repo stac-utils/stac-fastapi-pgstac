@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Changed
+
+- simplify `extensions.query.Operator` class, by removing unused `operator` method and unncessary dependencies ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
+
+### Added
+
+- implement `neq` query opeartor ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
+- add api test for `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
+
 ## [6.2.2] - 2026-01-09
 
 ### Fixed
