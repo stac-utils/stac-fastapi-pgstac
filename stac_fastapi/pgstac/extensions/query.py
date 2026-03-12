@@ -17,6 +17,11 @@ class Operator(str, Enum):
     lte = "lte"
     gt = "gt"
     gte = "gte"
+    # TODO: These are defined in the spec but aren't currently implemented by the api
+    # startsWith = auto()
+    # endsWith = auto()
+    # contains = auto()
+    # in = auto()
 
 
 class QueryExtensionPostRequest(BaseModel):
