@@ -2,7 +2,7 @@
 name = "stac-fastapi-pgstac"
 description = "An implementation of STAC API based on the FastAPI framework and using the pgstac backend."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = "MIT"
 authors = [
   { name = "David Bitner", email = "david@developmentseed.org" },
