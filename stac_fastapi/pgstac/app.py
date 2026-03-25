@@ -5,6 +5,7 @@ the ENABLED_EXTENSIONS environment variable (e.g. `transactions,sort,query`).
 If the variable is not set, enables all extensions.
 """
 
+import logging
 import os
 from contextlib import asynccontextmanager
 from typing import cast
@@ -45,12 +46,34 @@ from starlette.middleware.cors import CORSMiddleware
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
-from stac_fastapi.pgstac.extensions import FreeTextExtension, QueryExtension
+from stac_fastapi.pgstac.extensions import (
+    DatabaseLogic,
+    FreeTextExtension,
+    QueryExtension,
+)
+from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import CatalogsClient
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
 
+logger = logging.getLogger(__name__)
+
+# Optional catalogs extension (optional dependency)
+try:
+    from stac_fastapi_catalogs_extension import CatalogsExtension
+except ImportError:
+    CatalogsExtension = None
+
 settings = Settings()
+
+
+def _is_env_flag_enabled(name: str) -> bool:
+    """Return True if the given env var is enabled.
+
+    Accepts common truthy values ("yes", "true", "1") case-insensitively.
+    """
+    return os.environ.get(name, "").lower() in ("yes", "true", "1")
+
 
 # search extensions
 search_extensions_map: dict[str, ApiExtension] = {
@@ -98,11 +121,7 @@ if ext := os.environ.get("ENABLED_EXTENSIONS"):
 
 application_extensions: list[ApiExtension] = []
 
-with_transactions = os.environ.get("ENABLE_TRANSACTIONS_EXTENSIONS", "").lower() in [
-    "yes",
-    "true",
-    "1",
-]
+with_transactions = _is_env_flag_enabled("ENABLE_TRANSACTIONS_EXTENSIONS")
 if with_transactions:
     application_extensions.append(
         TransactionExtension(
@@ -157,6 +176,27 @@ if "collection_search" in enabled_extensions:
     collection_search_extension = CollectionSearchExtension.from_extensions(cs_extensions)
     collections_get_request_model = collection_search_extension.GET
     application_extensions.append(collection_search_extension)
+
+# Optional catalogs route
+ENABLE_CATALOGS_ROUTE = _is_env_flag_enabled("ENABLE_CATALOGS_ROUTE")
+logger.info("ENABLE_CATALOGS_ROUTE is set to %s", ENABLE_CATALOGS_ROUTE)
+
+if ENABLE_CATALOGS_ROUTE:
+    if CatalogsExtension is None:
+        logger.warning(
+            "ENABLE_CATALOGS_ROUTE is set to true, but the catalogs extension is not installed. "
+            "Please install it with: pip install stac-fastapi-core[catalogs].",
+        )
+    else:
+        try:
+            catalogs_extension = CatalogsExtension(
+                client=CatalogsClient(database=DatabaseLogic()),
+                enable_transactions=with_transactions,
+            )
+            application_extensions.append(catalogs_extension)
+            print("CatalogsExtension enabled successfully.")
+        except Exception as e:  # pragma: no cover - defensive
+            logger.warning("Failed to initialize CatalogsExtension: %s", e)
 
 
 @asynccontextmanager

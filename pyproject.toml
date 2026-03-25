@@ -55,6 +55,9 @@ validation = [
 server  = [
     "uvicorn[standard]==0.38.0"
 ]
+catalogs = [
+    "stac-fastapi-catalogs-extension>=0.1.2",
+]
 
 [dependency-groups]
 dev = [
