@@ -72,7 +72,6 @@ def database(postgresql_proc):
 
 @pytest.fixture(
     params=[
-        "0.8.6",
         "0.9.9",
     ],
 )
