@@ -199,6 +199,8 @@ class Settings(ApiSettings):
     invalid_id_chars: list[str] = DEFAULT_INVALID_ID_CHARS
     base_item_cache: type[BaseItemCache] = DefaultBaseItemCache
 
+    enabled_extensions: str = ""
+    enable_transaction_extension: bool = False
     validate_extensions: bool = False
     """
     Validate `stac_extensions` schemas against submitted data when creating or updated STAC objects.
@@ -219,6 +221,8 @@ class Settings(ApiSettings):
     cors_headers: Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] = (
         "Content-Type",
     )
+
+    uvicorn_root_path: str = ""
 
     testing: bool = False
 
