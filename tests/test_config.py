@@ -78,6 +78,21 @@ async def test_pg_settings_attributes(monkeypatch):
 
 
 @pytest.mark.parametrize(
+    "env_var, expected",
+    [
+        ("TRUE", True),
+        ("YES", True),
+        ("1", True),
+    ],
+)
+def test_settings_enable_transactions_extensions(monkeypatch, env_var, expected):
+    """Test that enable_transactions_extensions is properly parsed from environment variable."""
+    monkeypatch.setenv("ENABLE_TRANSACTIONS_EXTENSIONS", env_var)
+    settings = Settings()
+    assert settings.enable_transactions_extensions == expected
+
+
+@pytest.mark.parametrize(
     "cors_origins",
     [
         "http://stac-fastapi-pgstac.test,http://stac-fastapi.test",
