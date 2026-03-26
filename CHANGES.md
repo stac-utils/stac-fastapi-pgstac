@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- remove pgstac 0.8.6 in tests and update documentation ([#354](https://github.com/stac-utils/stac-fastapi-pgstac/pull/354))
+
 ## [6.2.2] - 2026-01-09
 
 ### Fixed
