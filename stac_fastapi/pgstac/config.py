@@ -200,7 +200,7 @@ class Settings(ApiSettings):
     base_item_cache: type[BaseItemCache] = DefaultBaseItemCache
 
     enabled_extensions: str = ""
-    enable_transaction_extension: bool = False
+    enable_transactions_extensions: bool = False
     validate_extensions: bool = False
     """
     Validate `stac_extensions` schemas against submitted data when creating or updated STAC objects.
