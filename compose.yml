@@ -1,0 +1,91 @@
+services:
+  app:
+    image: stac-utils/stac-fastapi-pgstac
+    restart: always
+    build: .
+    environment:
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8082
+      - RELOAD=true
+      - ENVIRONMENT=local
+      - PGUSER=username
+      - PGPASSWORD=password
+      - PGDATABASE=postgis
+      - PGHOST=database
+      - PGPORT=5432
+      - WEB_CONCURRENCY=10
+      - VSI_CACHE=TRUE
+      - GDAL_HTTP_MERGE_CONSECUTIVE_RANGES=YES
+      - GDAL_DISABLE_READDIR_ON_OPEN=EMPTY_DIR
+      - DB_MIN_CONN_SIZE=1
+      - DB_MAX_CONN_SIZE=1
+      - USE_API_HYDRATE=${USE_API_HYDRATE:-false}
+      - ENABLE_TRANSACTIONS_EXTENSIONS=TRUE
+      - ENABLE_CATALOGS_ROUTE=TRUE
+    # ports:
+    #   - "8082:8082"
+    depends_on:
+      - database
+    command: bash -c "scripts/wait-for-it.sh database:5432 && uvicorn stac_fastapi.pgstac.app:app --host 0.0.0.0 --port 8082 --reload"
+    develop:
+      watch:
+        - action: sync
+          path: ./stac_fastapi/pgstac
+          target: /app/stac_fastapi/pgstac
+        - action: rebuild
+          path: ./setup.py
+
+  database:
+    image: ghcr.io/stac-utils/pgstac:v0.9.8
+    environment:
+      - POSTGRES_USER=username
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgis
+      - PGUSER=username
+      - PGPASSWORD=password
+      - PGDATABASE=postgis
+    ports:
+      - "5439:5432"
+    command: postgres -N 500
+
+  # Load joplin demo dataset into the PGStac Application
+  loadjoplin:
+    image: stac-utils/stac-fastapi-pgstac
+    environment:
+      - ENVIRONMENT=development
+    volumes:
+      - ./testdata:/tmp/testdata      
+      - ./scripts:/tmp/scripts
+    command: >
+      /bin/sh -c "
+        scripts/wait-for-it.sh -t 60 app:8082 &&
+        python -m pip install pip -U &&
+        python -m pip install requests &&
+        python /tmp/scripts/ingest_joplin.py http://app:8082
+        "
+    depends_on:
+      - database
+      - app
+
+  nginx:
+    image: nginx
+    ports:
+      - ${STAC_FASTAPI_NGINX_PORT:-8080}:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - app-nginx
+    command: [ "nginx-debug", "-g", "daemon off;" ]
+
+  app-nginx:
+    extends:
+      service: app
+    command: >
+      bash -c "
+      scripts/wait-for-it.sh database:5432 && 
+      uvicorn stac_fastapi.pgstac.app:app --host 0.0.0.0 --port 8082 --proxy-headers --forwarded-allow-ips=* --root-path=/api/v1/pgstac
+      "
+
+networks:
+  default:
+    name: stac-fastapi-network

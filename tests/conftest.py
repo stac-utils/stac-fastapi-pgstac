@@ -46,10 +46,21 @@ from starlette.middleware.cors import CORSMiddleware
 from stac_fastapi.pgstac.config import PostgresSettings, Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
-from stac_fastapi.pgstac.extensions import FreeTextExtension, QueryExtension
+from stac_fastapi.pgstac.extensions import (
+    DatabaseLogic,
+    FreeTextExtension,
+    QueryExtension,
+)
+from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import CatalogsClient
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
+
+# Optional catalogs extension
+try:
+    from stac_fastapi_catalogs_extension import CatalogsExtension
+except ImportError:
+    CatalogsExtension = None
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
@@ -128,6 +139,14 @@ def api_client(request):
         TransactionExtension(client=TransactionsClient(), settings=api_settings),
         BulkTransactionExtension(client=BulkTransactionsClient()),
     ]
+
+    # Add catalogs extension if available
+    if CatalogsExtension is not None:
+        catalogs_extension = CatalogsExtension(
+            client=CatalogsClient(database=DatabaseLogic()),
+            enable_transactions=True,
+        )
+        application_extensions.append(catalogs_extension)
 
     search_extensions = [
         QueryExtension(),

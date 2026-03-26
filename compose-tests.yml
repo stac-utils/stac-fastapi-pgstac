@@ -1,6 +1,7 @@
 services:
   app:
     image: stac-utils/stac-fastapi-pgstac
+    restart: always
     build: .
     environment:
       - APP_HOST=0.0.0.0
@@ -20,15 +21,19 @@ services:
       - DB_MAX_CONN_SIZE=1
       - USE_API_HYDRATE=${USE_API_HYDRATE:-false}
       - ENABLE_TRANSACTIONS_EXTENSIONS=TRUE
-    ports:
-      - "8082:8082"
+      - ENABLE_CATALOGS_ROUTE=TRUE
+    # ports:
+    #   - "8082:8082"
     depends_on:
       - database
-    command: bash -c "scripts/wait-for-it.sh database:5432 && python -m stac_fastapi.pgstac.app"
+    command: bash -c "scripts/wait-for-it.sh database:5432 && uvicorn stac_fastapi.pgstac.app:app --host 0.0.0.0 --port 8082 --reload"
     develop:
       watch:
-        - action: rebuild
+        - action: sync
           path: ./stac_fastapi/pgstac
+          target: /app/stac_fastapi/pgstac
+        - action: rebuild
+          path: ./setup.py
 
   tests:
     image: stac-utils/stac-fastapi-pgstac-test
@@ -40,6 +45,7 @@ services:
       - DB_MIN_CONN_SIZE=1
       - DB_MAX_CONN_SIZE=1
       - USE_API_HYDRATE=${USE_API_HYDRATE:-false}
+      - ENABLE_CATALOGS_ROUTE=TRUE
     command: bash -c "python -m pytest -s -vv"
 
   database:
