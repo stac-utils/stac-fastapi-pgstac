@@ -120,8 +120,6 @@ def filter_fields(  # noqa: C901
     This will not perform a deep copy; values of the original item will be referenced
     in the return item.
     """
-    exclude = clean_exclude(include, exclude)
-
     if not include and not exclude:
         return item
 

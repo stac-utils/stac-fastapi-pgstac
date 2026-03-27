@@ -1,7 +1,9 @@
 """stac_fastapi.types.search module."""
 
-from pydantic import ValidationInfo, field_validator
+from pydantic import ValidationInfo, field_validator, model_validator
 from stac_fastapi.types.search import BaseSearchPostRequest
+
+from stac_fastapi.pgstac.utils import clean_exclude
 
 
 class PgstacSearch(BaseSearchPostRequest):
@@ -22,3 +24,11 @@ class PgstacSearch(BaseSearchPostRequest):
             )
 
         return v
+
+    @model_validator(mode="after")
+    def validate_fields(self):
+        """Clean the exclude to give the include set precedence."""
+        fields = getattr(self, "fields", None)
+        if fields and fields.include and fields.exclude:
+            fields.exclude = clean_exclude(fields.include, fields.exclude)
+        return self
