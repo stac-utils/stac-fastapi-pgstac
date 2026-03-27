@@ -5,6 +5,29 @@ from typing import Any, cast
 from stac_fastapi.types.stac import Item
 
 
+def clean_exclude(
+    include: set[str],
+    exclude: set[str],
+) -> set[str]:
+    """Clean the exclude set to ensure precedence of the include set.
+
+    Cleaning includes:
+    - Removing any fields from the exclude set that are also in the include set, since
+      the include set takes precedence.
+    - Removing any fields from the exclude set that are parent paths of fields in the include set,
+      since including a sub-field of an excluded parent field should take precedence.
+    """
+    intersection = include.intersection(exclude)
+    if intersection:
+        exclude = exclude - intersection
+    for field_excluded in exclude:
+        for field_included in include:
+            if field_included.startswith(field_excluded + "."):
+                exclude = exclude - {field_excluded}
+                pass
+    return exclude
+
+
 def dict_deep_update(merge_to: dict[str, Any], merge_from: dict[str, Any]) -> None:
     """Perform a deep update of two dicts.
 
@@ -97,6 +120,8 @@ def filter_fields(  # noqa: C901
     This will not perform a deep copy; values of the original item will be referenced
     in the return item.
     """
+    exclude = clean_exclude(include, exclude)
+
     if not include and not exclude:
         return item
 
