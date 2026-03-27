@@ -3,6 +3,14 @@ import pytest
 import stac_fastapi.pgstac.utils as utils
 
 
+def test_clean_exclude():
+    include = {"a", "b", "c.c1"}
+    exclude = {"a", "c", "d"}
+    res = utils.clean_exclude(include, exclude)
+    exp = {"d"}
+    assert res == exp
+
+
 def test_dict_deep_update():
     dict_0 = {"a": 0, "b": 0, "c": {"c1": 0, "c2": 0}, "d": {"d1": 0}, "e": 0, "f": 0}
     dict_1 = {"b": 1, "c": {"c2": 1, "c3": 1}, "d": 1, "e": {"e1": 1}, "f": 1}
@@ -53,7 +61,7 @@ def test_filter_fields_no_included_properties():
         collection="test_collection",
         properties={"prop_1": 0, "prop_2": 0},
     )
-    res = utils.filter_fields(item, include={"missing_field"})
+    res = utils.filter_fields(item, include={"missing_field"}, exclude=set())
     exp = utils.Item(id="test_id", collection="test_collection")
     assert res == exp
 
