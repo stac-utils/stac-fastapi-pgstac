@@ -87,8 +87,8 @@ def exclude_fields(source: dict[str, Any], fields: set[str] | None) -> None:
 
 def filter_fields(  # noqa: C901
     item: Item,
-    include: set[str] | None = None,
-    exclude: set[str] | None = None,
+    include: set[str],
+    exclude: set[str],
 ) -> Item:
     """Preserve and remove fields as indicated by the fields extension include/exclude sets.
 
