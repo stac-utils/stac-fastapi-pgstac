@@ -61,15 +61,19 @@ def test_filter_fields_no_included_properties():
 @pytest.mark.parametrize(
     "include, exclude, exp",
     [
+        ({"field_a", "field_b"}, {"field_a"}, {"field_a": "a", "field_b": "b"}),
+        ({"field_a"}, {"field_a"}, {"field_a": "a"}),
         ({"properties"}, {"properties.prop_1"}, {"properties": {"prop_2": 0}}),
+        ({"properties.prop_1"}, {"properties"}, {"properties": {"prop_1": 0}}),
     ],
-    ids=["include root, exclude nested"],
 )
 def test_filter_fields(include, exclude, exp):
     source = utils.Item(
         id="test_id",
         collection="test_collection",
         properties={"prop_1": 0, "prop_2": 0},
+        field_a="a",
+        field_b="b",
     )
     res = utils.filter_fields(source, include=include, exclude=exclude)
     assert res == utils.Item(**exp)
