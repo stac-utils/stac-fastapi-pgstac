@@ -28,7 +28,7 @@ def test_dict_deep_update():
 
 def test_include_fields_no_fields():
     source = {"a": 0}
-    res = utils.include_fields(source, fields=None)
+    res = utils.include_fields(source, fields=set())
     assert res == source
 
 
