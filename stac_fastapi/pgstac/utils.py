@@ -62,10 +62,10 @@ def include_fields(source: dict[str, Any], fields: set[str] | None) -> dict[str,
     return clean_item
 
 
-def exclude_fields(source: dict[str, Any], fields: set[str] | None) -> None:
+def exclude_fields(source: dict[str, Any], fields: set[str]) -> None:
     # For an item built up for included fields, remove excluded fields. This
     # modifies `source` in place.
-    for key_path in fields or []:
+    for key_path in fields:
         key_path_part = key_path.split(".")
         key_root = key_path_part[0]
         if key_root in source:
