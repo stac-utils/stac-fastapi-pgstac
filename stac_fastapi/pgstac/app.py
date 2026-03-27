@@ -5,7 +5,6 @@ the ENABLED_EXTENSIONS environment variable (e.g. `transactions,sort,query`).
 If the variable is not set, enables all extensions.
 """
 
-import os
 from contextlib import asynccontextmanager
 from typing import cast
 
@@ -93,16 +92,12 @@ enabled_extensions: set[str] = {
     "collection_search",
 }
 
-if ext := os.environ.get("ENABLED_EXTENSIONS"):
+if ext := settings.enabled_extensions:
     enabled_extensions = set(ext.split(","))
 
 application_extensions: list[ApiExtension] = []
 
-with_transactions = os.environ.get("ENABLE_TRANSACTIONS_EXTENSIONS", "").lower() in [
-    "yes",
-    "true",
-    "1",
-]
+with_transactions = settings.enable_transactions_extensions
 if with_transactions:
     application_extensions.append(
         TransactionExtension(
@@ -216,7 +211,7 @@ def run():
             port=settings.app_port,
             log_level="info",
             reload=settings.reload,
-            root_path=os.getenv("UVICORN_ROOT_PATH", ""),
+            root_path=settings.uvicorn_root_path,
         )
     except ImportError as e:
         raise RuntimeError("Uvicorn must be installed in order to use command") from e
