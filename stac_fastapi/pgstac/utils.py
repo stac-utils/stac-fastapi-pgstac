@@ -22,13 +22,13 @@ def dict_deep_update(merge_to: dict[str, Any], merge_from: dict[str, Any]) -> No
             merge_to[k] = v
 
 
-def include_fields(source: dict[str, Any], fields: set[str] | None) -> dict[str, Any]:
+def include_fields(source: dict[str, Any], fields: set[str]) -> dict[str, Any]:
     # Build a shallow copy of included fields on an item, or a sub-tree of an item
     if not fields:
         return source
 
     clean_item: dict[str, Any] = {}
-    for key_path in fields or []:
+    for key_path in fields:
         key_path_parts = key_path.split(".")
         key_root = key_path_parts[0]
         if key_root in source:
