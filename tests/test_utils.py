@@ -6,7 +6,7 @@ import stac_fastapi.pgstac.utils as utils
 def test_clean_exclude():
     include = {"a", "b", "c.c1"}
     exclude = {"a", "c", "d"}
-    res = utils.clean_exclude(include, exclude)
+    res = utils.clean_exclude_set(exclude, include)
     exp = {"d"}
     assert res == exp
 

@@ -5,9 +5,9 @@ from typing import Any, cast
 from stac_fastapi.types.stac import Item
 
 
-def clean_exclude(
-    include: set[str],
+def clean_exclude_set(
     exclude: set[str],
+    include: set[str],
 ) -> set[str]:
     """Clean the exclude set to ensure precedence of the include set.
 

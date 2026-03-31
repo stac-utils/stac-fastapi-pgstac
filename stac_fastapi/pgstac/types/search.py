@@ -3,7 +3,7 @@
 from pydantic import ValidationInfo, field_validator, model_validator
 from stac_fastapi.types.search import BaseSearchPostRequest
 
-from stac_fastapi.pgstac.utils import clean_exclude
+from stac_fastapi.pgstac.utils import clean_exclude_set
 
 
 class PgstacSearch(BaseSearchPostRequest):
@@ -27,8 +27,8 @@ class PgstacSearch(BaseSearchPostRequest):
 
     @model_validator(mode="after")
     def validate_fields(self):
-        """Clean the exclude to give the include set precedence."""
+        """Clean the exclude set to give the include set precedence."""
         fields = getattr(self, "fields", None)
         if fields and fields.include and fields.exclude:
-            fields.exclude = clean_exclude(fields.include, fields.exclude)
+            fields.exclude = clean_exclude_set(fields.exclude, fields.include)
         return self
