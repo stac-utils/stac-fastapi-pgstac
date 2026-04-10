@@ -5,11 +5,10 @@ from typing import Any, cast
 
 import attr
 from fastapi import Request
-from stac_fastapi_catalogs_extension.client import AsyncBaseCatalogsClient
 from stac_fastapi.types import stac as stac_types
-from starlette.responses import JSONResponse
-
 from stac_fastapi.types.errors import NotFoundError
+from stac_fastapi_catalogs_extension.client import AsyncBaseCatalogsClient
+from starlette.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
 
@@ -63,9 +62,16 @@ class CatalogsClient(AsyncBaseCatalogsClient):
     ) -> stac_types.Catalog:
         """Create a new catalog."""
         # Convert Pydantic model to dict if needed
-        catalog_dict = cast(stac_types.Catalog, catalog.model_dump(mode="json") if hasattr(catalog, "model_dump") else catalog)
-        
-        await self.database.create_catalog(dict(catalog_dict), refresh=True, request=request)
+        catalog_dict = cast(
+            stac_types.Catalog,
+            catalog.model_dump(mode="json")
+            if hasattr(catalog, "model_dump")
+            else catalog,
+        )
+
+        await self.database.create_catalog(
+            dict(catalog_dict), refresh=True, request=request
+        )
         return catalog_dict
 
     async def update_catalog(
@@ -73,9 +79,16 @@ class CatalogsClient(AsyncBaseCatalogsClient):
     ) -> stac_types.Catalog:
         """Update an existing catalog."""
         # Convert Pydantic model to dict if needed
-        catalog_dict = cast(stac_types.Catalog, catalog.model_dump(mode="json") if hasattr(catalog, "model_dump") else catalog)
-        
-        await self.database.create_catalog(dict(catalog_dict), refresh=True, request=request)
+        catalog_dict = cast(
+            stac_types.Catalog,
+            catalog.model_dump(mode="json")
+            if hasattr(catalog, "model_dump")
+            else catalog,
+        )
+
+        await self.database.create_catalog(
+            dict(catalog_dict), refresh=True, request=request
+        )
         return catalog_dict
 
     async def delete_catalog(
@@ -94,7 +107,11 @@ class CatalogsClient(AsyncBaseCatalogsClient):
     ) -> JSONResponse:
         """Get collections in a catalog."""
         limit = limit or 10
-        collections_list, total_hits, next_token = await self.database.get_catalog_collections(
+        (
+            collections_list,
+            total_hits,
+            next_token,
+        ) = await self.database.get_catalog_collections(
             catalog_id=catalog_id,
             limit=limit,
             token=token,
@@ -143,7 +160,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             catalog_dict = catalog.model_dump(mode="json")
         else:
             catalog_dict = dict(catalog) if not isinstance(catalog, dict) else catalog
-        
+
         catalog_dict["parent_ids"] = [catalog_id]
         await self.database.create_catalog(catalog_dict, refresh=True, request=request)
         return JSONResponse(content=catalog_dict, status_code=201)
@@ -156,10 +173,14 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         if hasattr(collection, "model_dump"):
             collection_dict = collection.model_dump(mode="json")
         else:
-            collection_dict = dict(collection) if not isinstance(collection, dict) else collection
-        
+            collection_dict = (
+                dict(collection) if not isinstance(collection, dict) else collection
+            )
+
         collection_dict["parent_ids"] = [catalog_id]
-        await self.database.create_collection(collection_dict, refresh=True, request=request)
+        await self.database.create_collection(
+            collection_dict, refresh=True, request=request
+        )
         return JSONResponse(content=collection_dict, status_code=201)
 
     async def get_catalog_collection(

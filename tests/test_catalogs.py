@@ -1,24 +1,15 @@
 """Tests for the catalogs extension."""
 
 import logging
-from urllib.parse import urlparse
 
 import pytest
 
 logger = logging.getLogger(__name__)
 
 
-def has_router_prefix(app_client):
-    """Check if the app_client has a router prefix."""
-    parsed = urlparse(str(app_client.base_url))
-    return "/router_prefix" in parsed.path
-
-
 @pytest.mark.asyncio
 async def test_create_catalog(app_client):
     """Test creating a catalog."""
-    if has_router_prefix(app_client):
-        pytest.skip("Catalogs extension routes not registered with router prefix")
 
     catalog_data = {
         "id": "test-catalog",
@@ -42,9 +33,6 @@ async def test_create_catalog(app_client):
 @pytest.mark.asyncio
 async def test_get_all_catalogs(app_client):
     """Test getting all catalogs."""
-    if has_router_prefix(app_client):
-        pytest.skip("Catalogs extension routes not registered with router prefix")
-
     # Create three catalogs
     catalog_ids = ["test-catalog-1", "test-catalog-2", "test-catalog-3"]
     for catalog_id in catalog_ids:
@@ -79,9 +67,6 @@ async def test_get_all_catalogs(app_client):
 @pytest.mark.asyncio
 async def test_get_catalog_by_id(app_client):
     """Test getting a specific catalog by ID."""
-    if has_router_prefix(app_client):
-        pytest.skip("Catalogs extension routes not registered with router prefix")
-
     # First create a catalog
     catalog_data = {
         "id": "test-catalog-get",

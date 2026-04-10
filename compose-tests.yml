@@ -47,6 +47,9 @@ services:
       - USE_API_HYDRATE=${USE_API_HYDRATE:-false}
       - ENABLE_CATALOGS_ROUTE=TRUE
     command: bash -c "python -m pytest -s -vv"
+    volumes:
+      - ./stac_fastapi/pgstac:/app/stac_fastapi/pgstac
+      - ./tests:/app/tests
 
   database:
     image: ghcr.io/stac-utils/pgstac:v0.9.8

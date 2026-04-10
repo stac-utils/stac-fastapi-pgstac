@@ -1,12 +1,11 @@
 import json
 import logging
-from typing import Any, cast
+from typing import Any
 
 from buildpg import render
-from fastapi import Request
-from stac_fastapi.pgstac.db import dbfunc
-from stac_fastapi.types import stac as stac_types
 from stac_fastapi.types.errors import NotFoundError
+
+from stac_fastapi.pgstac.db import dbfunc
 
 logger = logging.getLogger(__name__)
 
