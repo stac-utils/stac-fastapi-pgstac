@@ -7,7 +7,6 @@ If the variable is not set, enables all extensions.
 
 import logging
 import os
-
 from contextlib import asynccontextmanager
 from typing import cast
 
