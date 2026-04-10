@@ -5,6 +5,13 @@
 ### Changed
 
 - remove pgstac 0.8.6 in tests and update documentation ([#354](https://github.com/stac-utils/stac-fastapi-pgstac/pull/354))
+- simplify `extensions.query.Operator` class, by removing unused `operator` method and unncessary dependencies ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
+- handle `ENABLE_TRANSACTIONS_EXTENSIONS`, `ENABLED_EXTENSIONS` and `UVICORN_ROOT_PATH` environment configuration variables via the `config.Settings` class ([#368](https://github.com/stac-utils/stac-fastapi-pgstac/pull/368))
+
+### Added
+
+- implement `neq` query opeartor ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
+- add api test for `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
 
 ## [6.2.2] - 2026-01-09
 
