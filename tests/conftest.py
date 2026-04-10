@@ -51,7 +51,6 @@ from stac_fastapi.pgstac.extensions import (
     FreeTextExtension,
     QueryExtension,
 )
-from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import CatalogsClient
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
@@ -59,8 +58,11 @@ from stac_fastapi.pgstac.types.search import PgstacSearch
 # Optional catalogs extension
 try:
     from stac_fastapi_catalogs_extension import CatalogsExtension
+
+    from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import CatalogsClient
 except ImportError:
     CatalogsExtension = None
+    CatalogsClient = None
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
