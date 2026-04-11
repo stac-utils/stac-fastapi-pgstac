@@ -10,6 +10,11 @@ from stac_fastapi.types.errors import NotFoundError
 from stac_fastapi_catalogs_extension.client import AsyncBaseCatalogsClient
 from starlette.responses import JSONResponse
 
+from stac_fastapi.pgstac.extensions.catalogs.catalogs_links import (
+    CatalogLinks,
+    CatalogSubcatalogsLinks,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -54,56 +59,24 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         try:
             catalog = await self.database.find_catalog(catalog_id, request=request)
 
-            # Build base URL
-            base_url = "http://test"
             if request:
-                base_url = str(request.base_url).rstrip("/")
-
-            # Get parent_ids and add parent links
-            parent_ids = catalog.get("parent_ids", [])
-            links = list(catalog.get("links", []))
-
-            # Remove existing parent links
-            links = [link for link in links if link.get("rel") != "parent"]
-
-            # Add parent link - to root for top-level, to first parent for nested
-            if parent_ids:
-                # Nested catalog: parent link to first parent
-                links.insert(
-                    0,
-                    {
-                        "rel": "parent",
-                        "type": "application/json",
-                        "href": f"{base_url}/catalogs/{parent_ids[0]}",
-                        "title": parent_ids[0],
-                    },
+                parent_ids = catalog.get("parent_ids", [])
+                
+                # Get child catalogs (catalogs that have this catalog in their parent_ids)
+                child_catalogs, _, _ = await self.database.get_catalog_catalogs(
+                    catalog_id=catalog_id,
+                    limit=1000,  # Get all children for link generation
+                    request=request,
                 )
-            else:
-                # Top-level catalog: parent link to root
-                links.insert(
-                    0,
-                    {
-                        "rel": "parent",
-                        "type": "application/json",
-                        "href": base_url,
-                        "title": "Root Catalog",
-                    },
-                )
+                child_catalog_ids = [c.get("id") for c in child_catalogs] if child_catalogs else []
+                
+                catalog["links"] = await CatalogLinks(
+                    catalog_id=catalog_id,
+                    request=request,
+                    parent_ids=parent_ids,
+                    child_catalog_ids=child_catalog_ids,
+                ).get_links(extra_links=catalog.get("links"))
 
-            # Add root link if not already present
-            has_root = any(link.get("rel") == "root" for link in links)
-            if not has_root:
-                links.insert(
-                    0,
-                    {
-                        "rel": "root",
-                        "type": "application/json",
-                        "href": base_url,
-                        "title": "Root Catalog",
-                    },
-                )
-
-            catalog["links"] = links
             return JSONResponse(content=catalog)
         except NotFoundError:
             raise
@@ -205,39 +178,14 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         )
 
         # Build links
-        base_url = "http://test"
+        links = []
         if request:
-            base_url = str(request.base_url).rstrip("/")
-
-        links = [
-            {
-                "rel": "root",
-                "type": "application/json",
-                "href": base_url,
-                "title": "Root Catalog",
-            },
-            {
-                "rel": "parent",
-                "type": "application/json",
-                "href": f"{base_url}/catalogs/{catalog_id}",
-                "title": "Parent Catalog",
-            },
-            {
-                "rel": "self",
-                "type": "application/json",
-                "href": f"{base_url}/catalogs/{catalog_id}/catalogs",
-                "title": "Sub-catalogs",
-            },
-        ]
-
-        if next_token:
-            links.append(
-                {
-                    "rel": "next",
-                    "type": "application/json",
-                    "href": f"{base_url}/catalogs/{catalog_id}/catalogs?limit={limit}&token={next_token}",
-                }
-            )
+            links = await CatalogSubcatalogsLinks(
+                catalog_id=catalog_id,
+                request=request,
+                next_token=next_token,
+                limit=limit,
+            ).get_links()
 
         return JSONResponse(
             content={

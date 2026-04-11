@@ -257,3 +257,159 @@ async def test_sub_catalog_links(app_client):
     # Check for root link
     root_links = [link for link in links if link.get("rel") == "root"]
     assert len(root_links) > 0
+
+
+@pytest.mark.asyncio
+async def test_catalog_links_parent_and_root(app_client):
+    """Test that a catalog has proper parent and root links."""
+    # Create a parent catalog
+    parent_catalog = {
+        "id": "parent-catalog-links",
+        "type": "Catalog",
+        "description": "Parent catalog for link tests",
+        "stac_version": "1.0.0",
+        "links": [],
+    }
+    resp = await app_client.post("/catalogs", json=parent_catalog)
+    assert resp.status_code == 201
+
+    # Get the parent catalog
+    resp = await app_client.get("/catalogs/parent-catalog-links")
+    assert resp.status_code == 200
+    parent = resp.json()
+    parent_links = parent.get("links", [])
+
+    # Check for self link
+    self_links = [link for link in parent_links if link.get("rel") == "self"]
+    assert len(self_links) == 1
+    assert "parent-catalog-links" in self_links[0]["href"]
+
+    # Check for parent link (should point to root)
+    parent_rel_links = [link for link in parent_links if link.get("rel") == "parent"]
+    assert len(parent_rel_links) == 1
+    assert parent_rel_links[0]["title"] == "Root Catalog"
+
+    # Check for root link
+    root_links = [link for link in parent_links if link.get("rel") == "root"]
+    assert len(root_links) == 1
+
+
+@pytest.mark.asyncio
+async def test_catalog_child_links(app_client):
+    """Test that a catalog with children has proper child links."""
+    # Create a parent catalog
+    parent_catalog = {
+        "id": "parent-with-children",
+        "type": "Catalog",
+        "description": "Parent catalog with children",
+        "stac_version": "1.0.0",
+        "links": [],
+    }
+    resp = await app_client.post("/catalogs", json=parent_catalog)
+    assert resp.status_code == 201
+
+    # Create child catalogs
+    child_ids = ["child-1", "child-2"]
+    for child_id in child_ids:
+        child_catalog = {
+            "id": child_id,
+            "type": "Catalog",
+            "description": f"Child catalog {child_id}",
+            "stac_version": "1.0.0",
+            "links": [],
+        }
+        resp = await app_client.post(
+            "/catalogs/parent-with-children/catalogs",
+            json=child_catalog,
+        )
+        assert resp.status_code == 201
+
+    # Get the parent catalog
+    resp = await app_client.get("/catalogs/parent-with-children")
+    assert resp.status_code == 200
+    parent = resp.json()
+    parent_links = parent.get("links", [])
+
+    # Check for child links
+    child_links = [link for link in parent_links if link.get("rel") == "child"]
+    assert len(child_links) == 2
+
+    # Verify child link hrefs
+    child_hrefs = [link["href"] for link in child_links]
+    for child_id in child_ids:
+        assert any(child_id in href for href in child_hrefs)
+
+
+@pytest.mark.asyncio
+async def test_nested_catalog_parent_link(app_client):
+    """Test that a nested catalog has proper parent link pointing to its parent."""
+    # Create a parent catalog
+    parent_catalog = {
+        "id": "grandparent-catalog",
+        "type": "Catalog",
+        "description": "Grandparent catalog",
+        "stac_version": "1.0.0",
+        "links": [],
+    }
+    resp = await app_client.post("/catalogs", json=parent_catalog)
+    assert resp.status_code == 201
+
+    # Create a child catalog
+    child_catalog = {
+        "id": "child-of-grandparent",
+        "type": "Catalog",
+        "description": "Child of grandparent",
+        "stac_version": "1.0.0",
+        "links": [],
+    }
+    resp = await app_client.post(
+        "/catalogs/grandparent-catalog/catalogs",
+        json=child_catalog,
+    )
+    assert resp.status_code == 201
+
+    # Get the child catalog
+    resp = await app_client.get("/catalogs/child-of-grandparent")
+    assert resp.status_code == 200
+    child = resp.json()
+    child_links = child.get("links", [])
+
+    # Check for parent link pointing to grandparent
+    parent_links = [link for link in child_links if link.get("rel") == "parent"]
+    assert len(parent_links) == 1
+    assert "grandparent-catalog" in parent_links[0]["href"]
+    assert parent_links[0]["title"] == "grandparent-catalog"
+
+
+@pytest.mark.asyncio
+async def test_catalog_links_use_correct_base_url(app_client):
+    """Test that catalog links use the correct base URL."""
+    # Create a catalog
+    catalog_data = {
+        "id": "base-url-test",
+        "type": "Catalog",
+        "description": "Test catalog for base URL",
+        "stac_version": "1.0.0",
+        "links": [],
+    }
+    resp = await app_client.post("/catalogs", json=catalog_data)
+    assert resp.status_code == 201
+
+    # Get the catalog
+    resp = await app_client.get("/catalogs/base-url-test")
+    assert resp.status_code == 200
+    catalog = resp.json()
+    links = catalog.get("links", [])
+
+    # Check that we have the expected link types
+    link_rels = [link.get("rel") for link in links]
+    assert "self" in link_rels
+    assert "parent" in link_rels
+    assert "root" in link_rels
+
+    # Check that links are properly formed
+    for link in links:
+        href = link.get("href", "")
+        assert href, f"Link {link.get('rel')} has no href"
+        # Links should be either absolute or relative
+        assert href.startswith("/") or href.startswith("http")
