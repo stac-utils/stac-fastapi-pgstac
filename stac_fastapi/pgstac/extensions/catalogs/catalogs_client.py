@@ -61,15 +61,17 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
             if request:
                 parent_ids = catalog.get("parent_ids", [])
-                
+
                 # Get child catalogs (catalogs that have this catalog in their parent_ids)
                 child_catalogs, _, _ = await self.database.get_catalog_catalogs(
                     catalog_id=catalog_id,
                     limit=1000,  # Get all children for link generation
                     request=request,
                 )
-                child_catalog_ids = [c.get("id") for c in child_catalogs] if child_catalogs else []
-                
+                child_catalog_ids = (
+                    [c.get("id") for c in child_catalogs] if child_catalogs else []
+                )
+
                 catalog["links"] = await CatalogLinks(
                     catalog_id=catalog_id,
                     request=request,

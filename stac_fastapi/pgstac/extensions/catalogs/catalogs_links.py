@@ -1,11 +1,10 @@
 """Link helpers for catalogs."""
 
-from typing import Any
-
 import attr
-from stac_fastapi.pgstac.models.links import BaseLinks
 from stac_pydantic.links import Relations
 from stac_pydantic.shared import MimeTypes
+
+from stac_fastapi.pgstac.models.links import BaseLinks
 
 
 @attr.s
@@ -47,7 +46,7 @@ class CatalogLinks(BaseLinks):
         """Create `child` links for sub-catalogs found in database."""
         if not self.child_catalog_ids:
             return None
-        
+
         # Return list of child links - one for each child catalog
         return [
             {
