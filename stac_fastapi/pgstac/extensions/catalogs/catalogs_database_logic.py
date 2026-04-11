@@ -22,6 +22,8 @@ class CatalogsDatabaseLogic:
     ) -> tuple[list[dict[str, Any]], str | None, int | None]:
         """Retrieve a list of catalogs from PGStac, supporting pagination.
 
+        Uses collection_search() pgSTAC function with CQL2 filters for API stability.
+
         Args:
             token (str | None): The pagination token.
             limit (int): The number of results to return.
@@ -38,24 +40,25 @@ class CatalogsDatabaseLogic:
         try:
             async with request.app.state.get_connection(request, "r") as conn:
                 logger.debug("Attempting to fetch all catalogs from database")
+                # Use collection_search with CQL2 filter for type='Catalog'
+                search_query = {
+                    "filter": {"op": "=", "args": [{"property": "type"}, "Catalog"]},
+                    "limit": limit,
+                }
                 q, p = render(
                     """
-                    SELECT content
-                    FROM collections
-                    WHERE content->>'type' = 'Catalog'
-                    ORDER BY id
-                    LIMIT :limit OFFSET 0;
+                    SELECT * FROM collection_search(:search::text::jsonb);
                     """,
-                    limit=limit,
+                    search=json.dumps(search_query),
                 )
-                rows = await conn.fetch(q, *p)
-                catalogs = [row[0] for row in rows] if rows else []
+                result = await conn.fetchval(q, *p)
+                catalogs = result.get("collections", []) if result else []
                 logger.info(f"Successfully fetched {len(catalogs)} catalogs")
         except Exception as e:
             logger.warning(f"Error fetching all catalogs: {e}")
             catalogs = []
 
-        return catalogs, None, len(catalogs) if catalogs else None
+        return catalogs[:limit], None, len(catalogs) if catalogs else None
 
     async def find_catalog(self, catalog_id: str, request: Any = None) -> dict[str, Any]:
         """Find a catalog by ID.
@@ -140,6 +143,8 @@ class CatalogsDatabaseLogic:
     ) -> tuple[list[dict[str, Any]], int | None, str | None]:
         """Get all children (catalogs and collections) of a catalog.
 
+        Uses collection_search() pgSTAC function with CQL2 filters for API stability.
+
         Args:
             catalog_id: The parent catalog ID.
             limit: The number of results to return.
@@ -154,20 +159,25 @@ class CatalogsDatabaseLogic:
 
         try:
             async with request.app.state.get_connection(request, "r") as conn:
+                # Use collection_search with CQL2 filter for parent_ids contains catalog_id
+                # No type filter needed - returns both Catalogs and Collections
+                search_query = {
+                    "filter": {
+                        "op": "a_contains",
+                        "args": [{"property": "parent_ids"}, catalog_id],
+                    },
+                    "limit": limit,
+                }
                 q, p = render(
                     """
-                    SELECT content
-                    FROM collections
-                    WHERE content->'parent_ids' @> :parent_id::jsonb
-                    ORDER BY content->>'type' DESC, id
-                    LIMIT :limit OFFSET 0;
+                    SELECT * FROM collection_search(:search::text::jsonb);
                     """,
-                    parent_id=f'"{catalog_id}"',
-                    limit=limit,
+                    search=json.dumps(search_query),
                 )
-                rows = await conn.fetch(q, *p)
-                children = [row[0] for row in rows] if rows else []
-        except Exception:
+                result = await conn.fetchval(q, *p)
+                children = result.get("collections", []) if result else []
+        except Exception as e:
+            logger.warning(f"Error fetching catalog children: {e}")
             children = []
 
         return children[:limit], len(children) if children else None, None
@@ -180,6 +190,8 @@ class CatalogsDatabaseLogic:
         request: Any = None,
     ) -> tuple[list[dict[str, Any]], int | None, str | None]:
         """Get collections linked to a catalog.
+
+        Uses collection_search() pgSTAC function with CQL2 filters for API stability.
 
         Args:
             catalog_id: The catalog ID.
@@ -195,21 +207,31 @@ class CatalogsDatabaseLogic:
 
         try:
             async with request.app.state.get_connection(request, "r") as conn:
-                # Use the ? operator to check if catalog_id is in the parent_ids array
+                # Use collection_search with CQL2 filter for type='Collection' and parent_ids contains catalog_id
+                # Using 'a_contains' (Array Contains) operator to check if catalog_id is in the parent_ids array
+                search_query = {
+                    "filter": {
+                        "op": "and",
+                        "args": [
+                            {"op": "=", "args": [{"property": "type"}, "Collection"]},
+                            {
+                                "op": "a_contains",
+                                "args": [{"property": "parent_ids"}, catalog_id],
+                            },
+                        ],
+                    },
+                    "limit": limit,
+                }
                 q, p = render(
                     """
-                    SELECT content
-                    FROM collections
-                    WHERE content->>'type' = 'Collection' AND content->'parent_ids' ? :parent_id
-                    ORDER BY id
-                    LIMIT :limit OFFSET 0;
+                    SELECT * FROM collection_search(:search::text::jsonb);
                     """,
-                    parent_id=catalog_id,
-                    limit=limit,
+                    search=json.dumps(search_query),
                 )
-                rows = await conn.fetch(q, *p)
-                collections = [row[0] for row in rows] if rows else []
-        except Exception:
+                result = await conn.fetchval(q, *p)
+                collections = result.get("collections", []) if result else []
+        except Exception as e:
+            logger.warning(f"Error fetching catalog collections: {e}")
             collections = []
 
         return collections[:limit], len(collections) if collections else None, None
@@ -222,6 +244,8 @@ class CatalogsDatabaseLogic:
         request: Any = None,
     ) -> tuple[list[dict[str, Any]], int | None, str | None]:
         """Get sub-catalogs of a catalog.
+
+        Uses collection_search() pgSTAC function with CQL2 filters for API stability.
 
         Args:
             catalog_id: The parent catalog ID.
@@ -238,21 +262,30 @@ class CatalogsDatabaseLogic:
         try:
             async with request.app.state.get_connection(request, "r") as conn:
                 logger.debug(f"Fetching sub-catalogs for parent: {catalog_id}")
-                # Use the ? operator to check if catalog_id is in the parent_ids array
+                # Use collection_search with CQL2 filter for type='Catalog' and parent_ids contains catalog_id
+                # Using 'a_contains' (Array Contains) operator to check if catalog_id is in the parent_ids array
+                search_query = {
+                    "filter": {
+                        "op": "and",
+                        "args": [
+                            {"op": "=", "args": [{"property": "type"}, "Catalog"]},
+                            {
+                                "op": "a_contains",
+                                "args": [{"property": "parent_ids"}, catalog_id],
+                            },
+                        ],
+                    },
+                    "limit": limit,
+                }
                 q, p = render(
                     """
-                    SELECT content
-                    FROM collections
-                    WHERE content->>'type' = 'Catalog' AND content->'parent_ids' ? :parent_id
-                    ORDER BY id
-                    LIMIT :limit OFFSET 0;
+                    SELECT * FROM collection_search(:search::text::jsonb);
                     """,
-                    parent_id=catalog_id,
-                    limit=limit,
+                    search=json.dumps(search_query),
                 )
                 logger.debug(f"Query: {q}, Params: {p}")
-                rows = await conn.fetch(q, *p)
-                catalogs = [row[0] for row in rows] if rows else []
+                result = await conn.fetchval(q, *p)
+                catalogs = result.get("collections", []) if result else []
                 logger.debug(f"Found {len(catalogs)} sub-catalogs")
         except Exception as e:
             logger.warning(f"Error fetching sub-catalogs: {e}")
