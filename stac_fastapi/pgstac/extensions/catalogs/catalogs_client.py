@@ -53,6 +53,57 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         """Get a specific catalog by ID."""
         try:
             catalog = await self.database.find_catalog(catalog_id, request=request)
+
+            # Build base URL
+            base_url = "http://test"
+            if request:
+                base_url = str(request.base_url).rstrip("/")
+
+            # Get parent_ids and add parent links
+            parent_ids = catalog.get("parent_ids", [])
+            links = list(catalog.get("links", []))
+
+            # Remove existing parent links
+            links = [link for link in links if link.get("rel") != "parent"]
+
+            # Add parent link - to root for top-level, to first parent for nested
+            if parent_ids:
+                # Nested catalog: parent link to first parent
+                links.insert(
+                    0,
+                    {
+                        "rel": "parent",
+                        "type": "application/json",
+                        "href": f"{base_url}/catalogs/{parent_ids[0]}",
+                        "title": parent_ids[0],
+                    },
+                )
+            else:
+                # Top-level catalog: parent link to root
+                links.insert(
+                    0,
+                    {
+                        "rel": "parent",
+                        "type": "application/json",
+                        "href": base_url,
+                        "title": "Root Catalog",
+                    },
+                )
+
+            # Add root link if not already present
+            has_root = any(link.get("rel") == "root" for link in links)
+            if not has_root:
+                links.insert(
+                    0,
+                    {
+                        "rel": "root",
+                        "type": "application/json",
+                        "href": base_url,
+                        "title": "Root Catalog",
+                    },
+                )
+
+            catalog["links"] = links
             return JSONResponse(content=catalog)
         except NotFoundError:
             raise
@@ -134,7 +185,17 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         request: Request | None = None,
         **kwargs,
     ) -> JSONResponse:
-        """Get sub-catalogs."""
+        """Get all sub-catalogs of a specific catalog with pagination."""
+        # Validate catalog exists
+        try:
+            catalog = await self.database.find_catalog(catalog_id, request=request)
+            if not catalog:
+                raise NotFoundError(f"Catalog {catalog_id} not found")
+        except NotFoundError:
+            raise
+        except Exception as e:
+            raise NotFoundError(f"Catalog {catalog_id} not found") from e
+
         limit = limit or 10
         catalogs_list, total_hits, next_token = await self.database.get_catalog_catalogs(
             catalog_id=catalog_id,
@@ -142,10 +203,46 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             token=token,
             request=request,
         )
+
+        # Build links
+        base_url = "http://test"
+        if request:
+            base_url = str(request.base_url).rstrip("/")
+
+        links = [
+            {
+                "rel": "root",
+                "type": "application/json",
+                "href": base_url,
+                "title": "Root Catalog",
+            },
+            {
+                "rel": "parent",
+                "type": "application/json",
+                "href": f"{base_url}/catalogs/{catalog_id}",
+                "title": "Parent Catalog",
+            },
+            {
+                "rel": "self",
+                "type": "application/json",
+                "href": f"{base_url}/catalogs/{catalog_id}/catalogs",
+                "title": "Sub-catalogs",
+            },
+        ]
+
+        if next_token:
+            links.append(
+                {
+                    "rel": "next",
+                    "type": "application/json",
+                    "href": f"{base_url}/catalogs/{catalog_id}/catalogs?limit={limit}&token={next_token}",
+                }
+            )
+
         return JSONResponse(
             content={
                 "catalogs": catalogs_list or [],
-                "links": [],
+                "links": links,
                 "numberMatched": total_hits,
                 "numberReturned": len(catalogs_list) if catalogs_list else 0,
             }
@@ -154,21 +251,47 @@ class CatalogsClient(AsyncBaseCatalogsClient):
     async def create_sub_catalog(
         self, catalog_id: str, catalog: dict, request: Request | None = None, **kwargs
     ) -> JSONResponse:
-        """Create a sub-catalog."""
+        """Create a new catalog or link an existing catalog as a sub-catalog.
+
+        Maintains a list of parent IDs in the catalog's parent_ids field.
+        """
         # Convert Pydantic model to dict if needed
         if hasattr(catalog, "model_dump"):
             catalog_dict = catalog.model_dump(mode="json")
         else:
             catalog_dict = dict(catalog) if not isinstance(catalog, dict) else catalog
 
-        catalog_dict["parent_ids"] = [catalog_id]
-        await self.database.create_catalog(catalog_dict, refresh=True, request=request)
-        return JSONResponse(content=catalog_dict, status_code=201)
+        cat_id = catalog_dict.get("id")
+
+        try:
+            # Try to find existing catalog
+            existing = await self.database.find_catalog(cat_id, request=request)
+            # Link existing catalog - add parent_id if not already present
+            parent_ids = existing.get("parent_ids", [])
+            if not isinstance(parent_ids, list):
+                parent_ids = [parent_ids]
+            if catalog_id not in parent_ids:
+                parent_ids.append(catalog_id)
+            existing["parent_ids"] = parent_ids
+            await self.database.create_catalog(existing, refresh=True, request=request)
+            return JSONResponse(content=existing, status_code=201)
+        except Exception:
+            # Create new catalog
+            catalog_dict["type"] = "Catalog"
+            catalog_dict["parent_ids"] = [catalog_id]
+            await self.database.create_catalog(
+                catalog_dict, refresh=True, request=request
+            )
+            return JSONResponse(content=catalog_dict, status_code=201)
 
     async def create_catalog_collection(
         self, catalog_id: str, collection: dict, request: Request | None = None, **kwargs
     ) -> JSONResponse:
-        """Create a collection in a catalog."""
+        """Create a collection in a catalog.
+
+        Creates a new collection or links an existing collection to a catalog.
+        Maintains a list of parent IDs in the collection's parent_ids field.
+        """
         # Convert Pydantic model to dict if needed
         if hasattr(collection, "model_dump"):
             collection_dict = collection.model_dump(mode="json")
@@ -177,7 +300,18 @@ class CatalogsClient(AsyncBaseCatalogsClient):
                 dict(collection) if not isinstance(collection, dict) else collection
             )
 
-        collection_dict["parent_ids"] = [catalog_id]
+        # Initialize or append to parent_ids list
+        if "parent_ids" not in collection_dict:
+            collection_dict["parent_ids"] = [catalog_id]
+        else:
+            # Ensure parent_ids is a list and add the new parent if not already present
+            parent_ids = collection_dict.get("parent_ids", [])
+            if not isinstance(parent_ids, list):
+                parent_ids = [parent_ids]
+            if catalog_id not in parent_ids:
+                parent_ids.append(catalog_id)
+            collection_dict["parent_ids"] = parent_ids
+
         await self.database.create_collection(
             collection_dict, refresh=True, request=request
         )

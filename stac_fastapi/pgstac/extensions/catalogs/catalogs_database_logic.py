@@ -195,15 +195,16 @@ class CatalogsDatabaseLogic:
 
         try:
             async with request.app.state.get_connection(request, "r") as conn:
+                # Use the ? operator to check if catalog_id is in the parent_ids array
                 q, p = render(
                     """
                     SELECT content
                     FROM collections
-                    WHERE content->>'type' = 'Collection' AND content->'parent_ids' @> :parent_id::jsonb
+                    WHERE content->>'type' = 'Collection' AND content->'parent_ids' ? :parent_id
                     ORDER BY id
                     LIMIT :limit OFFSET 0;
                     """,
-                    parent_id=f'"{catalog_id}"',
+                    parent_id=catalog_id,
                     limit=limit,
                 )
                 rows = await conn.fetch(q, *p)
@@ -236,20 +237,25 @@ class CatalogsDatabaseLogic:
 
         try:
             async with request.app.state.get_connection(request, "r") as conn:
+                logger.debug(f"Fetching sub-catalogs for parent: {catalog_id}")
+                # Use the ? operator to check if catalog_id is in the parent_ids array
                 q, p = render(
                     """
                     SELECT content
                     FROM collections
-                    WHERE content->>'type' = 'Catalog' AND content->'parent_ids' @> :parent_id::jsonb
+                    WHERE content->>'type' = 'Catalog' AND content->'parent_ids' ? :parent_id
                     ORDER BY id
                     LIMIT :limit OFFSET 0;
                     """,
-                    parent_id=f'"{catalog_id}"',
+                    parent_id=catalog_id,
                     limit=limit,
                 )
+                logger.debug(f"Query: {q}, Params: {p}")
                 rows = await conn.fetch(q, *p)
                 catalogs = [row[0] for row in rows] if rows else []
-        except Exception:
+                logger.debug(f"Found {len(catalogs)} sub-catalogs")
+        except Exception as e:
+            logger.warning(f"Error fetching sub-catalogs: {e}")
             catalogs = []
 
         return catalogs[:limit], len(catalogs) if catalogs else None, None
