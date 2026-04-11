@@ -240,15 +240,14 @@ async def test_sub_catalog_links(app_client):
     assert resp.status_code == 200
     retrieved_sub = resp.json()
 
-    # Verify parent_ids
-    assert "parent_ids" in retrieved_sub
-    assert "parent-for-links" in retrieved_sub["parent_ids"]
+    # Verify parent_ids is NOT exposed in the response (internal only)
+    assert "parent_ids" not in retrieved_sub
 
     # Verify links structure
     assert "links" in retrieved_sub
     links = retrieved_sub["links"]
 
-    # Check for parent link
+    # Check for parent link (generated from parent_ids)
     parent_links = [link for link in links if link.get("rel") == "parent"]
     assert len(parent_links) > 0
     parent_link = parent_links[0]
@@ -413,3 +412,47 @@ async def test_catalog_links_use_correct_base_url(app_client):
         assert href, f"Link {link.get('rel')} has no href"
         # Links should be either absolute or relative
         assert href.startswith("/") or href.startswith("http")
+
+
+@pytest.mark.asyncio
+async def test_parent_ids_not_exposed_in_response(app_client):
+    """Test that parent_ids is not exposed in the API response."""
+    # Create a parent catalog
+    parent_catalog = {
+        "id": "parent-for-exposure-test",
+        "type": "Catalog",
+        "description": "Parent catalog",
+        "stac_version": "1.0.0",
+        "links": [],
+    }
+    resp = await app_client.post("/catalogs", json=parent_catalog)
+    assert resp.status_code == 201
+
+    # Create a child catalog
+    child_catalog = {
+        "id": "child-for-exposure-test",
+        "type": "Catalog",
+        "description": "Child catalog",
+        "stac_version": "1.0.0",
+        "links": [],
+    }
+    resp = await app_client.post(
+        "/catalogs/parent-for-exposure-test/catalogs",
+        json=child_catalog,
+    )
+    assert resp.status_code == 201
+
+    # Get the child catalog
+    resp = await app_client.get("/catalogs/child-for-exposure-test")
+    assert resp.status_code == 200
+    catalog = resp.json()
+
+    # Verify that parent_ids is NOT in the response
+    assert "parent_ids" not in catalog, "parent_ids should not be exposed in API response"
+
+    # Verify that parent link is still present (generated from parent_ids)
+    parent_links = [
+        link for link in catalog.get("links", []) if link.get("rel") == "parent"
+    ]
+    assert len(parent_links) == 1
+    assert "parent-for-exposure-test" in parent_links[0]["href"]

@@ -79,6 +79,9 @@ class CatalogsClient(AsyncBaseCatalogsClient):
                     child_catalog_ids=child_catalog_ids,
                 ).get_links(extra_links=catalog.get("links"))
 
+            # Remove internal metadata before returning
+            catalog.pop("parent_ids", None)
+
             return JSONResponse(content=catalog)
         except NotFoundError:
             raise
