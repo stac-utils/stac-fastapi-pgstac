@@ -10,7 +10,7 @@ from stac_fastapi.pgstac.db import dbfunc
 logger = logging.getLogger(__name__)
 
 
-class DatabaseLogic:
+class CatalogsDatabaseLogic:
     """Database logic for catalogs extension using PGStac."""
 
     async def get_all_catalogs(

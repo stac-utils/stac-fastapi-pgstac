@@ -47,7 +47,7 @@ from stac_fastapi.pgstac.config import PostgresSettings, Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
 from stac_fastapi.pgstac.extensions import (
-    DatabaseLogic,
+    CatalogsDatabaseLogic,
     FreeTextExtension,
     QueryExtension,
 )
@@ -145,7 +145,7 @@ def api_client(request):
     # Add catalogs extension if available
     if CatalogsExtension is not None:
         catalogs_extension = CatalogsExtension(
-            client=CatalogsClient(database=DatabaseLogic()),
+            client=CatalogsClient(database=CatalogsDatabaseLogic()),
             enable_transactions=True,
         )
         application_extensions.append(catalogs_extension)

@@ -47,7 +47,7 @@ from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
 from stac_fastapi.pgstac.extensions import (
-    DatabaseLogic,
+    CatalogsDatabaseLogic,
     FreeTextExtension,
     QueryExtension,
 )
@@ -190,11 +190,11 @@ if ENABLE_CATALOGS_ROUTE:
     else:
         try:
             catalogs_extension = CatalogsExtension(
-                client=CatalogsClient(database=DatabaseLogic()),
+                client=CatalogsClient(database=CatalogsDatabaseLogic()),
                 enable_transactions=with_transactions,
             )
             application_extensions.append(catalogs_extension)
-            print("CatalogsExtension enabled successfully.")
+            logger.info("CatalogsExtension enabled successfully.")
         except Exception as e:  # pragma: no cover - defensive
             logger.warning("Failed to initialize CatalogsExtension: %s", e)
 
