@@ -1,6 +1,7 @@
 services:
   app:
     image: stac-utils/stac-fastapi-pgstac
+    restart: always
     build: .
     environment:
       - APP_HOST=0.0.0.0
@@ -20,27 +21,15 @@ services:
       - DB_MAX_CONN_SIZE=1
       - USE_API_HYDRATE=${USE_API_HYDRATE:-false}
       - ENABLE_TRANSACTIONS_EXTENSIONS=TRUE
+      - ENABLE_CATALOGS_ROUTE=TRUE
     ports:
       - "8082:8082"
+    volumes:
+      - ./stac_fastapi:/app/stac_fastapi
+      - ./scripts:/app/scripts
     depends_on:
       - database
-    command: bash -c "scripts/wait-for-it.sh database:5432 && python -m stac_fastapi.pgstac.app"
-    develop:
-      watch:
-        - action: rebuild
-          path: ./stac_fastapi/pgstac
-
-  tests:
-    image: stac-utils/stac-fastapi-pgstac-test
-    build:
-      context: .
-      dockerfile: Dockerfile.tests
-    environment:
-      - ENVIRONMENT=local
-      - DB_MIN_CONN_SIZE=1
-      - DB_MAX_CONN_SIZE=1
-      - USE_API_HYDRATE=${USE_API_HYDRATE:-false}
-    command: bash -c "python -m pytest -s -vv"
+    command: bash -c "scripts/wait-for-it.sh database:5432 && uvicorn stac_fastapi.pgstac.app:app --host 0.0.0.0 --port 8082 --reload"
 
   database:
     image: ghcr.io/stac-utils/pgstac:v0.9.8

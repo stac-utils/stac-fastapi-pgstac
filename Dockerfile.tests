@@ -16,4 +16,4 @@ USER newuser
 WORKDIR /app
 COPY . /app
 
-RUN python -m pip install . --user --group dev
+RUN python -m pip install .[catalogs] --user --group dev
