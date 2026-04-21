@@ -77,6 +77,13 @@ To run the tests:
 uv run pytest
 ```
 
+**NOTE:** In order for the above commands to work, you need a number of postgres/postgis system packages to be installed. If running the tests directly on your machine doesn't work, another way is to spin up a test container and run the tests in that container. You need [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed. 
+
+To run the tests in the test container:
+```shell
+docker compose run --build --rm tests python -m pytest -s -vv
+```
+
 ## Contributing
 
 See [CONTRIBUTING](./contributing.md) for detailed contribution instructions.

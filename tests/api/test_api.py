@@ -275,6 +275,25 @@ async def test_app_query_extension_gte(load_test_data, app_client, load_test_col
     assert len(resp_json["features"]) == 1
 
 
+async def test_app_query_extension_neq(load_test_data, app_client, load_test_collection):
+    coll = load_test_collection
+    item = load_test_data("test_item.json")
+    resp = await app_client.post(f"/collections/{coll['id']}/items", json=item)
+    assert resp.status_code == 201
+
+    params = {"query": {"proj:epsg": {"neq": item["properties"]["proj:epsg"]}}}
+    resp = await app_client.post("/search", json=params)
+    assert resp.status_code == 200
+    resp_json = resp.json()
+    assert len(resp_json["features"]) == 0
+
+    params["query"] = quote_plus(orjson.dumps(params["query"]))
+    resp = await app_client.get("/search", params=params)
+    assert resp.status_code == 200
+    resp_json = resp.json()
+    assert len(resp_json["features"]) == 0
+
+
 async def test_app_collection_fields_extension(
     load_test_data, app_client, load_test_collection, app
 ):

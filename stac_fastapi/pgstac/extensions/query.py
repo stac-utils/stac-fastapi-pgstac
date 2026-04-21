@@ -1,35 +1,27 @@
 """Pgstac query customisation."""
 
-import operator
-from collections.abc import Callable
-from enum import auto
-from types import DynamicClassAttribute
+from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel
 from stac_fastapi.extensions.core.query import QueryExtension as QueryExtensionBase
-from stac_pydantic.utils import AutoValueEnum
 
 
-class Operator(str, AutoValueEnum):
+class Operator(str, Enum):
     """Defines the set of operators supported by the API."""
 
-    eq = auto()
-    ne = auto()
-    lt = auto()
-    lte = auto()
-    gt = auto()
-    gte = auto()
+    eq = "eq"
+    ne = "ne"
+    neq = "neq"
+    lt = "lt"
+    lte = "lte"
+    gt = "gt"
+    gte = "gte"
     # TODO: These are defined in the spec but aren't currently implemented by the api
     # startsWith = auto()
     # endsWith = auto()
     # contains = auto()
     # in = auto()
-
-    @DynamicClassAttribute
-    def operator(self) -> Callable[[Any, Any], bool]:
-        """Return python operator."""
-        return getattr(operator, self._value_)
 
 
 class QueryExtensionPostRequest(BaseModel):
