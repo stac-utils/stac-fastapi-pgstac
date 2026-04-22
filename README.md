@@ -32,7 +32,7 @@ PgSTAC stores all collection and item records as jsonb fields exactly as they co
 ## Usage
 
 PgSTAC is an external project and may be used by multiple front ends.
-For Stac FastAPI development, a Docker image (which is pulled as part of the docker-compose) is available via the [Github container registry](https://github.com/stac-utils/pgstac/pkgs/container/pgstac/81689794?tag=latest).
+For STAC FastAPI development, a Docker image (which is pulled as part of the docker-compose) is available via the [Github container registry](https://github.com/stac-utils/pgstac/pkgs/container/pgstac/81689794?tag=latest).
 The PgSTAC version required by **stac-fastapi-pgstac** is found in the [setup](http://github.com/stac-utils/stac-fastapi-pgstac/blob/main/setup.py) file.
 
 ### Sorting
@@ -63,9 +63,9 @@ pypgstac migrate
 
 Install the packages in editable mode:
 
-We recommand using [`uv`](https://docs.astral.sh/uv) as project manager for development.
+We recommend using [`uv`](https://docs.astral.sh/uv) as project manager for development.
 
-See https://docs.astral.sh/uv/getting-started/installation/ for installation 
+See https://docs.astral.sh/uv/getting-started/installation/ for installation
 
 ```shell
 uv sync --dev
@@ -77,7 +77,7 @@ To run the tests:
 uv run pytest
 ```
 
-**NOTE:** In order for the above commands to work, you need a number of postgres/postgis system packages to be installed. If running the tests directly on your machine doesn't work, another way is to spin up a test container and run the tests in that container. You need [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed. 
+**NOTE:** In order for the above commands to work, you need a number of postgres/postgis system packages to be installed. If running the tests directly on your machine doesn't work, another way is to spin up a test container and run the tests in that container. You need [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed.
 
 To run the tests in the test container:
 ```shell
