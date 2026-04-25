@@ -1,6 +1,6 @@
 """Get Queryables."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from buildpg import render
 from fastapi import Request
@@ -14,9 +14,9 @@ class FiltersClient(AsyncBaseFiltersClient):
     async def get_queryables(  # type: ignore[override]
         self,
         request: Request,
-        collection_id: Optional[str] = None,
+        collection_id: str | None = None,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get the queryables available for the given collection_id.
 
         If collection_id is None, returns the intersection of all

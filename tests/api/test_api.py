@@ -5,10 +5,12 @@ from urllib.parse import quote_plus
 
 import orjson
 import pytest
+from brotli_asgi import BrotliMiddleware
 from fastapi import Request
 from httpx import ASGITransport, AsyncClient
 from pystac import Collection, Extent, Item, SpatialExtent, TemporalExtent
 from stac_fastapi.api.app import StacApi
+from stac_fastapi.api.middleware import ProxyHeaderMiddleware
 from stac_fastapi.api.models import create_get_request_model, create_post_request_model
 from stac_fastapi.extensions.core import (
     CollectionSearchExtension,
@@ -17,6 +19,8 @@ from stac_fastapi.extensions.core import (
 )
 from stac_fastapi.extensions.core.fields import FieldsConformanceClasses
 from stac_fastapi.types import stac as stac_types
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 
 from stac_fastapi.pgstac.config import PostgresSettings
 from stac_fastapi.pgstac.core import CoreCrudClient, Settings
@@ -271,9 +275,31 @@ async def test_app_query_extension_gte(load_test_data, app_client, load_test_col
     assert len(resp_json["features"]) == 1
 
 
+async def test_app_query_extension_neq(load_test_data, app_client, load_test_collection):
+    coll = load_test_collection
+    item = load_test_data("test_item.json")
+    resp = await app_client.post(f"/collections/{coll['id']}/items", json=item)
+    assert resp.status_code == 201
+
+    params = {"query": {"proj:epsg": {"neq": item["properties"]["proj:epsg"]}}}
+    resp = await app_client.post("/search", json=params)
+    assert resp.status_code == 200
+    resp_json = resp.json()
+    assert len(resp_json["features"]) == 0
+
+    params["query"] = quote_plus(orjson.dumps(params["query"]))
+    resp = await app_client.get("/search", params=params)
+    assert resp.status_code == 200
+    resp_json = resp.json()
+    assert len(resp_json["features"]) == 0
+
+
 async def test_app_collection_fields_extension(
     load_test_data, app_client, load_test_collection, app
 ):
+    res = await app_client.get("/_mgmt/health")
+    pgstac_version = res.json()["pgstac"]["pgstac_version"]
+
     fields = ["title"]
     resp = await app_client.get("/collections", params={"fields": ",".join(fields)})
 
@@ -284,7 +310,11 @@ async def test_app_collection_fields_extension(
 
     assert len(resp_collections) > 0
     # NOTE: It's a bug that 'collection' is always included; see #327
-    constant_fields = ["id", "links", "collection"]
+    if tuple(map(int, pgstac_version.split("."))) < (0, 9, 9):
+        constant_fields = ["id", "links", "collection"]
+    else:
+        constant_fields = ["id", "links"]
+
     for collection in resp_collections:
         assert set(collection.keys()) == set(fields + constant_fields)
 
@@ -806,6 +836,19 @@ async def test_wrapped_function(load_test_data, pgstac) -> None:
         search_post_request_model=post_request_model,
         search_get_request_model=get_request_model,
         collections_get_request_model=collection_search_extension.GET,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=settings.cors_origins,
+                allow_origin_regex=settings.cors_origin_regex,
+                allow_methods=settings.cors_methods,
+                allow_credentials=settings.cors_credentials,
+                allow_headers=settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
     app = api.app
     await connect_to_db(
@@ -859,6 +902,19 @@ async def test_no_extension(hydrate, validation, load_test_data, pgstac) -> None
         settings=settings,
         extensions=extensions,
         search_post_request_model=post_request_model,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=settings.cors_origins,
+                allow_origin_regex=settings.cors_origin_regex,
+                allow_methods=settings.cors_methods,
+                allow_credentials=settings.cors_credentials,
+                allow_headers=settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
     app = api.app
     await connect_to_db(

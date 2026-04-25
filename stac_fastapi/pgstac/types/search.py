@@ -1,7 +1,5 @@
 """stac_fastapi.types.search module."""
 
-from typing import Dict, Optional
-
 from pydantic import ValidationInfo, field_validator
 from stac_fastapi.types.search import BaseSearchPostRequest
 
@@ -12,7 +10,7 @@ class PgstacSearch(BaseSearchPostRequest):
     Overrides the validation for datetime from the base request model.
     """
 
-    conf: Optional[Dict] = None
+    conf: dict | None = None
 
     @field_validator("filter_lang", check_fields=False)
     @classmethod

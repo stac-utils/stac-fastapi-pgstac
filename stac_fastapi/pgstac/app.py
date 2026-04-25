@@ -5,14 +5,13 @@ the ENABLED_EXTENSIONS environment variable (e.g. `transactions,sort,query`).
 If the variable is not set, enables all extensions.
 """
 
-import os
 from contextlib import asynccontextmanager
-from typing import Dict, List, Set, Type, cast
+from typing import cast
 
 from brotli_asgi import BrotliMiddleware
 from fastapi import APIRouter, FastAPI
 from stac_fastapi.api.app import StacApi
-from stac_fastapi.api.middleware import CORSMiddleware, ProxyHeaderMiddleware
+from stac_fastapi.api.middleware import ProxyHeaderMiddleware
 from stac_fastapi.api.models import (
     EmptyRequest,
     ItemCollectionUri,
@@ -40,6 +39,7 @@ from stac_fastapi.extensions.third_party import BulkTransactionExtension
 from stac_fastapi.types.extension import ApiExtension
 from stac_fastapi.types.search import APIRequest
 from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
@@ -52,7 +52,7 @@ from stac_fastapi.pgstac.types.search import PgstacSearch
 settings = Settings()
 
 # search extensions
-search_extensions_map: Dict[str, ApiExtension] = {
+search_extensions_map: dict[str, ApiExtension] = {
     "query": QueryExtension(),
     "sort": SortExtension(),
     "fields": FieldsExtension(),
@@ -61,7 +61,7 @@ search_extensions_map: Dict[str, ApiExtension] = {
 }
 
 # collection_search extensions
-cs_extensions_map: Dict[str, ApiExtension] = {
+cs_extensions_map: dict[str, ApiExtension] = {
     "query": QueryExtension(conformance_classes=[QueryConformanceClasses.COLLECTIONS]),
     "sort": SortExtension(conformance_classes=[SortConformanceClasses.COLLECTIONS]),
     "fields": FieldsExtension(conformance_classes=[FieldsConformanceClasses.COLLECTIONS]),
@@ -73,7 +73,7 @@ cs_extensions_map: Dict[str, ApiExtension] = {
 }
 
 # item_collection extensions
-itm_col_extensions_map: Dict[str, ApiExtension] = {
+itm_col_extensions_map: dict[str, ApiExtension] = {
     "query": QueryExtension(
         conformance_classes=[QueryConformanceClasses.ITEMS],
     ),
@@ -85,23 +85,19 @@ itm_col_extensions_map: Dict[str, ApiExtension] = {
     "pagination": TokenPaginationExtension(),
 }
 
-enabled_extensions: Set[str] = {
+enabled_extensions: set[str] = {
     *search_extensions_map.keys(),
     *cs_extensions_map.keys(),
     *itm_col_extensions_map.keys(),
     "collection_search",
 }
 
-if ext := os.environ.get("ENABLED_EXTENSIONS"):
+if ext := settings.enabled_extensions:
     enabled_extensions = set(ext.split(","))
 
-application_extensions: List[ApiExtension] = []
+application_extensions: list[ApiExtension] = []
 
-with_transactions = os.environ.get("ENABLE_TRANSACTIONS_EXTENSIONS", "").lower() in [
-    "yes",
-    "true",
-    "1",
-]
+with_transactions = settings.enable_transactions_extensions
 if with_transactions:
     application_extensions.append(
         TransactionExtension(
@@ -126,7 +122,7 @@ get_request_model = create_get_request_model(search_extensions)
 application_extensions.extend(search_extensions)
 
 # /collections/{collectionId}/items model
-items_get_request_model: Type[APIRequest] = ItemCollectionUri
+items_get_request_model: type[APIRequest] = ItemCollectionUri
 itm_col_extensions = [
     extension
     for key, extension in itm_col_extensions_map.items()
@@ -134,7 +130,7 @@ itm_col_extensions = [
 ]
 if itm_col_extensions:
     items_get_request_model = cast(
-        Type[APIRequest],
+        type[APIRequest],
         create_request_model(
             model_name="ItemCollectionUri",
             base_model=ItemCollectionUri,
@@ -146,7 +142,7 @@ if itm_col_extensions:
     application_extensions.extend(itm_col_extensions)
 
 # /collections model
-collections_get_request_model: Type[APIRequest] = EmptyRequest
+collections_get_request_model: type[APIRequest] = EmptyRequest
 if "collection_search" in enabled_extensions:
     cs_extensions = [
         extension
@@ -196,6 +192,7 @@ api = StacApi(
             allow_methods=settings.cors_methods,
             allow_credentials=settings.cors_credentials,
             allow_headers=settings.cors_headers,
+            max_age=600,
         ),
     ],
     health_check=health_check,  # type: ignore [arg-type]
@@ -214,7 +211,7 @@ def run():
             port=settings.app_port,
             log_level="info",
             reload=settings.reload,
-            root_path=os.getenv("UVICORN_ROOT_PATH", ""),
+            root_path=settings.uvicorn_root_path,
         )
     except ImportError as e:
         raise RuntimeError("Uvicorn must be installed in order to use command") from e

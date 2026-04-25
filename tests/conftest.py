@@ -7,12 +7,14 @@ from urllib.parse import urljoin
 
 import psycopg
 import pytest
+from brotli_asgi import BrotliMiddleware
 from fastapi import APIRouter
 from httpx import ASGITransport, AsyncClient
 from pypgstac.db import PgstacDB
 from pypgstac.migrate import Migrate
 from pytest_postgresql.janitor import DatabaseJanitor
 from stac_fastapi.api.app import StacApi
+from stac_fastapi.api.middleware import ProxyHeaderMiddleware
 from stac_fastapi.api.models import (
     ItemCollectionUri,
     JSONResponse,
@@ -38,6 +40,8 @@ from stac_fastapi.extensions.core.query import QueryConformanceClasses
 from stac_fastapi.extensions.core.sort import SortConformanceClasses
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
 from stac_pydantic import Collection, Item
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 
 from stac_fastapi.pgstac.config import PostgresSettings, Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
@@ -68,8 +72,7 @@ def database(postgresql_proc):
 
 @pytest.fixture(
     params=[
-        "0.8.6",
-        "0.9.8",
+        "0.9.9",
     ],
 )
 def pgstac(request, database):
@@ -187,6 +190,19 @@ def api_client(request):
         response_class=JSONResponse,
         router=APIRouter(prefix=prefix),
         health_check=health_check,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=api_settings.cors_origins,
+                allow_origin_regex=api_settings.cors_origin_regex,
+                allow_methods=api_settings.cors_methods,
+                allow_credentials=api_settings.cors_credentials,
+                allow_headers=api_settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
 
     return api
@@ -298,6 +314,19 @@ async def app_no_ext(pgstac):
         ],
         client=CoreCrudClient(),
         health_check=health_check,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=api_settings.cors_origins,
+                allow_origin_regex=api_settings.cors_origin_regex,
+                allow_methods=api_settings.cors_methods,
+                allow_credentials=api_settings.cors_credentials,
+                allow_headers=api_settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
 
     postgres_settings = PostgresSettings(
@@ -337,6 +366,19 @@ async def app_no_transaction(pgstac):
         extensions=[],
         client=CoreCrudClient(),
         health_check=health_check,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=api_settings.cors_origins,
+                allow_origin_regex=api_settings.cors_origin_regex,
+                allow_methods=api_settings.cors_methods,
+                allow_credentials=api_settings.cors_credentials,
+                allow_headers=api_settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
 
     postgres_settings = PostgresSettings(
@@ -420,6 +462,19 @@ async def app_advanced_freetext(pgstac):
         client=CoreCrudClient(),
         health_check=health_check,
         collections_get_request_model=collection_search_extension.GET,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=api_settings.cors_origins,
+                allow_origin_regex=api_settings.cors_origin_regex,
+                allow_methods=api_settings.cors_methods,
+                allow_credentials=api_settings.cors_credentials,
+                allow_headers=api_settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
 
     postgres_settings = PostgresSettings(
@@ -464,6 +519,19 @@ async def app_transaction_validation_ext(pgstac):
         ],
         client=CoreCrudClient(),
         health_check=health_check,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=api_settings.cors_origins,
+                allow_origin_regex=api_settings.cors_origin_regex,
+                allow_methods=api_settings.cors_methods,
+                allow_credentials=api_settings.cors_credentials,
+                allow_headers=api_settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
 
     postgres_settings = PostgresSettings(

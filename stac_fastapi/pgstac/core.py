@@ -2,7 +2,7 @@
 
 import json
 import re
-from typing import Any, Dict, List, Optional, Set, Type, Union
+from typing import Any
 from urllib.parse import unquote_plus, urljoin
 
 import attr
@@ -32,28 +32,28 @@ from stac_fastapi.pgstac.models.links import (
 from stac_fastapi.pgstac.types.search import PgstacSearch
 from stac_fastapi.pgstac.utils import filter_fields
 
-NumType = Union[float, int]
+NumType = float | int
 
 
 @attr.s
 class CoreCrudClient(AsyncBaseCoreClient):
     """Client for core endpoints defined by stac."""
 
-    pgstac_search_model: Type[PgstacSearch] = attr.ib(default=PgstacSearch)
+    pgstac_search_model: type[PgstacSearch] = attr.ib(default=PgstacSearch)
 
     async def all_collections(  # type: ignore [override] # noqa: C901
         self,
         request: Request,
         # Extensions
-        bbox: Optional[BBox] = None,
-        datetime: Optional[str] = None,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
-        query: Optional[str] = None,
-        fields: Optional[List[str]] = None,
-        sortby: Optional[str] = None,
-        filter_expr: Optional[str] = None,
-        filter_lang: Optional[str] = None,
+        bbox: BBox | None = None,
+        datetime: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+        query: str | None = None,
+        fields: list[str] | None = None,
+        sortby: str | None = None,
+        filter_expr: str | None = None,
+        filter_lang: str | None = None,
         **kwargs: Any,
     ) -> Collections:
         """Cross catalog search (GET).
@@ -66,8 +66,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
         """
         base_url = get_base_url(request)
 
-        next_link: Optional[Dict[str, Any]] = None
-        prev_link: Optional[Dict[str, Any]] = None
+        next_link: dict[str, Any] | None = None
+        prev_link: dict[str, Any] | None = None
         collections: Collections
 
         if self.extension_is_enabled("CollectionSearchExtension"):
@@ -112,7 +112,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         else:
             async with request.app.state.get_connection(request, "r") as conn:
-                cols: List[Collection] = (
+                cols: list[Collection] = (
                     await conn.fetchval(
                         """
                     SELECT * FROM all_collections();
@@ -184,7 +184,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 """,
                 id=collection_id,
             )
-            collection: Optional[Collection] = await conn.fetchval(q, *p)
+            collection: Collection | None = await conn.fetchval(q, *p)
 
         if collection is None:
             raise NotFoundError(f"Collection {collection_id} does not exist.")
@@ -212,7 +212,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         self,
         collection_id: str,
         request: Request,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get the base item of a collection for use in rehydrating full item collection properties.
 
         Args:
@@ -221,7 +221,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         Returns:
             Item.
         """
-        item: Optional[Dict[str, Any]]
+        item: dict[str, Any] | None
 
         async with request.app.state.get_connection(request, "r") as conn:
             q, p = render(
@@ -277,8 +277,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
             ) from e
 
         # Starting in pgstac 0.9.0, the `next` and `prev` tokens are returned in spec-compliant links with method GET
-        next_from_link: Optional[str] = None
-        prev_from_link: Optional[str] = None
+        next_from_link: str | None = None
+        prev_from_link: str | None = None
 
         for link in item_collection.get("links", []):
             if link.get("rel") == "next":
@@ -287,17 +287,17 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 prev_from_link = link["href"].split("token=prev:")[1]
 
         # NOTE: Old version of pgstac returned `next` and `prev` links directly in the response
-        next: Optional[str] = item_collection.pop("next", next_from_link)  # type: ignore [typeddict-item]
-        prev: Optional[str] = item_collection.pop("prev", prev_from_link)  # type: ignore [typeddict-item]
+        next: str | None = item_collection.pop("next", next_from_link)  # type: ignore [typeddict-item]
+        prev: str | None = item_collection.pop("prev", prev_from_link)  # type: ignore [typeddict-item]
 
         fields = getattr(search_request, "fields", None)
-        include: Set[str] = fields.include if fields and fields.include else set()
-        exclude: Set[str] = fields.exclude if fields and fields.exclude else set()
+        include: set[str] = fields.include if fields and fields.include else set()
+        exclude: set[str] = fields.exclude if fields and fields.exclude else set()
 
         async def _add_item_links(
             feature: Item,
-            collection_id: Optional[str] = None,
-            item_id: Optional[str] = None,
+            collection_id: str | None = None,
+            item_id: str | None = None,
         ) -> None:
             """Add ItemLinks to the Item.
 
@@ -314,10 +314,10 @@ class CoreCrudClient(AsyncBaseCoreClient):
                     request=request,
                 ).get_links(extra_links=feature.get("links"))
 
-        items: List[Item] = []
+        items: list[Item] = []
         if settings.use_api_hydrate:
 
-            async def _get_base_item(collection_id: str) -> Dict[str, Any]:
+            async def _get_base_item(collection_id: str) -> dict[str, Any]:
                 return await self._get_base_item(collection_id, request=request)
 
             base_item_cache = settings.base_item_cache(
@@ -361,16 +361,16 @@ class CoreCrudClient(AsyncBaseCoreClient):
         self,
         collection_id: str,
         request: Request,
-        bbox: Optional[BBox] = None,
-        datetime: Optional[str] = None,
-        limit: Optional[int] = None,
+        bbox: BBox | None = None,
+        datetime: str | None = None,
+        limit: int | None = None,
         # Extensions
-        query: Optional[str] = None,
-        fields: Optional[List[str]] = None,
-        sortby: Optional[str] = None,
-        filter_expr: Optional[str] = None,
-        filter_lang: Optional[str] = None,
-        token: Optional[str] = None,
+        query: str | None = None,
+        fields: list[str] | None = None,
+        sortby: str | None = None,
+        filter_expr: str | None = None,
+        filter_lang: str | None = None,
+        token: str | None = None,
         **kwargs: Any,
     ) -> ItemCollection:
         """Get all items from a specific collection.
@@ -496,19 +496,19 @@ class CoreCrudClient(AsyncBaseCoreClient):
     async def get_search(  # type: ignore [override]
         self,
         request: Request,
-        collections: Optional[List[str]] = None,
-        ids: Optional[List[str]] = None,
-        bbox: Optional[BBox] = None,
-        intersects: Optional[str] = None,
-        datetime: Optional[str] = None,
-        limit: Optional[int] = None,
+        collections: list[str] | None = None,
+        ids: list[str] | None = None,
+        bbox: BBox | None = None,
+        intersects: str | None = None,
+        datetime: str | None = None,
+        limit: int | None = None,
         # Extensions
-        query: Optional[str] = None,
-        fields: Optional[List[str]] = None,
-        sortby: Optional[str] = None,
-        filter_expr: Optional[str] = None,
-        filter_lang: Optional[str] = None,
-        token: Optional[str] = None,
+        query: str | None = None,
+        fields: list[str] | None = None,
+        sortby: str | None = None,
+        filter_expr: str | None = None,
+        filter_lang: str | None = None,
+        token: str | None = None,
         **kwargs: Any,
     ) -> ItemCollection:
         """Cross catalog search (GET).
@@ -564,16 +564,16 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
     def _clean_search_args(  # noqa: C901
         self,
-        base_args: Dict[str, Any],
-        intersects: Optional[str] = None,
-        datetime: Optional[str] = None,
-        fields: Optional[List[str]] = None,
-        sortby: Optional[str] = None,
-        filter_query: Optional[str] = None,
-        filter_lang: Optional[str] = None,
-        q: Optional[Union[str, List[str]]] = None,
+        base_args: dict[str, Any],
+        intersects: str | None = None,
+        datetime: str | None = None,
+        fields: list[str] | None = None,
+        sortby: str | None = None,
+        filter_query: str | None = None,
+        filter_lang: str | None = None,
+        q: str | list[str] | None = None,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Clean up search arguments to match format expected by pgstac"""
         if filter_query:
             if filter_lang == "cql2-text":
@@ -629,7 +629,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
         return clean
 
 
-async def health_check(request: Request) -> Union[Dict, JSONResponse]:
+async def health_check(request: Request) -> dict | JSONResponse:
     """PgSTAC HealthCheck."""
     resp = {
         "status": "UP",

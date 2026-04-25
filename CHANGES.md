@@ -4,7 +4,40 @@
 
 ### Fixed
 
-- Fix multi-platform Docker builds by adding QEMU emulation and correcting workflow_dispatch trigger
+- Fix multi-platform Docker builds by adding QEMU emulation and correcting workflow_dispatch trigger ([#337](https://github.com/stac-utils/stac-fastapi-pgstac/pull/337))
+
+### Changed
+
+- remove pgstac 0.8.6 in tests and update documentation ([#354](https://github.com/stac-utils/stac-fastapi-pgstac/pull/354))
+- simplify `extensions.query.Operator` class, by removing unused `operator` method and unncessary dependencies ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
+- handle `ENABLE_TRANSACTIONS_EXTENSIONS`, `ENABLED_EXTENSIONS` and `UVICORN_ROOT_PATH` environment configuration variables via the `config.Settings` class ([#368](https://github.com/stac-utils/stac-fastapi-pgstac/pull/368))
+
+### Added
+
+- implement `neq` query opeartor ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
+- add api test for `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
+
+## [6.2.2] - 2026-01-09
+
+### Fixed
+
+- use `CORSMiddleware` from starlette instead of the one from stac-fastapi to avoid breaking changes
+
+## [6.2.1] - 2026-01-23
+
+### Fixed
+
+- Set default values for deprecated `postgres_*` settings to `None` ([#343](https://github.com/stac-utils/stac-fastapi-pgstac/pull/343))
+
+## [6.2.0] - 2026-01-15
+
+### Fixed
+
+- update type hints for python 3.11
+
+### Removed
+
+- support for python 3.9 and 3.10
 
 ## [6.1.5] - 2025-12-12
 
@@ -549,7 +582,10 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.5..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.2..main>
+[6.2.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.1..6.2.2>
+[6.2.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.0..6.2.1>
+[6.2.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.5..6.2.0>
 [6.1.5]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.4..6.1.5>
 [6.1.4]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.3..6.1.4>
 [6.1.3]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.2..6.1.3>

@@ -1,14 +1,14 @@
 """stac-fastapi utility methods."""
 
-from typing import Any, Dict, Optional, Set, cast
+from typing import Any, cast
 
 from stac_fastapi.types.stac import Item
 
 
 def filter_fields(  # noqa: C901
     item: Item,
-    include: Optional[Set[str]] = None,
-    exclude: Optional[Set[str]] = None,
+    include: set[str] | None = None,
+    exclude: set[str] | None = None,
 ) -> Item:
     """Preserve and remove fields as indicated by the fields extension include/exclude sets.
 
@@ -21,13 +21,11 @@ def filter_fields(  # noqa: C901
         return item
 
     # Build a shallow copy of included fields on an item, or a sub-tree of an item
-    def include_fields(
-        source: Dict[str, Any], fields: Optional[Set[str]]
-    ) -> Dict[str, Any]:
+    def include_fields(source: dict[str, Any], fields: set[str] | None) -> dict[str, Any]:
         if not fields:
             return source
 
-        clean_item: Dict[str, Any] = {}
+        clean_item: dict[str, Any] = {}
         for key_path in fields or []:
             key_path_parts = key_path.split(".")
             key_root = key_path_parts[0]
@@ -63,7 +61,7 @@ def filter_fields(  # noqa: C901
 
     # For an item built up for included fields, remove excluded fields. This
     # modifies `source` in place.
-    def exclude_fields(source: Dict[str, Any], fields: Optional[Set[str]]) -> None:
+    def exclude_fields(source: dict[str, Any], fields: set[str] | None) -> None:
         for key_path in fields or []:
             key_path_part = key_path.split(".")
             key_root = key_path_part[0]
@@ -95,7 +93,7 @@ def filter_fields(  # noqa: C901
     return cast(Item, clean_item)
 
 
-def dict_deep_update(merge_to: Dict[str, Any], merge_from: Dict[str, Any]) -> None:
+def dict_deep_update(merge_to: dict[str, Any], merge_from: dict[str, Any]) -> None:
     """Perform a deep update of two dicts.
 
     merge_to is updated in-place with the values from merge_from.
