@@ -17,15 +17,19 @@ def clean_exclude_set(
     - Removing any fields from the exclude set that are parent paths of fields in the include set,
       since including a sub-field of an excluded parent field should take precedence.
     """
-    intersection = include.intersection(exclude)
-    if intersection:
-        exclude = exclude - intersection
-    for field_excluded in exclude:
-        for field_included in include:
-            if field_included.startswith(field_excluded + "."):
-                exclude = exclude - {field_excluded}
-                pass
-    return exclude
+    # Remove exact matches
+    exclude = exclude - include
+
+    # Identify and remove parent paths of included fields
+    to_remove = {
+        field_excluded
+        for field_excluded in exclude
+        if any(
+            field_included.startswith(f"{field_excluded}.") for field_included in include
+        )
+    }
+
+    return exclude - to_remove
 
 
 def dict_deep_update(merge_to: dict[str, Any], merge_from: dict[str, Any]) -> None:
