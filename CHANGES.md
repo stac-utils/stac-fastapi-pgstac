@@ -15,7 +15,7 @@
 
 ### Fixed
 
-- preprocess `fields` the give the `include` set precendence over the `exclude` set ([#370](https://github.com/stac-utils/stac-fastapi-pgstac/pull/370))
+- preprocess `fields` to give the `include` set precendence over the `exclude` set ([#370](https://github.com/stac-utils/stac-fastapi-pgstac/pull/370))
 
 ## [6.2.2] - 2026-01-09
 
