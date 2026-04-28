@@ -26,7 +26,7 @@ docker-run: image
 
 .PHONY: docker-run-nginx-proxy
 docker-run-nginx-proxy: image
-	docker compose -f compose.nginx.yml up
+	docker compose -f compose.yml -f compose.nginx.yml up
 
 .PHONY: docker-down
 docker-down:
@@ -34,7 +34,7 @@ docker-down:
 
 .PHONY: docker-down-nginx
 docker-down-nginx:
-	docker compose -f compose.nginx.yml down
+	docker compose -f compose.yml -f compose.nginx.yml down
 
 .PHONY: docker-down-tests
 docker-down-tests:
@@ -43,7 +43,7 @@ docker-down-tests:
 .PHONY: docker-down-all
 docker-down-all:
 	docker compose down
-	docker compose -f compose.nginx.yml down
+	docker compose -f compose.yml -f compose.nginx.yml down
 	docker compose -f compose.yml -f compose.tests.yml down
 
 .PHONY: docker-shell
