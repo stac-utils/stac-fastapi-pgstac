@@ -1,18 +1,5 @@
 services:
-  database:
-    image: ghcr.io/stac-utils/pgstac:v0.9.8
-    environment:
-      - POSTGRES_USER=username
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=postgis
-      - PGUSER=username
-      - PGPASSWORD=password
-      - PGDATABASE=postgis
-    ports:
-      - "5439:5432"
-    command: postgres -N 500
-
-  app-nginx:
+  app:
     image: stac-utils/stac-fastapi-pgstac
     build: .
     environment:
@@ -35,6 +22,8 @@ services:
       - ENABLE_TRANSACTIONS_EXTENSIONS=TRUE
     ports:
       - "8082:8082"
+    volumes:
+      - ./stac_fastapi:/app/stac_fastapi
     depends_on:
       - database
     command: >
@@ -47,6 +36,19 @@ services:
         - action: rebuild
           path: ./stac_fastapi/pgstac
 
+  database:
+    image: ghcr.io/stac-utils/pgstac:v0.9.8
+    environment:
+      - POSTGRES_USER=username
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgis
+      - PGUSER=username
+      - PGPASSWORD=password
+      - PGDATABASE=postgis
+    ports:
+      - "5439:5432"
+    command: postgres -N 500
+
   nginx:
     image: nginx
     ports:
@@ -54,27 +56,8 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
     depends_on:
-      - app-nginx
+      - app
     command: [ "nginx-debug", "-g", "daemon off;" ]
-
-  # Load joplin demo dataset into the PGStac Application
-  loadjoplin:
-    image: stac-utils/stac-fastapi-pgstac
-    environment:
-      - ENVIRONMENT=development
-    volumes:
-      - ./testdata:/tmp/testdata      
-      - ./scripts:/tmp/scripts
-    command: >
-      /bin/sh -c "
-        scripts/wait-for-it.sh -t 60 app-nginx:8082 &&
-        python -m pip install pip -U &&
-        python -m pip install requests &&
-        python /tmp/scripts/ingest_joplin.py http://app-nginx:8082
-        "
-    depends_on:
-      - database
-      - app-nginx
 
 networks:
   default:

@@ -15,20 +15,3 @@ services:
     depends_on:
       - database
     command: bash -c "python -m pytest -s -vv"
-
-  database:
-    image: ghcr.io/stac-utils/pgstac:v0.9.8
-    environment:
-      - POSTGRES_USER=username
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=postgis
-      - PGUSER=username
-      - PGPASSWORD=password
-      - PGDATABASE=postgis
-    ports:
-      - "5439:5432"
-    command: postgres -N 500
-
-networks:
-  default:
-    name: stac-fastapi-network
