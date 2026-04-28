@@ -93,7 +93,7 @@ make docker-run-nginx-proxy
 
 The API will be available at:
 - Direct: `http://localhost:8082`
-- Via Nginx: `http://localhost:8080/api/v1/pgstac`
+- Via Nginx: `http://localhost:8080/api/v1/pgstac/`
 
 ### Loading Demo Data
 
