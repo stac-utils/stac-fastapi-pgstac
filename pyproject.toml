@@ -53,7 +53,7 @@ validation = [
     "stac_pydantic[validation]",
 ]
 server  = [
-    "uvicorn[standard]==0.38.0"
+    "uvicorn[standard]==0.41.0"
 ]
 
 [dependency-groups]
@@ -61,7 +61,7 @@ dev = [
         "pystac[validation]",
         "pytest-postgresql>=7.0",
         # ref: https://github.com/dbfixtures/pytest-postgresql/issues/1210
-        "mirakuru>=2.0,<3.0",
+        "mirakuru>=2.0,<4.0",
         "pytest",
         "pytest-cov",
         "pytest-asyncio>=0.17,<1.3",
