@@ -32,7 +32,7 @@ PgSTAC stores all collection and item records as jsonb fields exactly as they co
 ## Usage
 
 PgSTAC is an external project and may be used by multiple front ends.
-For Stac FastAPI development, a Docker image (which is pulled as part of the docker-compose) is available via the [Github container registry](https://github.com/stac-utils/pgstac/pkgs/container/pgstac/81689794?tag=latest).
+For STAC FastAPI development, a Docker image (which is pulled as part of the docker-compose) is available via the [Github container registry](https://github.com/stac-utils/pgstac/pkgs/container/pgstac/81689794?tag=latest).
 The PgSTAC version required by **stac-fastapi-pgstac** is found in the [setup](http://github.com/stac-utils/stac-fastapi-pgstac/blob/main/setup.py) file.
 
 ### Sorting
@@ -61,27 +61,72 @@ pypgstac migrate
 
 ## Development
 
+### Quick Start
+
 Install the packages in editable mode:
 
-We recommand using [`uv`](https://docs.astral.sh/uv) as project manager for development.
+We recommend using [`uv`](https://docs.astral.sh/uv) as project manager for development.
 
-See https://docs.astral.sh/uv/getting-started/installation/ for installation 
+See https://docs.astral.sh/uv/getting-started/installation/ for installation
 
 ```shell
 uv sync --dev
 ```
 
-To run the tests:
+### Running the API Locally
+
+Start the API with Docker Compose:
+
+```shell
+make docker-run
+```
+
+The API will be available at `http://localhost:8082`
+
+### Running with Nginx Proxy
+
+To run the API behind an Nginx proxy:
+
+```shell
+make docker-run-nginx-proxy
+```
+
+The API will be available at:
+- Direct: `http://localhost:8082`
+- Via Nginx: `http://localhost:8080/api/v1/pgstac/`
+
+### Loading Demo Data
+
+To load the Joplin demo dataset:
+
+```shell
+make load-joplin
+```
+
+### Running Tests
+
+To run tests locally (requires postgres/postgis system packages):
 
 ```shell
 uv run pytest
 ```
 
-**NOTE:** In order for the above commands to work, you need a number of postgres/postgis system packages to be installed. If running the tests directly on your machine doesn't work, another way is to spin up a test container and run the tests in that container. You need [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed. 
+**NOTE:** If running tests directly on your machine doesn't work, you can use Docker Compose instead. You need [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed.
 
-To run the tests in the test container:
+To run tests in a container:
+
 ```shell
-docker compose run --build --rm tests python -m pytest -s -vv
+make test
+```
+
+### Stopping Services
+
+To stop running services:
+
+```shell
+make docker-down          # Stop the default app
+make docker-down-nginx    # Stop the nginx variant
+make docker-down-all      # Stop all services
 ```
 
 ## Contributing

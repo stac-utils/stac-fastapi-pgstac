@@ -7,11 +7,16 @@
 - remove pgstac 0.8.6 in tests and update documentation ([#354](https://github.com/stac-utils/stac-fastapi-pgstac/pull/354))
 - simplify `extensions.query.Operator` class, by removing unused `operator` method and unncessary dependencies ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
 - handle `ENABLE_TRANSACTIONS_EXTENSIONS`, `ENABLED_EXTENSIONS` and `UVICORN_ROOT_PATH` environment configuration variables via the `config.Settings` class ([#368](https://github.com/stac-utils/stac-fastapi-pgstac/pull/368))
+- Refactor Docker Compose files and Makefile for better organization and modularity. ([#379](https://github.com/stac-utils/stac-fastapi-pgstac/pull/379))
 
 ### Added
 
-- implement `neq` query opeartor ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
+- implement `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
 - add api test for `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
+
+### Fixed
+
+- preprocess `fields` to give the `include` set precendence over the `exclude` set ([#370](https://github.com/stac-utils/stac-fastapi-pgstac/pull/370))
 
 ## [6.2.2] - 2026-01-09
 
@@ -578,7 +583,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.1..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.2..main>
+[6.2.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.1..6.2.2>
 [6.2.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.0..6.2.1>
 [6.2.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.5..6.2.0>
 [6.1.5]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.4..6.1.5>

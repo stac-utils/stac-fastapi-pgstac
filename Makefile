@@ -10,19 +10,41 @@ run = docker compose run --rm \
 				-e APP_PORT=${APP_PORT} \
 				app
 
-runtests = docker compose run --rm tests
+runtests = docker compose -f compose.yml -f compose.tests.yml run --rm tests
 
 .PHONY: image
 image:
 	docker compose build
+
+.PHONY: image-tests
+image-tests:
+	docker compose -f compose.yml -f compose.tests.yml build
 
 .PHONY: docker-run
 docker-run: image
 	docker compose up
 
 .PHONY: docker-run-nginx-proxy
-docker-run-nginx-proxy:
-	docker compose -f docker-compose.yml -f docker-compose.nginx.yml up
+docker-run-nginx-proxy: image
+	docker compose -f compose.yml -f compose.nginx.yml up
+
+.PHONY: docker-down
+docker-down:
+	docker compose down
+
+.PHONY: docker-down-nginx
+docker-down-nginx:
+	docker compose -f compose.yml -f compose.nginx.yml down
+
+.PHONY: docker-down-tests
+docker-down-tests:
+	docker compose -f compose.yml -f compose.tests.yml down
+
+.PHONY: docker-down-all
+docker-down-all:
+	docker compose down
+	docker compose -f compose.yml -f compose.nginx.yml down
+	docker compose -f compose.yml -f compose.tests.yml down
 
 .PHONY: docker-shell
 docker-shell:
@@ -36,9 +58,9 @@ test:
 run-database:
 	docker compose run --rm database
 
-.PHONY: run-joplin
-run-joplin:
-	docker compose run --rm loadjoplin
+.PHONY: load-joplin
+load-joplin:
+	python scripts/ingest_joplin.py http://localhost:8082
 
 .PHONY: install
 install:
