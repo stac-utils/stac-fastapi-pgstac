@@ -143,7 +143,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 )
 
             # Remove internal metadata
-            collection.pop("parent_ids", None)
+            collection.pop("parent_ids", None)  # type: ignore [typeddict-item]
 
         collections["links"] = await CollectionSearchPagingLinks(
             request=request, next=next_link, prev=prev_link
@@ -210,7 +210,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             )
 
         # Remove internal metadata
-        collection.pop("parent_ids", None)
+        collection.pop("parent_ids", None)  # type: ignore [typeddict-item]
 
         return collection
 
