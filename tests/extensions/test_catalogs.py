@@ -1290,3 +1290,51 @@ async def test_catalog_collection_links_self_and_canonical(app_client):
     assert parent_link_from_detail["href"].endswith(
         "/catalogs/catalog-for-links-test"
     ), f"Parent link incorrect: {parent_link_from_detail['href']}"
+
+    # Verify items link is present
+    items_link_from_list = next(
+        (link for link in collection_from_list["links"] if link.get("rel") == "items"),
+        None,
+    )
+    items_link_from_detail = next(
+        (link for link in collection_from_detail["links"] if link.get("rel") == "items"),
+        None,
+    )
+
+    assert items_link_from_list is not None, "Items link missing from list response"
+    assert items_link_from_detail is not None, "Items link missing from detail response"
+
+    assert items_link_from_list["href"].endswith(
+        "/collections/collection-for-links-test/items"
+    ), f"Items link incorrect: {items_link_from_list['href']}"
+
+    assert items_link_from_detail["href"].endswith(
+        "/collections/collection-for-links-test/items"
+    ), f"Items link incorrect: {items_link_from_detail['href']}"
+
+    # Verify queryables link is present and not duplicated
+    queryables_links_from_list = [
+        link
+        for link in collection_from_list["links"]
+        if link.get("rel") == "http://www.opengis.net/def/rel/ogc/1.0/queryables"
+    ]
+    queryables_links_from_detail = [
+        link
+        for link in collection_from_detail["links"]
+        if link.get("rel") == "http://www.opengis.net/def/rel/ogc/1.0/queryables"
+    ]
+
+    assert (
+        len(queryables_links_from_list) == 1
+    ), f"Expected 1 queryables link in list response, got {len(queryables_links_from_list)}"
+    assert (
+        len(queryables_links_from_detail) == 1
+    ), f"Expected 1 queryables link in detail response, got {len(queryables_links_from_detail)}"
+
+    assert queryables_links_from_list[0]["href"].endswith(
+        "/collections/collection-for-links-test/queryables"
+    ), f"Queryables link incorrect: {queryables_links_from_list[0]['href']}"
+
+    assert queryables_links_from_detail[0]["href"].endswith(
+        "/collections/collection-for-links-test/queryables"
+    ), f"Queryables link incorrect: {queryables_links_from_detail[0]['href']}"

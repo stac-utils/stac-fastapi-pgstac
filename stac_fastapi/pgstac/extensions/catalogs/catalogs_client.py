@@ -344,6 +344,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         self_href = str(request.base_url).rstrip("/") + path
 
         # For scoped endpoint, generate links pointing to this specific catalog
+        base_url = str(request.base_url).rstrip("/")
         collection["links"] = [
             {
                 "rel": "self",
@@ -353,33 +354,49 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             {
                 "rel": "canonical",
                 "type": "application/json",
-                "href": str(request.base_url).rstrip("/")
-                + f"/collections/{collection_id}",
+                "href": base_url + f"/collections/{collection_id}",
+            },
+            {
+                "rel": "items",
+                "type": "application/geo+json",
+                "href": base_url + f"/collections/{collection_id}/items",
             },
             {
                 "rel": "parent",
                 "type": "application/json",
-                "href": str(request.base_url).rstrip("/") + f"/catalogs/{catalog_id}",
+                "href": base_url + f"/catalogs/{catalog_id}",
                 "title": catalog_id,
             },
             {
                 "rel": "root",
                 "type": "application/json",
-                "href": str(request.base_url).rstrip("/"),
+                "href": base_url,
+            },
+            {
+                "rel": "http://www.opengis.net/def/rel/ogc/1.0/queryables",
+                "type": "application/schema+json",
+                "title": "Queryables",
+                "href": base_url + f"/collections/{collection_id}/queryables",
             },
         ]
 
         # Add custom links from storage (non-inferred), excluding duplicates
         if collection.get("links"):
             custom_links = filter_links(collection.get("links", []))
-            # Avoid duplicate canonical links
+            # Avoid duplicate links for canonical, items, and queryables
             for custom_link in custom_links:
-                if custom_link.get("rel") == "canonical":
-                    # Skip if we already have a canonical link with the same href
+                rel = custom_link.get("rel")
+                href = custom_link.get("href")
+                # Skip if we already have a link with the same rel and href
+                if rel in (
+                    "canonical",
+                    "items",
+                    "http://www.opengis.net/def/rel/ogc/1.0/queryables",
+                ):
                     if not any(
-                        link.get("href") == custom_link.get("href")
+                        link.get("href") == href
                         for link in collection["links"]
-                        if link.get("rel") == "canonical"
+                        if link.get("rel") == rel
                     ):
                         collection["links"].append(custom_link)
                 else:
