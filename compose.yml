@@ -1,0 +1,50 @@
+services:
+  app:
+    image: stac-utils/stac-fastapi-pgstac
+    build: .
+    environment:
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8082
+      - RELOAD=true
+      - ENVIRONMENT=local
+      - PGUSER=username
+      - PGPASSWORD=password
+      - PGDATABASE=postgis
+      - PGHOST=database
+      - PGPORT=5432
+      - WEB_CONCURRENCY=10
+      - VSI_CACHE=TRUE
+      - GDAL_HTTP_MERGE_CONSECUTIVE_RANGES=YES
+      - GDAL_DISABLE_READDIR_ON_OPEN=EMPTY_DIR
+      - DB_MIN_CONN_SIZE=1
+      - DB_MAX_CONN_SIZE=1
+      - USE_API_HYDRATE=${USE_API_HYDRATE:-false}
+      - ENABLE_TRANSACTIONS_EXTENSIONS=TRUE
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./stac_fastapi:/app/stac_fastapi
+    depends_on:
+      - database
+    command: bash -c "scripts/wait-for-it.sh database:5432 && python -m stac_fastapi.pgstac.app"
+    develop:
+      watch:
+        - action: rebuild
+          path: ./stac_fastapi/pgstac
+
+  database:
+    image: ghcr.io/stac-utils/pgstac:v0.9.8
+    environment:
+      - POSTGRES_USER=username
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgis
+      - PGUSER=username
+      - PGPASSWORD=password
+      - PGDATABASE=postgis
+    ports:
+      - "5439:5432"
+    command: postgres -N 500
+
+networks:
+  default:
+    name: stac-fastapi-network
