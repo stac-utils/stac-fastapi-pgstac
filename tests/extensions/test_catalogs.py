@@ -1133,3 +1133,41 @@ async def test_get_catalog_collection_items(app_client):
     assert isinstance(data["links"], list)
     # Note: Items endpoint returns standard FeatureCollection, may not have numberMatched/numberReturned
     # Just verify the basic structure is correct
+
+
+@pytest.mark.asyncio
+async def test_get_catalog_collection_no_parent_ids_leak(app_client):
+    """Test that parent_ids is not exposed in get_catalog_collection response."""
+    # Create a catalog
+    await create_catalog(
+        app_client,
+        "catalog-for-parent-ids-test",
+        description="Catalog for parent_ids leak test",
+    )
+
+    # Create a collection linked to the catalog
+    await create_collection(
+        app_client, "collection-for-parent-ids-test", description="Test collection"
+    )
+
+    # Link the collection to the catalog
+    resp = await app_client.post(
+        "/catalogs/catalog-for-parent-ids-test/collections",
+        json={"id": "collection-for-parent-ids-test"},
+    )
+    assert resp.status_code == 200
+
+    # Get the collection via the scoped endpoint
+    resp = await app_client.get(
+        "/catalogs/catalog-for-parent-ids-test/collections/collection-for-parent-ids-test"
+    )
+    assert resp.status_code == 200
+
+    data = resp.json()
+    # Verify parent_ids is NOT in the response
+    assert (
+        "parent_ids" not in data
+    ), "parent_ids should not be exposed in the API response"
+    # Verify the collection has proper links
+    assert "links" in data
+    assert any(link.get("rel") == "parent" for link in data["links"])

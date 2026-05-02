@@ -56,7 +56,7 @@ test:
 
 .PHONY: test-catalogs
 test-catalogs:
-	docker compose run --rm tests python -m pytest tests/extensions/test_catalogs.py -v --log-cli-level $(LOG_LEVEL)
+	$(runtests) python -m pytest /app/tests/extensions/test_catalogs.py -v --log-cli-level $(LOG_LEVEL)
 
 .PHONY: run-database
 run-database:

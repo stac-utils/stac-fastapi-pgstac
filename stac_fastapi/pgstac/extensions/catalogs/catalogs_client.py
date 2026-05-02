@@ -746,6 +746,9 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             collection_id=collection_id,
             request=request,
         )
+        # Run the rewrite logic to generate links AND pop parent_ids
+        if request:
+            self._rewrite_collection_links(collection, catalog_id, request)
         return JSONResponse(content=collection)
 
     async def unlink_catalog_collection(
