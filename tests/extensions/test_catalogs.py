@@ -1171,3 +1171,122 @@ async def test_get_catalog_collection_no_parent_ids_leak(app_client):
     # Verify the collection has proper links
     assert "links" in data
     assert any(link.get("rel") == "parent" for link in data["links"])
+
+
+@pytest.mark.asyncio
+async def test_catalog_collection_links_self_and_canonical(app_client):
+    """Test that collection links are correct for scoped catalog endpoints."""
+    # Create a catalog
+    await create_catalog(
+        app_client,
+        "catalog-for-links-test",
+        description="Catalog for links test",
+    )
+
+    # Create a collection
+    await create_collection(
+        app_client, "collection-for-links-test", description="Test collection"
+    )
+
+    # Link the collection to the catalog
+    resp = await app_client.post(
+        "/catalogs/catalog-for-links-test/collections",
+        json={"id": "collection-for-links-test"},
+    )
+    assert resp.status_code == 200
+
+    # Test 1: Get collection via list endpoint
+    resp_list = await app_client.get("/catalogs/catalog-for-links-test/collections")
+    assert resp_list.status_code == 200
+    list_data = resp_list.json()
+    assert len(list_data["collections"]) > 0
+
+    collection_from_list = next(
+        (c for c in list_data["collections"] if c["id"] == "collection-for-links-test"),
+        None,
+    )
+    assert collection_from_list is not None
+
+    # Test 2: Get collection via detail endpoint
+    resp_detail = await app_client.get(
+        "/catalogs/catalog-for-links-test/collections/collection-for-links-test"
+    )
+    assert resp_detail.status_code == 200
+    collection_from_detail = resp_detail.json()
+
+    # Verify both responses have correct self links
+    self_link_from_list = next(
+        (link for link in collection_from_list["links"] if link.get("rel") == "self"),
+        None,
+    )
+    self_link_from_detail = next(
+        (link for link in collection_from_detail["links"] if link.get("rel") == "self"),
+        None,
+    )
+
+    assert self_link_from_list is not None, "Self link missing from list response"
+    assert self_link_from_detail is not None, "Self link missing from detail response"
+
+    # Self link from list endpoint should point to the detail endpoint
+    assert self_link_from_list["href"].endswith(
+        "/catalogs/catalog-for-links-test/collections/collection-for-links-test"
+    ), f"List endpoint self link incorrect: {self_link_from_list['href']}"
+
+    # Self link from detail endpoint should also point to the detail endpoint
+    assert self_link_from_detail["href"].endswith(
+        "/catalogs/catalog-for-links-test/collections/collection-for-links-test"
+    ), f"Detail endpoint self link incorrect: {self_link_from_detail['href']}"
+
+    # Verify canonical link points to global collections endpoint
+    canonical_link_from_list = next(
+        (
+            link
+            for link in collection_from_list["links"]
+            if link.get("rel") == "canonical"
+        ),
+        None,
+    )
+    canonical_link_from_detail = next(
+        (
+            link
+            for link in collection_from_detail["links"]
+            if link.get("rel") == "canonical"
+        ),
+        None,
+    )
+
+    assert (
+        canonical_link_from_list is not None
+    ), "Canonical link missing from list response"
+    assert (
+        canonical_link_from_detail is not None
+    ), "Canonical link missing from detail response"
+
+    assert canonical_link_from_list["href"].endswith(
+        "/collections/collection-for-links-test"
+    ), f"Canonical link incorrect: {canonical_link_from_list['href']}"
+
+    assert canonical_link_from_detail["href"].endswith(
+        "/collections/collection-for-links-test"
+    ), f"Canonical link incorrect: {canonical_link_from_detail['href']}"
+
+    # Verify parent link points to the catalog
+    parent_link_from_list = next(
+        (link for link in collection_from_list["links"] if link.get("rel") == "parent"),
+        None,
+    )
+    parent_link_from_detail = next(
+        (link for link in collection_from_detail["links"] if link.get("rel") == "parent"),
+        None,
+    )
+
+    assert parent_link_from_list is not None, "Parent link missing from list response"
+    assert parent_link_from_detail is not None, "Parent link missing from detail response"
+
+    assert parent_link_from_list["href"].endswith(
+        "/catalogs/catalog-for-links-test"
+    ), f"Parent link incorrect: {parent_link_from_list['href']}"
+
+    assert parent_link_from_detail["href"].endswith(
+        "/catalogs/catalog-for-links-test"
+    ), f"Parent link incorrect: {parent_link_from_detail['href']}"

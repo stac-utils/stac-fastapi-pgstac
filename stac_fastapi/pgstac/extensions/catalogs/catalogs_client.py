@@ -336,12 +336,25 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         collection_id = collection.get("id")
         parent_ids = collection.get("parent_ids", [])
 
+        # Correct the self link by ensuring it ends with the collection ID
+        path = request.url.path.rstrip("/")
+        if not path.endswith(f"/{collection_id}"):
+            path = f"{path}/{collection_id}"
+
+        self_href = str(request.base_url).rstrip("/") + path
+
         # For scoped endpoint, generate links pointing to this specific catalog
         collection["links"] = [
             {
                 "rel": "self",
                 "type": "application/json",
-                "href": str(request.url),
+                "href": self_href,
+            },
+            {
+                "rel": "canonical",
+                "type": "application/json",
+                "href": str(request.base_url).rstrip("/")
+                + f"/collections/{collection_id}",
             },
             {
                 "rel": "parent",
@@ -356,10 +369,21 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             },
         ]
 
-        # Add custom links from storage (non-inferred)
+        # Add custom links from storage (non-inferred), excluding duplicates
         if collection.get("links"):
             custom_links = filter_links(collection.get("links", []))
-            collection["links"].extend(custom_links)
+            # Avoid duplicate canonical links
+            for custom_link in custom_links:
+                if custom_link.get("rel") == "canonical":
+                    # Skip if we already have a canonical link with the same href
+                    if not any(
+                        link.get("href") == custom_link.get("href")
+                        for link in collection["links"]
+                        if link.get("rel") == "canonical"
+                    ):
+                        collection["links"].append(custom_link)
+                else:
+                    collection["links"].append(custom_link)
 
         # Add related links for alternative parents (poly-hierarchy)
         if parent_ids and len(parent_ids) > 1:
