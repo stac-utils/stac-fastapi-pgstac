@@ -142,6 +142,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
                     }
                 )
 
+            # Remove internal metadata
+            collection.pop("parent_ids", None)
+
         collections["links"] = await CollectionSearchPagingLinks(
             request=request, next=next_link, prev=prev_link
         ).get_links()
@@ -205,6 +208,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
                     "href": urljoin(base_url, f"collections/{collection_id}/queryables"),
                 }
             )
+
+        # Remove internal metadata
+        collection.pop("parent_ids", None)
 
         return collection
 
