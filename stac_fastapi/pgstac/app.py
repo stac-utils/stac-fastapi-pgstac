@@ -59,9 +59,13 @@ logger = logging.getLogger(__name__)
 
 # Optional catalogs extension (optional dependency)
 try:
-    from stac_fastapi_catalogs_extension import CatalogsExtension
+    from stac_fastapi_catalogs_extension import (
+        CatalogsExtension,
+        CatalogsTransactionExtension,
+    )
 except ImportError:
     CatalogsExtension = None
+    CatalogsTransactionExtension = None
 
 settings = Settings()
 
@@ -172,20 +176,32 @@ if "collection_search" in enabled_extensions:
 logger.info("ENABLE_CATALOGS_ROUTE is set to %s", settings.enable_catalogs_route)
 
 if settings.enable_catalogs_route:
-    if CatalogsExtension is None:
+    if CatalogsExtension is None or CatalogsTransactionExtension is None:
         raise ImportError(
             "ENABLE_CATALOGS_ROUTE is set to true, but the catalogs extension is not installed. "
             "Please install it with: pip install stac-fastapi-core[catalogs]."
         )
     try:
+        catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
+
+        # Register the read-only catalogs extension
         catalogs_extension = CatalogsExtension(
-            client=CatalogsClient(database=CatalogsDatabaseLogic()),
-            enable_transactions=with_transactions,
+            client=catalogs_client,
+            settings={"enable_response_models": True},
         )
         application_extensions.append(catalogs_extension)
-        logger.info("CatalogsExtension enabled successfully.")
+        logger.info("CatalogsExtension (read-only) enabled successfully.")
+
+        # Register the transaction extension if transactions are enabled
+        if with_transactions:
+            catalogs_transaction_extension = CatalogsTransactionExtension(
+                client=catalogs_client,
+                settings={"enable_response_models": True},
+            )
+            application_extensions.append(catalogs_transaction_extension)
+            logger.info("CatalogsTransactionExtension enabled successfully.")
     except Exception as e:  # pragma: no cover - defensive
-        logger.error("Failed to initialize CatalogsExtension: %s", e)
+        logger.error("Failed to initialize Catalogs extensions: %s", e)
         raise
 
 

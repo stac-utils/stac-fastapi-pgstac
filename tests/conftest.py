@@ -41,7 +41,10 @@ from stac_fastapi.extensions.core.sort import SortConformanceClasses
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
 
 # Catalogs extension (required for tests)
-from stac_fastapi_catalogs_extension import CatalogsExtension
+from stac_fastapi_catalogs_extension import (
+    CatalogsExtension,
+    CatalogsTransactionExtension,
+)
 from stac_pydantic import Collection, Item
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
@@ -137,13 +140,23 @@ def api_client(request):
         BulkTransactionExtension(client=BulkTransactionsClient()),
     ]
 
-    # Add catalogs extension if available
-    if CatalogsExtension is not None:
+    # Add catalogs extensions if available
+    if CatalogsExtension is not None and CatalogsTransactionExtension is not None:
+        catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
+
+        # Register the read-only catalogs extension
         catalogs_extension = CatalogsExtension(
-            client=CatalogsClient(database=CatalogsDatabaseLogic()),
-            enable_transactions=True,
+            client=catalogs_client,
+            settings={"enable_response_models": True},
         )
         application_extensions.append(catalogs_extension)
+
+        # Register the transaction extension
+        catalogs_transaction_extension = CatalogsTransactionExtension(
+            client=catalogs_client,
+            settings={"enable_response_models": True},
+        )
+        application_extensions.append(catalogs_transaction_extension)
 
     search_extensions = [
         QueryExtension(),
