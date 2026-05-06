@@ -6,7 +6,7 @@ If the variable is not set, enables all extensions.
 """
 
 from contextlib import asynccontextmanager
-from typing import cast
+from typing import Type, cast
 
 from brotli_asgi import BrotliMiddleware
 from fastapi import APIRouter, FastAPI
@@ -44,6 +44,7 @@ settings = Settings()
 
 def instantiate_api(
     settings: Settings = settings,
+    client_class: Type[CoreCrudClient] = CoreCrudClient,
     search_extensions_update: dict[str, ApiExtension] | None = None,
     collection_search_extensions_update: dict[str, ApiExtension] | None = None,
     item_collection_extensions_update: dict[str, ApiExtension] | None = None,
@@ -141,6 +142,8 @@ def instantiate_api(
         yield
         await close_db_connection(app)
 
+    client = client_class(pgstac_search_model=post_request_model)
+
     api = StacApi(
         app=FastAPI(
             openapi_url=settings.openapi_url,
@@ -155,7 +158,7 @@ def instantiate_api(
         router=APIRouter(prefix=settings.prefix_path),
         settings=settings,
         extensions=application_extensions,
-        client=CoreCrudClient(pgstac_search_model=post_request_model),  # type: ignore [arg-type]
+        client=client,  # type: ignore [arg-type]
         response_class=JSONResponse,
         items_get_request_model=items_get_request_model,
         search_get_request_model=get_request_model,
