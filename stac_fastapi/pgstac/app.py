@@ -44,12 +44,23 @@ settings = Settings()
 
 def instantiate_api(
     settings: Settings = settings,
-    client_class: Type[CoreCrudClient] = CoreCrudClient,
+    client: Type[CoreCrudClient] = CoreCrudClient,
     search_extensions_update: dict[str, ApiExtension] | None = None,
     collection_search_extensions_update: dict[str, ApiExtension] | None = None,
     item_collection_extensions_update: dict[str, ApiExtension] | None = None,
 ) -> StacApi:
-    """Instantiate the STAC API."""
+    """Instantiate the STAC API.
+
+    Args:
+        settings: The application settings.
+        client: The client class to use for the API.
+        search_extensions_update: A dictionary of extensions to update the default search extensions with.
+        collection_search_extensions_update: A dictionary of extensions to update the default collection search extensions with.
+        item_collection_extensions_update: A dictionary of extensions to update the default item collection extensions with.
+
+    Returns:
+        An instance of the STAC API.
+    """
 
     search_extensions_map = get_stac_api_extensions(
         default=get_default_search_extensions(), update=search_extensions_update
@@ -142,8 +153,6 @@ def instantiate_api(
         yield
         await close_db_connection(app)
 
-    client = client_class(pgstac_search_model=post_request_model)
-
     api = StacApi(
         app=FastAPI(
             openapi_url=settings.openapi_url,
@@ -158,7 +167,7 @@ def instantiate_api(
         router=APIRouter(prefix=settings.prefix_path),
         settings=settings,
         extensions=application_extensions,
-        client=client,  # type: ignore [arg-type]
+        client=client(pgstac_search_model=post_request_model),  # type: ignore [arg-type]
         response_class=JSONResponse,
         items_get_request_model=items_get_request_model,
         search_get_request_model=get_request_model,
