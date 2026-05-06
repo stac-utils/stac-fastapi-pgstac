@@ -39,6 +39,9 @@ from stac_fastapi.extensions.core.free_text import FreeTextConformanceClasses
 from stac_fastapi.extensions.core.query import QueryConformanceClasses
 from stac_fastapi.extensions.core.sort import SortConformanceClasses
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
+
+# Catalogs extension (required for tests)
+from stac_fastapi_catalogs_extension import CatalogsExtension
 from stac_pydantic import Collection, Item
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
@@ -51,18 +54,10 @@ from stac_fastapi.pgstac.extensions import (
     FreeTextExtension,
     QueryExtension,
 )
+from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import CatalogsClient
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
-
-# Optional catalogs extension
-try:
-    from stac_fastapi_catalogs_extension import CatalogsExtension
-
-    from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import CatalogsClient
-except ImportError:
-    CatalogsExtension = None
-    CatalogsClient = None
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
