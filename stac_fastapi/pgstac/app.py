@@ -20,21 +20,7 @@ from stac_fastapi.api.models import (
     create_post_request_model,
     create_request_model,
 )
-from stac_fastapi.extensions.core import (
-    CollectionSearchExtension,
-    CollectionSearchFilterExtension,
-    FieldsExtension,
-    ItemCollectionFilterExtension,
-    OffsetPaginationExtension,
-    SearchFilterExtension,
-    SortExtension,
-    TokenPaginationExtension,
-    TransactionExtension,
-)
-from stac_fastapi.extensions.core.fields import FieldsConformanceClasses
-from stac_fastapi.extensions.core.free_text import FreeTextConformanceClasses
-from stac_fastapi.extensions.core.query import QueryConformanceClasses
-from stac_fastapi.extensions.core.sort import SortConformanceClasses
+from stac_fastapi.extensions.core import CollectionSearchExtension, TransactionExtension
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
 from stac_fastapi.types.extension import ApiExtension
 from stac_fastapi.types.search import APIRequest
@@ -44,8 +30,12 @@ from starlette.middleware.cors import CORSMiddleware
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
-from stac_fastapi.pgstac.extensions import FreeTextExtension, QueryExtension
-from stac_fastapi.pgstac.extensions.filter import FiltersClient
+from stac_fastapi.pgstac.extensions.utils import (
+    get_default_collection_search_extensions,
+    get_default_item_collection_extensions,
+    get_default_search_extensions,
+    get_stac_api_extensions,
+)
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
 
@@ -54,46 +44,23 @@ settings = Settings()
 
 def instantiate_api(
     settings: Settings = settings,
+    search_extensions_update: dict[str, ApiExtension] | None = None,
+    collection_search_extensions_update: dict[str, ApiExtension] | None = None,
+    item_collection_extensions_update: dict[str, ApiExtension] | None = None,
 ) -> StacApi:
     """Instantiate the STAC API."""
 
-    # search extensions
-    search_extensions_map: dict[str, ApiExtension] = {
-        "query": QueryExtension(),
-        "sort": SortExtension(),
-        "fields": FieldsExtension(),
-        "filter": SearchFilterExtension(client=FiltersClient()),
-        "pagination": TokenPaginationExtension(),
-    }
-
-    # collection_search extensions
-    cs_extensions_map: dict[str, ApiExtension] = {
-        "query": QueryExtension(
-            conformance_classes=[QueryConformanceClasses.COLLECTIONS]
-        ),
-        "sort": SortExtension(conformance_classes=[SortConformanceClasses.COLLECTIONS]),
-        "fields": FieldsExtension(
-            conformance_classes=[FieldsConformanceClasses.COLLECTIONS]
-        ),
-        "filter": CollectionSearchFilterExtension(client=FiltersClient()),
-        "free_text": FreeTextExtension(
-            conformance_classes=[FreeTextConformanceClasses.COLLECTIONS],
-        ),
-        "pagination": OffsetPaginationExtension(),
-    }
-
-    # item_collection extensions
-    itm_col_extensions_map: dict[str, ApiExtension] = {
-        "query": QueryExtension(
-            conformance_classes=[QueryConformanceClasses.ITEMS],
-        ),
-        "sort": SortExtension(
-            conformance_classes=[SortConformanceClasses.ITEMS],
-        ),
-        "fields": FieldsExtension(conformance_classes=[FieldsConformanceClasses.ITEMS]),
-        "filter": ItemCollectionFilterExtension(client=FiltersClient()),
-        "pagination": TokenPaginationExtension(),
-    }
+    search_extensions_map = get_stac_api_extensions(
+        default=get_default_search_extensions(), update=search_extensions_update
+    )
+    cs_extensions_map = get_stac_api_extensions(
+        default=get_default_collection_search_extensions(),
+        update=collection_search_extensions_update,
+    )
+    itm_col_extensions_map = get_stac_api_extensions(
+        default=get_default_item_collection_extensions(),
+        update=item_collection_extensions_update,
+    )
 
     enabled_extensions: set[str] = {
         *search_extensions_map.keys(),
