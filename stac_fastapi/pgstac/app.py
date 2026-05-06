@@ -52,7 +52,9 @@ from stac_fastapi.pgstac.types.search import PgstacSearch
 settings = Settings()
 
 
-def instantiate_api() -> StacApi:
+def instantiate_api(
+    settings: Settings = settings,
+) -> StacApi:
     """Instantiate the STAC API."""
 
     # search extensions
