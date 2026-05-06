@@ -201,6 +201,7 @@ class Settings(ApiSettings):
 
     enabled_extensions: str = ""
     enable_transactions_extensions: bool = False
+    enable_catalogs_route: bool = False
     validate_extensions: bool = False
     """
     Validate `stac_extensions` schemas against submitted data when creating or updated STAC objects.

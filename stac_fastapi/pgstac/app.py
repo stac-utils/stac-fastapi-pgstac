@@ -6,7 +6,6 @@ If the variable is not set, enables all extensions.
 """
 
 import logging
-import os
 from contextlib import asynccontextmanager
 from typing import cast
 
@@ -67,14 +66,6 @@ except ImportError:
 settings = Settings()
 
 
-def _is_env_flag_enabled(name: str) -> bool:
-    """Return True if the given env var is enabled.
-
-    Accepts common truthy values ("yes", "true", "1") case-insensitively.
-    """
-    return os.environ.get(name, "").lower() in ("yes", "true", "1")
-
-
 # search extensions
 search_extensions_map: dict[str, ApiExtension] = {
     "query": QueryExtension(),
@@ -121,7 +112,7 @@ if ext := settings.enabled_extensions:
 
 application_extensions: list[ApiExtension] = []
 
-with_transactions = _is_env_flag_enabled("ENABLE_TRANSACTIONS_EXTENSIONS")
+with_transactions = settings.enable_transactions_extensions
 if with_transactions:
     application_extensions.append(
         TransactionExtension(
@@ -178,10 +169,9 @@ if "collection_search" in enabled_extensions:
     application_extensions.append(collection_search_extension)
 
 # Optional catalogs route
-ENABLE_CATALOGS_ROUTE = _is_env_flag_enabled("ENABLE_CATALOGS_ROUTE")
-logger.info("ENABLE_CATALOGS_ROUTE is set to %s", ENABLE_CATALOGS_ROUTE)
+logger.info("ENABLE_CATALOGS_ROUTE is set to %s", settings.enable_catalogs_route)
 
-if ENABLE_CATALOGS_ROUTE:
+if settings.enable_catalogs_route:
     if CatalogsExtension is None:
         logger.warning(
             "ENABLE_CATALOGS_ROUTE is set to true, but the catalogs extension is not installed. "
