@@ -172,13 +172,13 @@ if "collection_search" in enabled_extensions:
     collections_get_request_model = collection_search_extension.GET
     application_extensions.append(collection_search_extension)
 
-# Optional catalogs route
-logger.info("ENABLE_CATALOGS_ROUTE is set to %s", settings.enable_catalogs_route)
+# Optional catalogs extension
+logger.info("ENABLE_CATALOGS_EXTENSION is set to %s", settings.enable_catalogs_extension)
 
-if settings.enable_catalogs_route:
+if settings.enable_catalogs_extension:
     if CatalogsExtension is None or CatalogsTransactionExtension is None:
         raise ImportError(
-            "ENABLE_CATALOGS_ROUTE is set to true, but the catalogs extension is not installed. "
+            "ENABLE_CATALOGS_EXTENSION is set to true, but the catalogs extension is not installed. "
             "Please install it with: pip install stac-fastapi-core[catalogs]."
         )
     try:

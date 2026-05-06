@@ -23,7 +23,7 @@ The optional Multi-Tenant Catalogs Extension provides discovery and management e
 
 For more information about the Multi-Tenant Catalogs specification, see [StacLabs/multi-tenant-catalogs](https://github.com/StacLabs/multi-tenant-catalogs).
 
-To enable the catalogs extension, set `ENABLE_CATALOGS_ROUTE=TRUE/YES/1`.
+To enable the catalogs extension, set `ENABLE_CATALOGS_EXTENSION=TRUE/YES/1`.
 
 When `ENABLE_TRANSACTIONS_EXTENSIONS=TRUE`, additional write endpoints are available for creating, updating, and deleting catalogs and managing relationships (linking/unlinking catalogs and collections).
 

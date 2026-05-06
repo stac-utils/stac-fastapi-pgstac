@@ -13,7 +13,7 @@
 
 - implement `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
 - add api test for `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
-- Multi-Tenant Catalogs Extension: Integrated optional `stac-fastapi-catalogs-extension` to support native DAG (Directed Acyclic Graph) traversal of Catalogs and Collections. Enabled via `ENABLE_CATALOGS_ROUTE` environment variable ([#366](https://github.com/stac-utils/stac-fastapi-pgstac/pull/366))
+- Multi-Tenant Catalogs Extension: Integrated optional `stac-fastapi-catalogs-extension` to support native DAG (Directed Acyclic Graph) traversal of Catalogs and Collections. Enabled via `ENABLE_CATALOGS_EXTENSION` environment variable ([#366](https://github.com/stac-utils/stac-fastapi-pgstac/pull/366))
 
 ### Fixed
 
