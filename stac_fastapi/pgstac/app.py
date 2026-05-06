@@ -173,20 +173,20 @@ logger.info("ENABLE_CATALOGS_ROUTE is set to %s", settings.enable_catalogs_route
 
 if settings.enable_catalogs_route:
     if CatalogsExtension is None:
-        logger.warning(
+        raise ImportError(
             "ENABLE_CATALOGS_ROUTE is set to true, but the catalogs extension is not installed. "
-            "Please install it with: pip install stac-fastapi-core[catalogs].",
+            "Please install it with: pip install stac-fastapi-core[catalogs]."
         )
-    else:
-        try:
-            catalogs_extension = CatalogsExtension(
-                client=CatalogsClient(database=CatalogsDatabaseLogic()),
-                enable_transactions=with_transactions,
-            )
-            application_extensions.append(catalogs_extension)
-            logger.info("CatalogsExtension enabled successfully.")
-        except Exception as e:  # pragma: no cover - defensive
-            logger.warning("Failed to initialize CatalogsExtension: %s", e)
+    try:
+        catalogs_extension = CatalogsExtension(
+            client=CatalogsClient(database=CatalogsDatabaseLogic()),
+            enable_transactions=with_transactions,
+        )
+        application_extensions.append(catalogs_extension)
+        logger.info("CatalogsExtension enabled successfully.")
+    except Exception as e:  # pragma: no cover - defensive
+        logger.error("Failed to initialize CatalogsExtension: %s", e)
+        raise
 
 
 @asynccontextmanager
