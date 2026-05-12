@@ -147,14 +147,14 @@ def api_client(request):
         # Register the read-only catalogs extension
         catalogs_extension = CatalogsExtension(
             client=catalogs_client,
-            settings={"enable_response_models": True},
+            settings={"enable_response_models": api_settings.enable_response_models},
         )
         application_extensions.append(catalogs_extension)
 
         # Register the transaction extension
         catalogs_transaction_extension = CatalogsTransactionExtension(
             client=catalogs_client,
-            settings={"enable_response_models": True},
+            settings={"enable_response_models": api_settings.enable_response_models},
         )
         application_extensions.append(catalogs_transaction_extension)
 

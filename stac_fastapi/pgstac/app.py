@@ -187,7 +187,7 @@ if settings.enable_catalogs_extension:
         # Register the read-only catalogs extension
         catalogs_extension = CatalogsExtension(
             client=catalogs_client,
-            settings={"enable_response_models": True},
+            settings={"enable_response_models": settings.enable_response_models},
         )
         application_extensions.append(catalogs_extension)
         logger.info("CatalogsExtension (read-only) enabled successfully.")
@@ -196,7 +196,7 @@ if settings.enable_catalogs_extension:
         if with_transactions:
             catalogs_transaction_extension = CatalogsTransactionExtension(
                 client=catalogs_client,
-                settings={"enable_response_models": True},
+                settings={"enable_response_models": settings.enable_response_models},
             )
             application_extensions.append(catalogs_transaction_extension)
             logger.info("CatalogsTransactionExtension enabled successfully.")
