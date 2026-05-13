@@ -80,25 +80,8 @@ def instantiate_api(
         *itm_col_extensions_map.keys(),
         "collection_search",
     }
-
     if ext := settings.enabled_extensions:
         enabled_extensions = set(ext.split(","))
-
-    application_extensions: list[ApiExtension] = []
-
-    with_transactions = settings.enable_transactions_extensions
-    if with_transactions:
-        application_extensions.append(
-            TransactionExtension(
-                client=TransactionsClient(),
-                settings=settings,
-                response_class=JSONResponse,
-            ),
-        )
-
-        application_extensions.append(
-            BulkTransactionExtension(client=BulkTransactionsClient()),
-        )
 
     # /search models
     search_extensions = [
@@ -110,7 +93,6 @@ def instantiate_api(
         search_extensions, base_model=PgstacSearch
     )
     get_request_model = create_get_request_model(search_extensions)
-    application_extensions.extend(search_extensions)
 
     # /collections/{collectionId}/items model
     items_get_request_model: type[APIRequest] = ItemCollectionUri
@@ -130,10 +112,9 @@ def instantiate_api(
             ),
         )
 
-        application_extensions.extend(itm_col_extensions)
-
     # /collections model
     collections_get_request_model: type[APIRequest] = EmptyRequest
+    collection_search_extension = None
     if "collection_search" in enabled_extensions:
         cs_extensions = [
             extension
@@ -144,6 +125,28 @@ def instantiate_api(
             cs_extensions
         )
         collections_get_request_model = collection_search_extension.GET
+
+    with_transactions = settings.enable_transactions_extensions
+
+    transaction_extensions = []
+    if with_transactions:
+        transaction_extensions.append(
+            TransactionExtension(
+                client=TransactionsClient(),
+                settings=settings,
+                response_class=JSONResponse,
+            ),
+        )
+        transaction_extensions.append(
+            BulkTransactionExtension(client=BulkTransactionsClient()),
+        )
+
+    application_extensions = [
+        *search_extensions,
+        *itm_col_extensions,
+        *transaction_extensions,
+    ]
+    if collection_search_extension is not None:
         application_extensions.append(collection_search_extension)
 
     @asynccontextmanager
