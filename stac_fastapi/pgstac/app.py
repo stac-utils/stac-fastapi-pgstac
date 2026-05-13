@@ -128,7 +128,7 @@ def instantiate_api(
 
     with_transactions = settings.enable_transactions_extensions
 
-    transaction_extensions = []
+    transaction_extensions: list[ApiExtension] = []
     if with_transactions:
         transaction_extensions.append(
             TransactionExtension(
