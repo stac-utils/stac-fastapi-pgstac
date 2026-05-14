@@ -7,7 +7,6 @@ from typing import Any, cast
 import attr
 from buildpg import render
 from fastapi import HTTPException
-from stac_fastapi.types import stac as stac_types
 from stac_fastapi.types.errors import NotFoundError
 from stac_fastapi.types.stac import ItemCollection
 from stac_fastapi_catalogs_extension.client import AsyncBaseCatalogsClient
@@ -218,7 +217,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         """
         # Convert Pydantic model to dict if needed
         catalog_dict = cast(
-            stac_types.Catalog,
+            dict[str, Any],
             catalog.model_dump(mode="json")
             if hasattr(catalog, "model_dump")
             else catalog,
@@ -264,7 +263,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
     async def update_catalog(
         self, catalog_id: str, catalog: dict, request: Request | None = None, **kwargs
-    ) -> stac_types.Catalog:
+    ) -> dict[str, Any]:
         """Update an existing catalog.
 
         Args:
@@ -278,7 +277,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         """
         # Convert Pydantic model to dict if needed
         catalog_dict = cast(
-            stac_types.Catalog,
+            dict[str, Any],
             catalog.model_dump(mode="json")
             if hasattr(catalog, "model_dump")
             else catalog,
