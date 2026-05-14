@@ -137,7 +137,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         # Generate links dynamically for each catalog
         if request and catalogs_list:
             for catalog in catalogs_list:
-                await self._generate_catalog_links(
+                await CatalogsClient._generate_catalog_links(
                     catalog=catalog,
                     database=self.database,
                     request=request,
@@ -190,7 +190,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             catalog = await self.database.find_catalog(catalog_id, request=request)
 
             if request:
-                await self._generate_catalog_links(
+                await CatalogsClient._generate_catalog_links(
                     catalog=catalog,
                     database=self.database,
                     request=request,
@@ -254,7 +254,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
         # Generate links dynamically for response
         if request:
-            await self._generate_catalog_links(
+            await CatalogsClient._generate_catalog_links(
                 catalog=catalog_dict,
                 database=self.database,
                 request=request,
@@ -301,8 +301,8 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         """
         await self.database.delete_catalog(catalog_id, refresh=True, request=request)
 
+    @staticmethod
     def _rewrite_collection_links(
-        self,
         collection: dict,
         catalog_id: str,
         request: Request,
@@ -402,8 +402,9 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         # Remove internal metadata
         collection.pop("parent_ids", None)
 
+    @staticmethod
     def _extract_limit_and_token(
-        self, limit: int | None, token: str | None, request: Request | None
+        limit: int | None, token: str | None, request: Request | None
     ) -> tuple[int, str | None]:
         """Extract limit and token from parameters and request query params."""
         if request and not token:
@@ -421,8 +422,8 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
         return limit or 10, token
 
+    @staticmethod
     async def _build_response_links(
-        self,
         catalog_id: str,
         offset: int,
         original_count: int,
@@ -483,7 +484,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         Returns:
             Collections object containing collections list, total count, and pagination info.
         """
-        limit, token = self._extract_limit_and_token(limit, token, request)
+        limit, token = CatalogsClient._extract_limit_and_token(limit, token, request)
 
         (
             collections_list,
@@ -504,9 +505,9 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
         if request and collections_list:
             for collection in collections_list:
-                self._rewrite_collection_links(collection, catalog_id, request)
+                CatalogsClient._rewrite_collection_links(collection, catalog_id, request)
 
-        response_links = await self._build_response_links(
+        response_links = await CatalogsClient._build_response_links(
             catalog_id, offset, original_count, total_hits, request
         )
 
@@ -518,8 +519,9 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         }
         return JSONResponse(_remove_null_titles(result_dict))
 
+    @staticmethod
     async def _generate_sub_catalog_links(
-        self, catalogs_list: list[dict], catalog_id: str, request: Request | None
+        catalogs_list: list[dict], catalog_id: str, request: Request | None
     ) -> None:
         """Generate links for each sub-catalog in the list."""
         if not (request and catalogs_list):
@@ -570,7 +572,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         except Exception as e:
             raise NotFoundError(f"Catalog {catalog_id} not found") from e
 
-        limit, token = self._extract_limit_and_token(limit, token, request)
+        limit, token = CatalogsClient._extract_limit_and_token(limit, token, request)
 
         catalogs_list, total_hits, _ = await self.database.get_sub_catalogs(
             catalog_id=catalog_id,
@@ -585,9 +587,11 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         if catalogs_list and len(catalogs_list) > limit:
             catalogs_list = catalogs_list[:limit]
 
-        await self._generate_sub_catalog_links(catalogs_list, catalog_id, request)
+        await CatalogsClient._generate_sub_catalog_links(
+            catalogs_list, catalog_id, request
+        )
 
-        pagination_links = await self._build_response_links(
+        pagination_links = await CatalogsClient._build_response_links(
             catalog_id, offset, original_count, total_hits, request
         )
 
@@ -764,7 +768,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         )
         # Run the rewrite logic to generate links AND pop parent_ids
         if request:
-            self._rewrite_collection_links(collection, catalog_id, request)
+            CatalogsClient._rewrite_collection_links(collection, catalog_id, request)
         return JSONResponse(content=collection)
 
     async def unlink_catalog_collection(
@@ -788,9 +792,8 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             request=request,
         )
 
-    def _extract_pagination_tokens(
-        self, links: list[dict]
-    ) -> tuple[str | None, str | None]:
+    @staticmethod
+    def _extract_pagination_tokens(links: list[dict]) -> tuple[str | None, str | None]:
         """Extract next and prev tokens from search links."""
         next_token = None
         prev_token = None
@@ -874,7 +877,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
         # Extract pagination tokens from search links
         extra_links = item_collection.get("links", [])
-        next_token, prev_token = self._extract_pagination_tokens(extra_links)
+        next_token, prev_token = CatalogsClient._extract_pagination_tokens(extra_links)
 
         # Generate pagination links for the scoped endpoint
         from stac_fastapi.pgstac.models.links import PagingLinks
