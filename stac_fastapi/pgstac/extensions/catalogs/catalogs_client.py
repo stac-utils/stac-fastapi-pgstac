@@ -57,6 +57,52 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
     database: Any = attr.ib()
 
+    @staticmethod
+    async def _generate_catalog_links(
+        catalog: dict,
+        database: Any,
+        request: Request,
+    ) -> None:
+        """Generate links for a catalog and remove internal metadata.
+
+        This method extracts parent_ids, fetches child catalogs, generates
+        appropriate links using CatalogLinks, and removes internal metadata
+        before returning the response.
+
+        Args:
+            catalog: The catalog dictionary (modified in-place)
+            database: The database client for fetching child catalogs
+            request: The FastAPI request object for link generation
+        """
+        catalog_id = cast(str, catalog.get("id"))
+        parent_ids_raw = catalog.get("parent_ids", [])
+        parent_ids: list[str] = (
+            cast(list[str], parent_ids_raw)
+            if isinstance(parent_ids_raw, list)
+            else ([cast(str, parent_ids_raw)] if parent_ids_raw else [])
+        )
+
+        # Get child catalogs for link generation
+        child_catalogs, _, _ = await database.get_sub_catalogs(
+            catalog_id=catalog_id,
+            limit=1000,
+            request=request,
+        )
+        child_catalog_ids: list[str] = (
+            [cast(str, c.get("id")) for c in child_catalogs] if child_catalogs else []
+        )
+
+        # Generate links
+        catalog["links"] = await CatalogLinks(
+            catalog_id=catalog_id,
+            request=request,
+            parent_ids=parent_ids,
+            child_catalog_ids=child_catalog_ids,
+        ).get_links(extra_links=catalog.get("links"))
+
+        # Remove internal metadata before returning
+        catalog.pop("parent_ids", None)
+
     async def get_catalogs(
         self,
         limit: int | None = None,
@@ -91,36 +137,11 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         # Generate links dynamically for each catalog
         if request and catalogs_list:
             for catalog in catalogs_list:
-                catalog_id = cast(str, catalog.get("id"))
-                parent_ids_raw = catalog.get("parent_ids", [])
-                parent_ids: list[str] = (
-                    cast(list[str], parent_ids_raw)
-                    if isinstance(parent_ids_raw, list)
-                    else ([cast(str, parent_ids_raw)] if parent_ids_raw else [])
-                )
-
-                # Get child catalogs for link generation
-                child_catalogs, _, _ = await self.database.get_sub_catalogs(
-                    catalog_id=catalog_id,
-                    limit=1000,
+                await self._generate_catalog_links(
+                    catalog=catalog,
+                    database=self.database,
                     request=request,
                 )
-                child_catalog_ids: list[str] = (
-                    [cast(str, c.get("id")) for c in child_catalogs]
-                    if child_catalogs
-                    else []
-                )
-
-                # Generate links
-                catalog["links"] = await CatalogLinks(
-                    catalog_id=catalog_id,
-                    request=request,
-                    parent_ids=parent_ids,
-                    child_catalog_ids=child_catalog_ids,
-                ).get_links(extra_links=catalog.get("links"))
-
-                # Remove internal metadata before returning
-                catalog.pop("parent_ids", None)
 
         pagination_links: list[dict] = []
         if request:
@@ -169,34 +190,11 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             catalog = await self.database.find_catalog(catalog_id, request=request)
 
             if request:
-                parent_ids_raw = catalog.get("parent_ids", [])
-                parent_ids: list[str] = (
-                    cast(list[str], parent_ids_raw)
-                    if isinstance(parent_ids_raw, list)
-                    else ([cast(str, parent_ids_raw)] if parent_ids_raw else [])
-                )
-
-                # Get child catalogs (catalogs that have this catalog in their parent_ids)
-                child_catalogs, _, _ = await self.database.get_sub_catalogs(
-                    catalog_id=catalog_id,
-                    limit=1000,  # Get all children for link generation
+                await self._generate_catalog_links(
+                    catalog=catalog,
+                    database=self.database,
                     request=request,
                 )
-                child_catalog_ids: list[str] = (
-                    [cast(str, c.get("id")) for c in child_catalogs]
-                    if child_catalogs
-                    else []
-                )
-
-                catalog["links"] = await CatalogLinks(
-                    catalog_id=catalog_id,
-                    request=request,
-                    parent_ids=parent_ids,
-                    child_catalog_ids=child_catalog_ids,
-                ).get_links(extra_links=catalog.get("links"))
-
-            # Remove internal metadata before returning
-            catalog.pop("parent_ids", None)
 
             return JSONResponse(content=catalog)
         except NotFoundError:
@@ -256,34 +254,11 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
         # Generate links dynamically for response
         if request:
-            catalog_id = cast(str, catalog_dict.get("id"))
-            parent_ids_raw = catalog_dict.get("parent_ids", [])
-            parent_ids: list[str] = (
-                cast(list[str], parent_ids_raw)
-                if isinstance(parent_ids_raw, list)
-                else ([cast(str, parent_ids_raw)] if parent_ids_raw else [])
-            )
-
-            # Get child catalogs for link generation
-            child_catalogs, _, _ = await self.database.get_sub_catalogs(
-                catalog_id=catalog_id,
-                limit=1000,
+            await self._generate_catalog_links(
+                catalog=catalog_dict,
+                database=self.database,
                 request=request,
             )
-            child_catalog_ids: list[str] = (
-                [cast(str, c.get("id")) for c in child_catalogs] if child_catalogs else []
-            )
-
-            # Generate links
-            catalog_dict["links"] = await CatalogLinks(
-                catalog_id=catalog_id,
-                request=request,
-                parent_ids=parent_ids,
-                child_catalog_ids=child_catalog_ids,
-            ).get_links(extra_links=catalog_dict.get("links"))
-
-        # Remove internal metadata before returning
-        catalog_dict.pop("parent_ids", None)  # type: ignore
 
         return JSONResponse(content=catalog_dict, status_code=201)
 
