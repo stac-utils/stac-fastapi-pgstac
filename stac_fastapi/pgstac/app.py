@@ -66,9 +66,7 @@ def instantiate_api(
             f"Expected `extensions` to be an instance of `Extensions`, got {type(extensions)}"
         )
 
-    enabled_extensions = extensions.default_enabled
-    if ext := settings.enabled_extensions:
-        enabled_extensions = set(ext.split(","))
+    enabled_extensions = settings.enabled_extensions or extensions.default_enabled
 
     # /search models
     search_extensions = [
