@@ -72,9 +72,10 @@ class Extensions:
     search: dict[str, ApiExtension] = field(default_factory=dict)
     collection_search: dict[str, ApiExtension] = field(default_factory=dict)
     item_collection: dict[str, ApiExtension] = field(default_factory=dict)
+    extra: dict[str, ApiExtension] = field(default_factory=dict)
 
     def __post_init__(self):
-        for field_name in ("search", "collection_search", "item_collection"):
+        for field_name in ("search", "collection_search", "item_collection", "extra"):
             value = getattr(self, field_name)
             invalid = {
                 k: type(v).__name__
@@ -97,5 +98,6 @@ class Extensions:
             *self.search.keys(),
             *self.collection_search.keys(),
             *self.item_collection.keys(),
+            *self.extra.keys(),
             "collection_search",
         }
