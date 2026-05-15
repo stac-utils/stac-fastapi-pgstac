@@ -179,7 +179,7 @@ if settings.enable_catalogs_extension:
     if CatalogsExtension is None or CatalogsTransactionExtension is None:
         raise ImportError(
             "ENABLE_CATALOGS_EXTENSION is set to true, but the catalogs extension is not installed. "
-            "Please install it with: pip install stac-fastapi-core[catalogs]."
+            "Please install it with: pip install stac-fastapi-pgstac[catalogs]."
         )
     try:
         catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
