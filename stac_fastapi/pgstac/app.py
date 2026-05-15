@@ -30,63 +30,50 @@ from starlette.middleware.cors import CORSMiddleware
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
-from stac_fastapi.pgstac.extensions.utils import (
-    get_default_collection_search_extensions,
-    get_default_item_collection_extensions,
-    get_default_search_extensions,
-    get_stac_api_extensions,
-)
+from stac_fastapi.pgstac.models.extensions import Extensions
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
 
 settings = Settings()
+extensions = Extensions()
 
 
 def instantiate_api(
     settings: Settings = settings,
     client: Type[CoreCrudClient] = CoreCrudClient,
-    search_extensions_update: dict[str, ApiExtension] | None = None,
-    collection_search_extensions_update: dict[str, ApiExtension] | None = None,
-    item_collection_extensions_update: dict[str, ApiExtension] | None = None,
+    extensions: Extensions = extensions,
 ) -> StacApi:
     """Instantiate the STAC API.
 
     Args:
-        settings: The application settings.
-        client: The client class to use for the API.
-        search_extensions_update: A dictionary of extensions to update the default search extensions with.
-        collection_search_extensions_update: A dictionary of extensions to update the default collection search extensions with.
-        item_collection_extensions_update: A dictionary of extensions to update the default item collection extensions with.
-
+        settings: The application settings, must be an instance of `Settings`.
+        client: The client class to use for the API, must be a subclass of `CoreCrudClient`.
+        extensions: The extensions to use for the API, must be an instance of `Extensions`.
+        Provided extensions will be merged with the default extensions.
     Returns:
         An instance of the STAC API.
     """
+    if not isinstance(settings, Settings):
+        raise TypeError(
+            f"Expected `settings` to be an instance of `Settings`, got {type(settings)}"
+        )
+    if not isinstance(client, type) or not issubclass(client, CoreCrudClient):
+        raise TypeError(
+            f"Expected `client` to be a subclass of `CoreCrudClient`, got {type(client)}"
+        )
+    if not isinstance(extensions, Extensions):
+        raise TypeError(
+            f"Expected `extensions` to be an instance of `Extensions`, got {type(extensions)}"
+        )
 
-    search_extensions_map = get_stac_api_extensions(
-        default=get_default_search_extensions(), update=search_extensions_update
-    )
-    cs_extensions_map = get_stac_api_extensions(
-        default=get_default_collection_search_extensions(),
-        update=collection_search_extensions_update,
-    )
-    itm_col_extensions_map = get_stac_api_extensions(
-        default=get_default_item_collection_extensions(),
-        update=item_collection_extensions_update,
-    )
-
-    enabled_extensions: set[str] = {
-        *search_extensions_map.keys(),
-        *cs_extensions_map.keys(),
-        *itm_col_extensions_map.keys(),
-        "collection_search",
-    }
+    enabled_extensions = extensions.default_enabled
     if ext := settings.enabled_extensions:
         enabled_extensions = set(ext.split(","))
 
     # /search models
     search_extensions = [
         extension
-        for key, extension in search_extensions_map.items()
+        for key, extension in extensions.search.items()
         if key in enabled_extensions
     ]
     post_request_model = create_post_request_model(
@@ -98,7 +85,7 @@ def instantiate_api(
     items_get_request_model: type[APIRequest] = ItemCollectionUri
     itm_col_extensions = [
         extension
-        for key, extension in itm_col_extensions_map.items()
+        for key, extension in extensions.item_collection.items()
         if key in enabled_extensions
     ]
     if itm_col_extensions:
@@ -118,7 +105,7 @@ def instantiate_api(
     if "collection_search" in enabled_extensions:
         cs_extensions = [
             extension
-            for key, extension in cs_extensions_map.items()
+            for key, extension in extensions.collection_search.items()
             if key in enabled_extensions
         ]
         collection_search_extension = CollectionSearchExtension.from_extensions(

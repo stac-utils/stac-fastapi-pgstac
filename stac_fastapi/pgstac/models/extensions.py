@@ -1,3 +1,5 @@
+from dataclasses import dataclass, field
+
 from stac_fastapi.extensions.core import (
     CollectionSearchFilterExtension,
     FieldsExtension,
@@ -16,21 +18,15 @@ from stac_fastapi.types.extension import ApiExtension
 from stac_fastapi.pgstac.extensions import FreeTextExtension, QueryExtension
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
 
-
-def get_default_search_extensions() -> dict[str, ApiExtension]:
-    """Get the default search extensions."""
-    return {
+DEFAULT_EXTENSIONS = {
+    "search": {
         "query": QueryExtension(),
         "sort": SortExtension(),
         "fields": FieldsExtension(),
         "filter": SearchFilterExtension(client=FiltersClient()),
         "pagination": TokenPaginationExtension(),
-    }
-
-
-def get_default_collection_search_extensions() -> dict[str, ApiExtension]:
-    """Get the default collection search extensions."""
-    return {
+    },
+    "collection_search": {
         "query": QueryExtension(
             conformance_classes=[QueryConformanceClasses.COLLECTIONS]
         ),
@@ -43,12 +39,8 @@ def get_default_collection_search_extensions() -> dict[str, ApiExtension]:
             conformance_classes=[FreeTextConformanceClasses.COLLECTIONS],
         ),
         "pagination": OffsetPaginationExtension(),
-    }
-
-
-def get_default_item_collection_extensions() -> dict[str, ApiExtension]:
-    """Get the default item collection extensions."""
-    return {
+    },
+    "item_collection": {
         "query": QueryExtension(
             conformance_classes=[QueryConformanceClasses.ITEMS],
         ),
@@ -58,7 +50,8 @@ def get_default_item_collection_extensions() -> dict[str, ApiExtension]:
         "fields": FieldsExtension(conformance_classes=[FieldsConformanceClasses.ITEMS]),
         "filter": ItemCollectionFilterExtension(client=FiltersClient()),
         "pagination": TokenPaginationExtension(),
-    }
+    },
+}
 
 
 def get_stac_api_extensions(
@@ -70,3 +63,39 @@ def get_stac_api_extensions(
     if update:
         extensions.update(update)
     return extensions
+
+
+@dataclass
+class Extensions:
+    """Updating the default extensions. Provided extensions are merged with defaults."""
+
+    search: dict[str, ApiExtension] = field(default_factory=dict)
+    collection_search: dict[str, ApiExtension] = field(default_factory=dict)
+    item_collection: dict[str, ApiExtension] = field(default_factory=dict)
+
+    def __post_init__(self):
+        for field_name in ("search", "collection_search", "item_collection"):
+            value = getattr(self, field_name)
+            invalid = {
+                k: type(v).__name__
+                for k, v in value.items()
+                if not isinstance(v, ApiExtension)
+            }
+            if invalid:
+                raise TypeError(
+                    f"'{field_name}' contains values that are not ApiExtension instances: {invalid}"
+                )
+            default = DEFAULT_EXTENSIONS.get(field_name)
+            setattr(
+                self, field_name, get_stac_api_extensions(default=default, update=value)
+            )
+
+    @property
+    def default_enabled(self) -> set[str]:
+        """Return the unique keys from all extension groups plus 'collection_search'."""
+        return {
+            *self.search.keys(),
+            *self.collection_search.keys(),
+            *self.item_collection.keys(),
+            "collection_search",
+        }
