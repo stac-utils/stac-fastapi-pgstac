@@ -1338,3 +1338,68 @@ async def test_catalog_collection_links_self_and_canonical(app_client):
     assert queryables_links_from_detail[0]["href"].endswith(
         "/collections/collection-for-links-test/queryables"
     ), f"Queryables link incorrect: {queryables_links_from_detail[0]['href']}"
+
+
+@pytest.mark.asyncio
+async def test_collections_endpoint_filters_out_catalogs(app_client):
+    """Test that /collections endpoint filters out catalogs from the response.
+
+    This test verifies that when catalogs are stored in the collections table,
+    they are filtered out from the /collections endpoint response at the database
+    level using CQL2 to prevent validation errors (response model expects only
+    type='Collection').
+    """
+    # Create a catalog
+    catalog_data = {
+        "id": "test-catalog-for-filtering",
+        "type": "Catalog",
+        "title": "Test Catalog for Filtering",
+        "description": "A catalog to test filtering",
+        "stac_version": "1.0.0",
+        "links": [],
+    }
+    catalog_resp = await app_client.post("/catalogs", json=catalog_data)
+    assert catalog_resp.status_code == 201
+
+    # Create a collection
+    collection_data = {
+        "id": "test-collection-for-filtering",
+        "type": "Collection",
+        "description": "A collection to test filtering",
+        "stac_version": "1.0.0",
+        "license": "proprietary",
+        "extent": {
+            "spatial": {"bbox": [[-180, -90, 180, 90]]},
+            "temporal": {"interval": [["2020-01-01T00:00:00Z", None]]},
+        },
+        "links": [],
+    }
+    collection_resp = await app_client.post("/collections", json=collection_data)
+    assert collection_resp.status_code == 201
+
+    # Call /collections endpoint
+    collections_resp = await app_client.get("/collections")
+    assert collections_resp.status_code == 200
+
+    collections_data = collections_resp.json()
+    # Verify that only collections are returned (no catalogs)
+    for item in collections_data["collections"]:
+        assert item["type"] == "Collection", (
+            f"Expected only Collections, but found {item['type']} "
+            f"for item {item.get('id')}"
+        )
+
+    # Verify that our test collection is in the response
+    collection_ids = [c["id"] for c in collections_data["collections"]]
+    assert "test-collection-for-filtering" in collection_ids
+
+    # Verify that the catalog is NOT in the collections response
+    assert "test-catalog-for-filtering" not in collection_ids
+
+    # Verify that numberReturned reflects the filtered count (current page only)
+    assert collections_data["numberReturned"] == len(collections_data["collections"])
+    # numberMatched is database total minus filtered catalogs from current page
+    # Since we have 1 catalog and 1 collection, and the catalog is filtered out:
+    # numberMatched should be (database_total - 1_catalog_filtered)
+    # This should equal numberReturned since the catalog was on the current page
+    assert collections_data["numberMatched"] == collections_data["numberReturned"]
