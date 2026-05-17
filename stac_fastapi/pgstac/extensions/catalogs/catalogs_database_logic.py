@@ -133,15 +133,15 @@ class CatalogsDatabaseLogic:
                     "offset": offset,
                 }
 
+                if sort:
+                    search_query["sortby"] = sort
+
                 catalogs, total_count, next_link = await _execute_collection_search(
                     conn, search_query
                 )
                 logger.info(f"Successfully fetched {len(catalogs)} catalogs")
         except (AttributeError, KeyError, TypeError) as e:
             logger.warning(f"Error parsing catalog search results: {e}")
-            catalogs = []
-        except Exception as e:
-            logger.error(f"Unexpected error fetching all catalogs: {e}", exc_info=True)
             catalogs = []
 
         return catalogs, total_count, next_link
@@ -308,6 +308,7 @@ class CatalogsDatabaseLogic:
         limit: int = 10,
         token: str | None = None,
         request: Any = None,
+        sort: list[dict[str, Any]] | None = None,
     ) -> tuple[list[dict[str, Any]], int | None, dict[str, Any] | None]:
         """Get all children (catalogs and collections) of a catalog.
 
@@ -350,16 +351,14 @@ class CatalogsDatabaseLogic:
                     "offset": offset,
                 }
 
+                if sort:
+                    search_query["sortby"] = sort
+
                 children, total_count, next_link = await _execute_collection_search(
                     conn, search_query
                 )
         except (AttributeError, KeyError, TypeError) as e:
             logger.warning(f"Error parsing catalog children results: {e}")
-            children = []
-        except Exception as e:
-            logger.error(
-                f"Unexpected error fetching catalog children: {e}", exc_info=True
-            )
             children = []
 
         return children, total_count, next_link
@@ -370,6 +369,7 @@ class CatalogsDatabaseLogic:
         limit: int = 10,
         token: str | None = None,
         request: Any = None,
+        sort: list[dict[str, Any]] | None = None,
     ) -> tuple[list[dict[str, Any]], int | None, dict[str, Any] | None]:
         """Get collections linked to a catalog.
 
@@ -418,16 +418,14 @@ class CatalogsDatabaseLogic:
                     "offset": offset,
                 }
 
+                if sort:
+                    search_query["sortby"] = sort
+
                 collections, total_count, next_link = await _execute_collection_search(
                     conn, search_query
                 )
         except (AttributeError, KeyError, TypeError) as e:
             logger.warning(f"Error parsing catalog collections results: {e}")
-            collections = []
-        except Exception as e:
-            logger.error(
-                f"Unexpected error fetching catalog collections: {e}", exc_info=True
-            )
             collections = []
 
         return collections, total_count, next_link
@@ -438,6 +436,7 @@ class CatalogsDatabaseLogic:
         limit: int = 10,
         token: str | None = None,
         request: Any = None,
+        sort: list[dict[str, Any]] | None = None,
     ) -> tuple[list[dict[str, Any]], int | None, dict[str, Any] | None]:
         """Get sub-catalogs of a catalog.
 
@@ -487,15 +486,15 @@ class CatalogsDatabaseLogic:
                     "offset": offset,
                 }
 
+                if sort:
+                    search_query["sortby"] = sort
+
                 catalogs, total_count, next_link = await _execute_collection_search(
                     conn, search_query
                 )
                 logger.debug(f"Found {len(catalogs)} sub-catalogs")
         except (AttributeError, KeyError, TypeError) as e:
             logger.warning(f"Error parsing sub-catalogs results: {e}")
-            catalogs = []
-        except Exception as e:
-            logger.error(f"Unexpected error fetching sub-catalogs: {e}", exc_info=True)
             catalogs = []
 
         return catalogs, total_count, next_link
@@ -713,7 +712,8 @@ class CatalogsDatabaseLogic:
                 await conn.fetchval(q, *p)
             logger.info(f"Unlinked sub-catalog {sub_catalog_id} from parent {catalog_id}")
         except Exception as e:
-            logger.warning(f"Error unlinking sub-catalog: {e}")
+            logger.error(f"Error unlinking sub-catalog: {e}", exc_info=True)
+            raise
 
     async def unlink_collection(
         self,
@@ -757,4 +757,5 @@ class CatalogsDatabaseLogic:
                 await conn.fetchval(q, *p)
             logger.info(f"Unlinked collection {collection_id} from catalog {catalog_id}")
         except Exception as e:
-            logger.warning(f"Error unlinking collection: {e}")
+            logger.error(f"Error unlinking collection: {e}", exc_info=True)
+            raise
