@@ -70,6 +70,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
         prev_link: dict[str, Any] | None = None
         collections: Collections
 
+        # Always use collection_search() for consistency
+        # If CollectionSearchExtension is enabled, use full search parameters
+        # If disabled, use simple search with just type=Collection filter
         if self.extension_is_enabled("CollectionSearchExtension"):
             base_args = {
                 "bbox": bbox,
@@ -87,42 +90,49 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 filter_lang=filter_lang,
                 **kwargs,
             )
-
-            # NOTE: `FreeTextExtension` - pgstac will only accept `str` so we need to
-            # join the list[str] with ` OR `
-            # ref: https://github.com/stac-utils/stac-fastapi-pgstac/pull/263
-            if q := clean_args.pop("q", None):
-                clean_args["q"] = " OR ".join(q) if isinstance(q, list) else q
-
-            async with request.app.state.get_connection(request, "r") as conn:
-                q, p = render(
-                    """
-                    SELECT * FROM collection_search(:req::text::jsonb);
-                    """,
-                    req=json.dumps(clean_args),
-                )
-                collections = await conn.fetchval(q, *p)
-
-            if links := collections.get("links"):
-                for link in links:
-                    if link["rel"] == "next":
-                        next_link = link
-                    elif link["rel"] == "prev":
-                        prev_link = link
-
         else:
-            async with request.app.state.get_connection(request, "r") as conn:
-                cols: list[Collection] = (
-                    await conn.fetchval(
-                        """
-                    SELECT * FROM all_collections();
-                    """
-                    )
-                    or []
-                )
+            # When CollectionSearchExtension is disabled, use a high limit to return all collections
+            clean_args = {"limit": limit or 10000, "offset": offset or 0}
 
-                collections = Collections(collections=cols, links=[])
+        # Add filter to ensure only Collections are returned (not Catalogs)
+        # This is needed because catalogs are also stored in the collections table
+        if "filter" in clean_args:
+            clean_args["filter"] = {
+                "op": "and",
+                "args": [
+                    clean_args["filter"],
+                    {"op": "=", "args": [{"property": "type"}, "Collection"]},
+                ],
+            }
+        else:
+            clean_args["filter"] = {
+                "op": "=",
+                "args": [{"property": "type"}, "Collection"],
+            }
 
+        # NOTE: `FreeTextExtension` - pgstac will only accept `str` so we need to
+        # join the list[str] with ` OR `
+        # ref: https://github.com/stac-utils/stac-fastapi-pgstac/pull/263
+        if q := clean_args.pop("q", None):
+            clean_args["q"] = " OR ".join(q) if isinstance(q, list) else q
+
+        async with request.app.state.get_connection(request, "r") as conn:
+            q, p = render(
+                """
+                SELECT * FROM collection_search(:req::text::jsonb);
+                """,
+                req=json.dumps(clean_args),
+            )
+            collections = await conn.fetchval(q, *p)
+
+        if links := collections.get("links"):
+            for link in links:
+                if link["rel"] == "next":
+                    next_link = link
+                elif link["rel"] == "prev":
+                    prev_link = link
+
+        # Generate links for each collection
         for collection in collections["collections"]:
             collection["links"] = await CollectionLinks(
                 collection_id=collection["id"], request=request
@@ -141,6 +151,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
                         ),
                     }
                 )
+
+            # Remove internal metadata
+            collection.pop("parent_ids", None)  # type: ignore [typeddict-item]
 
         collections["links"] = await CollectionSearchPagingLinks(
             request=request, next=next_link, prev=prev_link
@@ -189,6 +202,10 @@ class CoreCrudClient(AsyncBaseCoreClient):
         if collection is None:
             raise NotFoundError(f"Collection {collection_id} does not exist.")
 
+        # Ensure the returned object is actually a Collection
+        if collection.get("type") != "Collection":
+            raise NotFoundError(f"Collection {collection_id} does not exist.")
+
         collection["links"] = await CollectionLinks(
             collection_id=collection_id, request=request
         ).get_links(extra_links=collection.get("links"))
@@ -205,6 +222,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
                     "href": urljoin(base_url, f"collections/{collection_id}/queryables"),
                 }
             )
+
+        # Remove internal metadata
+        collection.pop("parent_ids", None)  # type: ignore [typeddict-item]
 
         return collection
 

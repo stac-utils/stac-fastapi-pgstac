@@ -5,6 +5,7 @@ the ENABLED_EXTENSIONS environment variable (e.g. `transactions,sort,query`).
 If the variable is not set, enables all extensions.
 """
 
+import logging
 from contextlib import asynccontextmanager
 from typing import cast
 
@@ -44,12 +45,30 @@ from starlette.middleware.cors import CORSMiddleware
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
-from stac_fastapi.pgstac.extensions import FreeTextExtension, QueryExtension
+from stac_fastapi.pgstac.extensions import (
+    CatalogsDatabaseLogic,
+    FreeTextExtension,
+    QueryExtension,
+)
+from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import CatalogsClient
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
 
+logger = logging.getLogger(__name__)
+
+# Optional catalogs extension (optional dependency)
+try:
+    from stac_fastapi_catalogs_extension import (
+        CatalogsExtension,
+        CatalogsTransactionExtension,
+    )
+except ImportError:
+    CatalogsExtension = None
+    CatalogsTransactionExtension = None
+
 settings = Settings()
+
 
 # search extensions
 search_extensions_map: dict[str, ApiExtension] = {
@@ -152,6 +171,38 @@ if "collection_search" in enabled_extensions:
     collection_search_extension = CollectionSearchExtension.from_extensions(cs_extensions)
     collections_get_request_model = collection_search_extension.GET
     application_extensions.append(collection_search_extension)
+
+# Optional catalogs extension
+logger.info("ENABLE_CATALOGS_EXTENSION is set to %s", settings.enable_catalogs_extension)
+
+if settings.enable_catalogs_extension:
+    if CatalogsExtension is None or CatalogsTransactionExtension is None:
+        raise ImportError(
+            "ENABLE_CATALOGS_EXTENSION is set to true, but the catalogs extension is not installed. "
+            "Please install it with: pip install stac-fastapi-pgstac[catalogs]."
+        )
+    try:
+        catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
+
+        # Register the read-only catalogs extension
+        catalogs_extension = CatalogsExtension(
+            client=catalogs_client,
+            settings={"enable_response_models": settings.enable_response_models},
+        )
+        application_extensions.append(catalogs_extension)
+        logger.info("CatalogsExtension (read-only) enabled successfully.")
+
+        # Register the transaction extension if transactions are enabled
+        if with_transactions:
+            catalogs_transaction_extension = CatalogsTransactionExtension(
+                client=catalogs_client,
+                settings={"enable_response_models": settings.enable_response_models},
+            )
+            application_extensions.append(catalogs_transaction_extension)
+            logger.info("CatalogsTransactionExtension enabled successfully.")
+    except Exception as e:  # pragma: no cover - defensive
+        logger.error("Failed to initialize Catalogs extensions: %s", e)
+        raise
 
 
 @asynccontextmanager

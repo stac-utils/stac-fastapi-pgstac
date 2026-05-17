@@ -39,6 +39,12 @@ from stac_fastapi.extensions.core.free_text import FreeTextConformanceClasses
 from stac_fastapi.extensions.core.query import QueryConformanceClasses
 from stac_fastapi.extensions.core.sort import SortConformanceClasses
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
+
+# Catalogs extension (required for tests)
+from stac_fastapi_catalogs_extension import (
+    CatalogsExtension,
+    CatalogsTransactionExtension,
+)
 from stac_pydantic import Collection, Item
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
@@ -46,7 +52,12 @@ from starlette.middleware.cors import CORSMiddleware
 from stac_fastapi.pgstac.config import PostgresSettings, Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
-from stac_fastapi.pgstac.extensions import FreeTextExtension, QueryExtension
+from stac_fastapi.pgstac.extensions import (
+    CatalogsDatabaseLogic,
+    FreeTextExtension,
+    QueryExtension,
+)
+from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import CatalogsClient
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
@@ -128,6 +139,24 @@ def api_client(request):
         TransactionExtension(client=TransactionsClient(), settings=api_settings),
         BulkTransactionExtension(client=BulkTransactionsClient()),
     ]
+
+    # Add catalogs extensions if available
+    if CatalogsExtension is not None and CatalogsTransactionExtension is not None:
+        catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
+
+        # Register the read-only catalogs extension
+        catalogs_extension = CatalogsExtension(
+            client=catalogs_client,
+            settings={"enable_response_models": api_settings.enable_response_models},
+        )
+        application_extensions.append(catalogs_extension)
+
+        # Register the transaction extension
+        catalogs_transaction_extension = CatalogsTransactionExtension(
+            client=catalogs_client,
+            settings={"enable_response_models": api_settings.enable_response_models},
+        )
+        application_extensions.append(catalogs_transaction_extension)
 
     search_extensions = [
         QueryExtension(),

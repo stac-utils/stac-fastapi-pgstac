@@ -11,7 +11,7 @@ from starlette.requests import Request
 
 # These can be inferred from the item/collection so they aren't included in the database
 # Instead they are dynamically generated when querying the database using the classes defined below
-INFERRED_LINK_RELS = ["self", "item", "parent", "collection", "root", "items"]
+INFERRED_LINK_RELS = ["self", "item", "parent", "collection", "root", "items", "child"]
 
 
 def filter_links(links: list[dict]) -> list[dict]:
@@ -99,7 +99,11 @@ class BaseLinks:
             if name.startswith("link_") and callable(getattr(self, name)):
                 link = getattr(self, name)()
                 if link is not None:
-                    links.append(link)
+                    # Handle both single dict and list of dicts
+                    if isinstance(link, list):
+                        links.extend(link)
+                    else:
+                        links.append(link)
         return links
 
     async def get_links(
