@@ -583,14 +583,18 @@ class CatalogsDatabaseLogic:
         if request is None:
             return
 
-        async with request.app.state.get_connection(request, "w") as conn:
-            q, p = render(
-                """
-                SELECT * FROM update_collection(:item::text::jsonb);
-                """,
-                item=json.dumps(collection),
-            )
-            await conn.fetchval(q, *p)
+        try:
+            async with request.app.state.get_connection(request, "w") as conn:
+                q, p = render(
+                    """
+                    SELECT * FROM update_collection(:item::text::jsonb);
+                    """,
+                    item=json.dumps(collection),
+                )
+                await conn.fetchval(q, *p)
+        except Exception as e:
+            logger.error(f"Error updating collection {collection_id}: {e}", exc_info=True)
+            raise
 
     async def update_catalog_collection(
         self,
