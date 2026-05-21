@@ -102,6 +102,12 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         # Remove internal metadata before returning
         catalog.pop("parent_ids", None)
 
+        # Dynamically inject the extension URI for conformance
+        extension_uri = "https://api.stacspec.org/v1.0.0-rc.1/multi-tenant-catalogs"
+        extensions = catalog.setdefault("stac_extensions", [])
+        if extension_uri not in extensions:
+            extensions.append(extension_uri)
+
     async def get_catalogs(
         self,
         limit: int | None = None,
@@ -241,15 +247,9 @@ class CatalogsClient(AsyncBaseCatalogsClient):
                 # Catalog doesn't exist, proceed with creation
                 pass
 
-        success = await self.database.create_catalog(
+        await self.database.create_catalog(
             dict(catalog_dict), refresh=True, request=request
         )
-
-        if not success:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to create catalog {catalog_id}",
-            )
 
         # Generate links dynamically for response
         if request:
@@ -346,6 +346,9 @@ class CatalogsClient(AsyncBaseCatalogsClient):
     ) -> None:
         """Rewrite collection links for scoped context."""
         collection_id = collection.get("id")
+        if not collection_id:
+            return
+
         parent_ids = collection.get("parent_ids", [])
 
         # Correct the self link by ensuring it ends with the collection ID
@@ -357,7 +360,33 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
         # For scoped endpoint, generate links pointing to this specific catalog
         base_url = str(request.base_url).rstrip("/")
-        collection["links"] = [
+        collection["links"] = CatalogsClient._generate_base_collection_links(
+            collection_id, catalog_id, base_url, self_href
+        )
+
+        # Add related links for poly-hierarchy
+        CatalogsClient._add_related_links(
+            collection, parent_ids, catalog_id, collection_id, base_url
+        )
+
+        # Remove internal metadata
+        collection.pop("parent_ids", None)
+
+        # Dynamically inject the extension URI for conformance on scoped routes
+        extension_uri = "https://api.stacspec.org/v1.0.0-rc.1/multi-tenant-catalogs"
+        extensions = collection.setdefault("stac_extensions", [])
+        if extension_uri not in extensions:
+            extensions.append(extension_uri)
+
+    @staticmethod
+    def _generate_base_collection_links(
+        collection_id: str,
+        catalog_id: str,
+        base_url: str,
+        self_href: str,
+    ) -> list[dict]:
+        """Generate base collection links for scoped context."""
+        return [
             {
                 "rel": "self",
                 "type": "application/json",
@@ -390,54 +419,46 @@ class CatalogsClient(AsyncBaseCatalogsClient):
                 "title": "Queryables",
                 "href": base_url + f"/collections/{collection_id}/queryables",
             },
+            {
+                "rel": "http://www.opengis.net/def/rel/ogc/1.0/sortables",
+                "type": "application/schema+json",
+                "title": "Sortables",
+                "href": base_url + f"/collections/{collection_id}/sortables",
+            },
         ]
 
-        # Add custom links from storage (non-inferred), excluding duplicates
-        if collection.get("links"):
-            custom_links = filter_links(collection.get("links", []))
-            # Avoid duplicate links for canonical, items, and queryables
-            for custom_link in custom_links:
-                rel = custom_link.get("rel")
-                href = custom_link.get("href")
-                # Skip if we already have a link with the same rel and href
-                if rel in (
-                    "canonical",
-                    "items",
-                    "http://www.opengis.net/def/rel/ogc/1.0/queryables",
-                ):
-                    if not any(
-                        link.get("href") == href
-                        for link in collection["links"]
-                        if link.get("rel") == rel
-                    ):
-                        collection["links"].append(custom_link)
-                else:
-                    collection["links"].append(custom_link)
-
-        # Add related links for alternative parents (poly-hierarchy)
+    @staticmethod
+    def _add_related_links(
+        collection: dict,
+        parent_ids: list[str],
+        catalog_id: str,
+        collection_id: str,
+        base_url: str,
+    ) -> None:
+        """Add related links for poly-hierarchy."""
         if parent_ids and len(parent_ids) > 1:
             for parent_id in parent_ids:
                 if parent_id != catalog_id:  # Don't link to self
                     related_href = (
-                        str(request.base_url).rstrip("/")
-                        + f"/catalogs/{parent_id}/collections/{collection_id}"
+                        base_url + f"/catalogs/{parent_id}/collections/{collection_id}"
                     )
-                    if not any(
-                        link.get("href") == related_href
-                        for link in collection["links"]
-                        if link.get("rel") == "related"
-                    ):
-                        collection["links"].append(
-                            {
-                                "rel": "related",
-                                "type": "application/json",
-                                "href": related_href,
-                                "title": f"Collection in {parent_id}",
-                            }
-                        )
+                    collection["links"].append(
+                        {
+                            "rel": "related",
+                            "type": "application/json",
+                            "href": related_href,
+                            "title": f"Collection in {parent_id}",
+                        }
+                    )
 
         # Remove internal metadata
         collection.pop("parent_ids", None)
+
+        # Dynamically inject the extension URI for conformance on scoped routes
+        extension_uri = "https://api.stacspec.org/v1.0.0-rc.1/multi-tenant-catalogs"
+        extensions = collection.setdefault("stac_extensions", [])
+        if extension_uri not in extensions:
+            extensions.append(extension_uri)
 
     @staticmethod
     def _extract_limit_and_token(
@@ -688,14 +709,16 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             if catalog_id not in parent_ids:
                 parent_ids.append(catalog_id)
             existing["parent_ids"] = parent_ids
-            success = await self.database.create_catalog(
-                existing, refresh=True, request=request
-            )
-            if not success:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to link catalog {cat_id} to parent {catalog_id}",
+            await self.database.create_catalog(existing, refresh=True, request=request)
+
+            # Rewrite links before returning the response
+            if request:
+                await CatalogsClient._generate_catalog_links(
+                    catalog=existing,
+                    database=self.database,
+                    request=request,
                 )
+
             return JSONResponse(content=existing, status_code=201)
         except HTTPException:
             # Re-raise HTTP exceptions (like cycle detection errors)
@@ -704,14 +727,9 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             # Create new catalog
             catalog_dict["type"] = "Catalog"
             catalog_dict["parent_ids"] = [catalog_id]
-            success = await self.database.create_catalog(
+            await self.database.create_catalog(
                 catalog_dict, refresh=True, request=request
             )
-            if not success:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to create catalog {cat_id}",
-                ) from None
             return JSONResponse(content=catalog_dict, status_code=201)
 
     async def create_catalog_collection(
@@ -762,6 +780,11 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             await self.database.update_collection(
                 coll_id, existing, refresh=True, request=request
             )
+
+            # Rewrite links before returning the response
+            if request:
+                CatalogsClient._rewrite_collection_links(existing, catalog_id, request)
+
             return JSONResponse(content=existing, status_code=200)
         except HTTPException:
             # Re-raise HTTP exceptions
@@ -770,14 +793,9 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             # Create new collection
             collection_dict["type"] = "Collection"
             collection_dict["parent_ids"] = [catalog_id]
-            success = await self.database.create_collection(
+            await self.database.create_collection(
                 collection_dict, refresh=True, request=request
             )
-            if not success:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to create collection {coll_id}",
-                ) from None
             return JSONResponse(content=collection_dict, status_code=201)
 
     async def get_catalog_collection(
@@ -1082,8 +1100,8 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             content={
                 "conformsTo": [
                     "https://api.stacspec.org/v1.0.0/core",
-                    "https://api.stacspec.org/v1.0.0-beta.4/multi-tenant-catalogs",
-                    "https://api.stacspec.org/v1.0.0-beta.4/multi-tenant-catalogs/transaction",
+                    "https://api.stacspec.org/v1.0.0-rc.1/multi-tenant-catalogs",
+                    "https://api.stacspec.org/v1.0.0-rc.1/multi-tenant-catalogs/transaction",
                     "https://api.stacspec.org/v1.0.0-rc.2/children",
                 ]
             }
