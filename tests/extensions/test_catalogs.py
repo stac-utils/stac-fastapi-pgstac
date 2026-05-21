@@ -1,6 +1,7 @@
 """Tests for the catalogs extension."""
 
 import logging
+from unittest.mock import patch
 
 import pytest
 
@@ -1501,3 +1502,63 @@ async def test_update_catalog_collection_preserves_parent_ids(app_client):
     assert get2_after.status_code == 200
     assert get2_after.json()["description"] == "Updated description"
     assert get2_after.json()["title"] == "Updated Title"
+
+
+@pytest.mark.asyncio
+async def test_create_catalog_database_error(app_client):
+    """Test that a database failure during catalog creation raises an exception."""
+    catalog_data = {
+        "id": "error-catalog-test",
+        "type": "Catalog",
+        "description": "Will fail",
+        "stac_version": "1.0.0",
+        "links": [],
+    }
+
+    # Mock the database create_catalog method to simulate a crash
+    with patch(
+        "stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic.CatalogsDatabaseLogic.create_catalog",
+        side_effect=Exception("Simulated DB crash"),
+    ):
+        # The exception should be raised and caught by FastAPI's error handler
+        with pytest.raises(Exception, match="Simulated DB crash"):
+            await app_client.post("/catalogs", json=catalog_data)
+
+
+@pytest.mark.asyncio
+async def test_delete_catalog_database_error(app_client):
+    """Test that a database failure during deletion raises an exception."""
+    # 1. Create a valid catalog first so we bypass the 404 check
+    await create_catalog(app_client, "catalog-to-fail-delete")
+
+    # 2. Mock the database delete_catalog method to simulate a crash
+    with patch(
+        "stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic.CatalogsDatabaseLogic.delete_catalog",
+        side_effect=Exception("Simulated DB crash"),
+    ):
+        # The exception should be raised
+        with pytest.raises(Exception, match="Simulated DB crash"):
+            await app_client.delete("/catalogs/catalog-to-fail-delete")
+
+
+@pytest.mark.asyncio
+async def test_update_catalog_database_error(app_client):
+    """Test that a database failure during catalog update raises an exception."""
+    # 1. Create a catalog first
+    await create_catalog(app_client, "catalog-to-fail-update")
+
+    # 2. Mock the database update_catalog method to simulate a crash
+    with patch(
+        "stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic.CatalogsDatabaseLogic.update_catalog",
+        side_effect=Exception("Simulated DB crash"),
+    ):
+        update_data = {
+            "id": "catalog-to-fail-update",
+            "type": "Catalog",
+            "description": "This update will fail",
+            "stac_version": "1.0.0",
+            "links": [],
+        }
+        # The exception should be raised
+        with pytest.raises(Exception, match="Simulated DB crash"):
+            await app_client.put("/catalogs/catalog-to-fail-update", json=update_data)
