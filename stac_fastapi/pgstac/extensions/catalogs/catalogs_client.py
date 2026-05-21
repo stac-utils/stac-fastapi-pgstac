@@ -288,6 +288,44 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         )
         return catalog_dict
 
+    async def update_catalog_collection(
+        self,
+        catalog_id: str,
+        collection_id: str,
+        collection: Any,
+        request: Request | None = None,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """Concrete implementation of the RC1 scoped PUT route.
+
+        Args:
+            catalog_id: The catalog ID.
+            collection_id: The collection ID to update.
+            collection: The collection Pydantic model or dictionary.
+            request: The FastAPI request object.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            The updated collection dictionary.
+        """
+        # Dump the Pydantic model safely to a dictionary
+        collection_dict = cast(
+            dict[str, Any],
+            collection.model_dump(mode="json")
+            if hasattr(collection, "model_dump")
+            else collection,
+        )
+
+        # Execute the state-preserving database update
+        updated_collection = await self.database.update_catalog_collection(
+            catalog_id=catalog_id,
+            collection_id=collection_id,
+            collection=collection_dict,
+            request=request,
+        )
+
+        return updated_collection
+
     async def delete_catalog(
         self, catalog_id: str, request: Request | None = None, **kwargs
     ) -> None:

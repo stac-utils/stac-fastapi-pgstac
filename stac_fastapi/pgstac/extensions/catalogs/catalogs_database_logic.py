@@ -582,6 +582,55 @@ class CatalogsDatabaseLogic:
             )
             await conn.fetchval(q, *p)
 
+    async def update_catalog_collection(
+        self,
+        catalog_id: str,
+        collection_id: str,
+        collection: dict[str, Any],
+        request: Any = None,
+    ) -> dict[str, Any]:
+        """Update a collection while ensuring parent_ids are preserved.
+
+        Args:
+            catalog_id: The catalog ID.
+            collection_id: The collection ID to update.
+            collection: The collection dictionary.
+            request: The FastAPI request object.
+
+        Returns:
+            The updated collection dictionary.
+
+        Raises:
+            Exception: If the update fails.
+        """
+        if request is None:
+            return collection
+
+        try:
+            # 1. Fetch existing collection to extract current DAG state
+            existing = await self.find_collection(collection_id, request=request)
+            parent_ids = existing.get("parent_ids", [])
+
+            # 2. Re-inject parent_ids and ensure IDs match
+            collection["id"] = collection_id
+            collection["parent_ids"] = parent_ids
+
+            # 3. Execute the standard pgSTAC update function
+            async with request.app.state.get_connection(request, "w") as conn:
+                q, p = render(
+                    """
+                    SELECT * FROM update_collection(:item::text::jsonb);
+                    """,
+                    item=json.dumps(collection),
+                )
+                await conn.fetchval(q, *p)
+
+            logger.info(f"Successfully updated catalog collection {collection_id}")
+            return collection
+        except Exception as e:
+            logger.error(f"Error updating catalog collection: {e}", exc_info=True)
+            raise
+
     async def get_catalog_collection(
         self,
         catalog_id: str,

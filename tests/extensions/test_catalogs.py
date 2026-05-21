@@ -1403,3 +1403,101 @@ async def test_collections_endpoint_filters_out_catalogs(app_client):
     # numberMatched should be (database_total - 1_catalog_filtered)
     # This should equal numberReturned since the catalog was on the current page
     assert collections_data["numberMatched"] == collections_data["numberReturned"]
+
+
+@pytest.mark.asyncio
+async def test_update_catalog_collection_preserves_parent_ids(app_client):
+    """Test that updating a collection via scoped route preserves all parent_ids (poly-hierarchy)."""
+    # Create two catalogs
+    catalog1_data = {
+        "id": "test-catalog-1",
+        "type": "Catalog",
+        "title": "Test Catalog 1",
+        "description": "First test catalog",
+        "stac_version": "1.0.0",
+        "links": [],
+    }
+    catalog1_resp = await app_client.post("/catalogs", json=catalog1_data)
+    assert catalog1_resp.status_code == 201
+
+    catalog2_data = {
+        "id": "test-catalog-2",
+        "type": "Catalog",
+        "title": "Test Catalog 2",
+        "description": "Second test catalog",
+        "stac_version": "1.0.0",
+        "links": [],
+    }
+    catalog2_resp = await app_client.post("/catalogs", json=catalog2_data)
+    assert catalog2_resp.status_code == 201
+
+    # Create a collection in the first catalog context
+    collection_data = {
+        "id": "test-collection-poly",
+        "type": "Collection",
+        "description": "A collection for poly-hierarchy test",
+        "stac_version": "1.0.0",
+        "license": "proprietary",
+        "extent": {
+            "spatial": {"bbox": [[-180, -90, 180, 90]]},
+            "temporal": {"interval": [["2020-01-01T00:00:00Z", None]]},
+        },
+        "links": [],
+    }
+    collection_resp = await app_client.post(
+        "/catalogs/test-catalog-1/collections", json=collection_data
+    )
+    assert collection_resp.status_code == 201
+
+    # Link the collection to the second catalog (poly-hierarchy)
+    link_resp = await app_client.post(
+        "/catalogs/test-catalog-2/collections", json={"id": "test-collection-poly"}
+    )
+    assert link_resp.status_code == 200
+
+    # Verify collection is accessible from both catalogs
+    get1_resp = await app_client.get(
+        "/catalogs/test-catalog-1/collections/test-collection-poly"
+    )
+    assert get1_resp.status_code == 200
+
+    get2_resp = await app_client.get(
+        "/catalogs/test-catalog-2/collections/test-collection-poly"
+    )
+    assert get2_resp.status_code == 200
+
+    # Update the collection via the first catalog's scoped route
+    update_data = {
+        "id": "test-collection-poly",  # Must match the URL id
+        "type": "Collection",
+        "stac_version": "1.0.0",
+        "license": "proprietary",
+        "extent": {
+            "spatial": {"bbox": [[-180, -90, 180, 90]]},
+            "temporal": {"interval": [["2020-01-01T00:00:00Z", None]]},
+        },
+        "links": [],
+        # Our updated attributes:
+        "title": "Updated Title",
+        "description": "Updated description",
+    }
+    update_resp = await app_client.put(
+        "/catalogs/test-catalog-1/collections/test-collection-poly",
+        json=update_data,
+    )
+    assert update_resp.status_code == 200
+
+    # Verify collection is still accessible from both catalogs after update
+    get1_after = await app_client.get(
+        "/catalogs/test-catalog-1/collections/test-collection-poly"
+    )
+    assert get1_after.status_code == 200
+    assert get1_after.json()["description"] == "Updated description"
+    assert get1_after.json()["title"] == "Updated Title"
+
+    get2_after = await app_client.get(
+        "/catalogs/test-catalog-2/collections/test-collection-poly"
+    )
+    assert get2_after.status_code == 200
+    assert get2_after.json()["description"] == "Updated description"
+    assert get2_after.json()["title"] == "Updated Title"
