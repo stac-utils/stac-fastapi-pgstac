@@ -162,20 +162,17 @@ class CatalogsDatabaseLogic:
         if request is None:
             raise NotFoundError(f"Catalog {catalog_id} not found")
 
-        try:
-            async with request.app.state.get_connection(request, "r") as conn:
-                q, p = render(
-                    """
-                    SELECT content
-                    FROM collections
-                    WHERE id = :id AND content->>'type' = 'Catalog';
-                    """,
-                    id=catalog_id,
-                )
-                row = await conn.fetchval(q, *p)
-                catalog = row if row else None
-        except Exception:
-            catalog = None
+        async with request.app.state.get_connection(request, "r") as conn:
+            q, p = render(
+                """
+                SELECT content
+                FROM collections
+                WHERE id = :id AND content->>'type' = 'Catalog';
+                """,
+                id=catalog_id,
+            )
+            row = await conn.fetchval(q, *p)
+            catalog = row if row else None
 
         if catalog is None:
             raise NotFoundError(f"Catalog {catalog_id} not found")
@@ -243,8 +240,10 @@ class CatalogsDatabaseLogic:
                 await dbfunc(conn, "create_collection", dict(catalog))
             return True
         except Exception as e:
-            logger.warning(f"Error creating catalog: {e}")
-            return False
+            logger.error(
+                f"Conflict or database error creating catalog: {e}", exc_info=True
+            )
+            raise
 
     async def update_catalog(
         self,
@@ -278,10 +277,17 @@ class CatalogsDatabaseLogic:
             catalog["parent_ids"] = parent_ids
 
             async with request.app.state.get_connection(request, "w") as conn:
-                await dbfunc(conn, "create_collection", dict(catalog))
+                q, p = render(
+                    """
+                    SELECT * FROM update_collection(:item::text::jsonb);
+                    """,
+                    item=json.dumps(catalog),
+                )
+                await conn.fetchval(q, *p)
             logger.info(f"Successfully updated catalog {catalog_id}")
         except Exception as e:
-            logger.warning(f"Error updating catalog: {e}")
+            logger.error(f"Error updating catalog {catalog_id}: {e}", exc_info=True)
+            raise
 
     async def delete_catalog(
         self, catalog_id: str, refresh: bool = False, request: Any = None
@@ -299,8 +305,10 @@ class CatalogsDatabaseLogic:
         try:
             async with request.app.state.get_connection(request, "w") as conn:
                 await dbfunc(conn, "delete_collection", catalog_id)
+            logger.info(f"Successfully deleted catalog {catalog_id}")
         except Exception as e:
-            logger.warning(f"Error deleting catalog: {e}")
+            logger.error(f"Error deleting catalog {catalog_id}: {e}", exc_info=True)
+            raise
 
     async def get_catalog_children(
         self,
@@ -552,8 +560,10 @@ class CatalogsDatabaseLogic:
                 await dbfunc(conn, "create_collection", dict(collection))
             return True
         except Exception as e:
-            logger.warning(f"Error creating collection: {e}")
-            return False
+            logger.error(
+                f"Conflict or database error creating collection: {e}", exc_info=True
+            )
+            raise
 
     async def update_collection(
         self,
