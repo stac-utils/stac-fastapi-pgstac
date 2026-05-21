@@ -17,7 +17,13 @@ from stac_fastapi.api.models import JSONResponse
 from stac_fastapi.types.core import AsyncBaseCoreClient, Relations
 from stac_fastapi.types.errors import InvalidQueryParameter, NotFoundError
 from stac_fastapi.types.requests import get_base_url
-from stac_fastapi.types.stac import Collection, Collections, Item, ItemCollection
+from stac_fastapi.types.stac import (
+    Collection,
+    Collections,
+    Item,
+    ItemCollection,
+    LandingPage,
+)
 from stac_pydantic.shared import BBox, MimeTypes
 
 from stac_fastapi.pgstac.config import Settings
@@ -41,22 +47,27 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
     pgstac_search_model: type[PgstacSearch] = attr.ib(default=PgstacSearch)
 
-    async def landing_page(self, **kwargs: dict[str, Any]) -> dict[str, Any]:
+    async def landing_page(self, **kwargs: dict[str, Any]) -> LandingPage:
         """Landing page with catalogs link if extension is enabled."""
         # Call the parent method to get the base landing page
         landing_page = await super().landing_page(**kwargs)
 
-        request: Request = kwargs.get("request")
-        if request and self.extension_is_enabled("CatalogsExtension"):
-            base_url = str(request.base_url).rstrip("/")
-            landing_page["links"].append(
-                {
-                    "rel": "catalogs",
-                    "type": "application/json",
-                    "title": "Catalogs available for this API",
-                    "href": f"{base_url}/catalogs",
-                }
-            )
+        # Add catalogs link if the extension is enabled
+        request = kwargs.get("request")
+        if isinstance(request, Request):
+            from stac_fastapi.pgstac.config import Settings
+
+            settings = Settings()
+            if settings.enable_catalogs_extension:
+                base_url = str(request.base_url).rstrip("/")
+                landing_page["links"].append(
+                    {
+                        "rel": "catalogs",
+                        "type": "application/json",
+                        "title": "Catalogs available for this API",
+                        "href": f"{base_url}/catalogs",
+                    }
+                )
 
         return landing_page
 
