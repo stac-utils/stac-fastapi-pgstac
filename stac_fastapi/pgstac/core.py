@@ -54,20 +54,18 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         # Add catalogs link if the extension is enabled
         request = kwargs.get("request")
-        if isinstance(request, Request):
-            from stac_fastapi.pgstac.config import Settings
-
-            settings = Settings()
-            if settings.enable_catalogs_extension:
-                base_url = str(request.base_url).rstrip("/")
-                landing_page["links"].append(
-                    {
-                        "rel": "catalogs",
-                        "type": "application/json",
-                        "title": "Catalogs available for this API",
-                        "href": f"{base_url}/catalogs",
-                    }
-                )
+        if isinstance(request, Request) and self.extension_is_enabled(
+            "CatalogsExtension"
+        ):
+            base_url = str(request.base_url).rstrip("/")
+            landing_page["links"].append(
+                {
+                    "rel": "catalogs",
+                    "type": "application/json",
+                    "title": "Catalogs available for this API",
+                    "href": f"{base_url}/catalogs",
+                }
+            )
 
         return landing_page
 
