@@ -41,6 +41,25 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
     pgstac_search_model: type[PgstacSearch] = attr.ib(default=PgstacSearch)
 
+    async def landing_page(self, **kwargs: dict[str, Any]) -> dict[str, Any]:
+        """Landing page with catalogs link if extension is enabled."""
+        # Call the parent method to get the base landing page
+        landing_page = await super().landing_page(**kwargs)
+
+        request: Request = kwargs.get("request")
+        if request and self.extension_is_enabled("CatalogsExtension"):
+            base_url = str(request.base_url).rstrip("/")
+            landing_page["links"].append(
+                {
+                    "rel": "catalogs",
+                    "type": "application/json",
+                    "title": "Catalogs available for this API",
+                    "href": f"{base_url}/catalogs",
+                }
+            )
+
+        return landing_page
+
     async def all_collections(  # type: ignore [override] # noqa: C901
         self,
         request: Request,

@@ -1562,3 +1562,22 @@ async def test_update_catalog_database_error(app_client):
         # The exception should be raised
         with pytest.raises(Exception, match="Simulated DB crash"):
             await app_client.put("/catalogs/catalog-to-fail-update", json=update_data)
+
+
+@pytest.mark.asyncio
+async def test_landing_page_includes_catalogs_link(app_client):
+    """Test that the landing page includes a catalogs link when the extension is enabled."""
+    resp = await app_client.get("/")
+    assert resp.status_code == 200
+    resp_json = resp.json()
+
+    # Check that a catalogs link is present
+    catalogs_links = [
+        link for link in resp_json.get("links", []) if link.get("rel") == "catalogs"
+    ]
+    assert len(catalogs_links) == 1
+
+    catalogs_link = catalogs_links[0]
+    assert catalogs_link["type"] == "application/json"
+    assert catalogs_link["title"] == "Catalogs available for this API"
+    assert "/catalogs" in catalogs_link["href"]
