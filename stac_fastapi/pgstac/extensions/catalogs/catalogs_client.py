@@ -102,12 +102,6 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         # Remove internal metadata before returning
         catalog.pop("parent_ids", None)
 
-        # Dynamically inject the extension URI for conformance
-        extension_uri = "https://api.stacspec.org/v1.0.0-rc.1/multi-tenant-catalogs"
-        extensions = catalog.setdefault("stac_extensions", [])
-        if extension_uri not in extensions:
-            extensions.append(extension_uri)
-
     async def get_catalogs(
         self,
         limit: int | None = None,
@@ -372,12 +366,6 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         # Remove internal metadata
         collection.pop("parent_ids", None)
 
-        # Dynamically inject the extension URI for conformance on scoped routes
-        extension_uri = "https://api.stacspec.org/v1.0.0-rc.1/multi-tenant-catalogs"
-        extensions = collection.setdefault("stac_extensions", [])
-        if extension_uri not in extensions:
-            extensions.append(extension_uri)
-
     @staticmethod
     def _generate_base_collection_links(
         collection_id: str,
@@ -453,12 +441,6 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
         # Remove internal metadata
         collection.pop("parent_ids", None)
-
-        # Dynamically inject the extension URI for conformance on scoped routes
-        extension_uri = "https://api.stacspec.org/v1.0.0-rc.1/multi-tenant-catalogs"
-        extensions = collection.setdefault("stac_extensions", [])
-        if extension_uri not in extensions:
-            extensions.append(extension_uri)
 
     @staticmethod
     def _extract_limit_and_token(
