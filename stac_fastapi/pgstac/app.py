@@ -126,10 +126,17 @@ def instantiate_api(
             BulkTransactionExtension(client=BulkTransactionsClient()),
         )
 
+    extra_extensions = [
+        extension
+        for key, extension in extensions.extra.items()
+        if key in enabled_extensions
+    ]
+
     application_extensions = [
         *search_extensions,
         *itm_col_extensions,
         *transaction_extensions,
+        *extra_extensions,
     ]
     if collection_search_extension is not None:
         application_extensions.append(collection_search_extension)

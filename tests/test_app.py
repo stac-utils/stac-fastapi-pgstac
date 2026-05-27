@@ -5,6 +5,7 @@ from stac_fastapi.types.extension import ApiExtension
 
 from stac_fastapi.pgstac.app import (
     CollectionSearchExtension,
+    StacApi,
     create_get_request_model,
     create_post_request_model,
     create_request_model,
@@ -232,4 +233,18 @@ def test_intantiate_api_custom_item_collection_extensions():
     for type_ext in [
         type(ext) for ext in DEFAULT_EXTENSIONS.get("item_collection", {}).values()
     ]:
+        assert type_ext in [type(e) for e in extensions]
+
+
+def test_instantiate_api_extra_extensions():
+    """Test that extra extensions are used when passed to instantiate_api."""
+    extra_extensions = {
+        "extra_extension": CustomNewExtension(),
+    }
+
+    with patch("stac_fastapi.pgstac.app.StacApi", wraps=StacApi) as mock_stac_api:
+        instantiate_api(extensions=Extensions(extra=extra_extensions))
+        extensions = mock_stac_api.call_args.kwargs["extensions"]
+
+    for type_ext in [type(ext) for ext in extra_extensions.values()]:
         assert type_ext in [type(e) for e in extensions]
