@@ -59,7 +59,7 @@ def get_stac_api_extensions(
     default: dict[str, ApiExtension] | None = None,
 ) -> dict[str, ApiExtension]:
     """Get the STAC API extensions."""
-    extensions = default or {}
+    extensions = dict(default or {})
     if update:
         extensions.update(update)
     return extensions
