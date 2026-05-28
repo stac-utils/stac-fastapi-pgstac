@@ -144,10 +144,18 @@ def test_instantiate_api_custom_search_extensions():
     assert len(extensions_post) == len(
         set(DEFAULT_EXTENSIONS.get("search", {}).keys()).union(custom_extensions.keys())
     )
-    for type_ext in [type(ext) for ext in custom_extensions.values()]:
-        assert type_ext in [type(e) for e in extensions_post]
-    for type_ext in [type(ext) for ext in DEFAULT_EXTENSIONS.get("search", {}).values()]:
-        assert type_ext in [type(e) for e in extensions_post]
+    actual_extensions_types = [type(ext) for ext in extensions_post]
+    custom_extensions_types = [type(ext) for ext in custom_extensions.values()]
+    for type_ext in custom_extensions_types:
+        assert type_ext in actual_extensions_types
+    expected_default_extensions = {
+        k: ext
+        for k, ext in DEFAULT_EXTENSIONS.get("search", {}).items()
+        if k not in custom_extensions
+    }
+    print(expected_default_extensions)
+    for type_ext in [type(ext) for ext in expected_default_extensions.values()]:
+        assert type_ext in actual_extensions_types
 
 
 def test_instantiate_api_default_collection_search_extensions():
@@ -185,12 +193,16 @@ def test_instantiate_api_custom_collection_search_extensions():
             custom_extensions.keys()
         )
     )
+    actual_extensions_types = [type(ext) for ext in extensions]
     for type_ext in [type(ext) for ext in custom_extensions.values()]:
-        assert type_ext in [type(e) for e in extensions]
-    for type_ext in [
-        type(ext) for ext in DEFAULT_EXTENSIONS.get("collection_search", {}).values()
-    ]:
-        assert type_ext in [type(e) for e in extensions]
+        assert type_ext in actual_extensions_types
+    expected_default_extensions = {
+        k: ext
+        for k, ext in DEFAULT_EXTENSIONS.get("collection_search", {}).items()
+        if k not in custom_extensions
+    }
+    for type_ext in [type(ext) for ext in expected_default_extensions.values()]:
+        assert type_ext in actual_extensions_types
 
 
 def test_intantiate_api_default_item_collection_extensions():
@@ -228,12 +240,16 @@ def test_intantiate_api_custom_item_collection_extensions():
             custom_extensions.keys()
         )
     )
+    actual_extensions_types = [type(ext) for ext in extensions]
     for type_ext in [type(ext) for ext in custom_extensions.values()]:
-        assert type_ext in [type(e) for e in extensions]
-    for type_ext in [
-        type(ext) for ext in DEFAULT_EXTENSIONS.get("item_collection", {}).values()
-    ]:
-        assert type_ext in [type(e) for e in extensions]
+        assert type_ext in actual_extensions_types
+    expected_default_extensions = {
+        k: ext
+        for k, ext in DEFAULT_EXTENSIONS.get("item_collection", {}).items()
+        if k not in custom_extensions
+    }
+    for type_ext in [type(ext) for ext in expected_default_extensions.values()]:
+        assert type_ext in actual_extensions_types
 
 
 def test_instantiate_api_extra_extensions():
