@@ -700,6 +700,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             existing = await self.database.find_catalog(cat_id, request=request)
 
             # Check for cycles before linking
+            # A cycle would be a circular dependency (e.g., A -> B -> C -> A)
             if await self.database._check_cycle(cat_id, catalog_id, request=request):
                 raise HTTPException(
                     status_code=400,
