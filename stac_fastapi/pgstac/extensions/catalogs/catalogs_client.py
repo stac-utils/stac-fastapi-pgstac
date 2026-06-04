@@ -16,6 +16,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic import (
+    CatalogsDatabaseLogic,
     _parse_pagination_token,
 )
 from stac_fastapi.pgstac.extensions.catalogs.catalogs_links import (
@@ -56,12 +57,12 @@ class CatalogsClient(AsyncBaseCatalogsClient):
     to the database layer for all catalog operations.
     """
 
-    database: Any = attr.ib()
+    database: CatalogsDatabaseLogic = attr.ib()
 
     @staticmethod
     async def _add_catalog_links(
         catalog: dict,
-        database: Any,
+        database: CatalogsDatabaseLogic,
         request: Request,
     ) -> None:
         """Generate links for a catalog and remove parent_ids.
