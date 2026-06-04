@@ -8,6 +8,7 @@ import attr
 from buildpg import render
 from fastapi import HTTPException
 from stac_fastapi.types.errors import NotFoundError
+from stac_fastapi.types.requests import get_base_url
 from stac_fastapi.types.stac import ItemCollection
 from stac_fastapi_catalogs_extension.client import AsyncBaseCatalogsClient
 from stac_fastapi_catalogs_extension.types import Children
@@ -25,6 +26,7 @@ from stac_fastapi.pgstac.extensions.catalogs.catalogs_links import (
 from stac_fastapi.pgstac.models.links import (
     CollectionSearchPagingLinks,
     ItemCollectionLinks,
+    PagingLinks,
     filter_links,
 )
 
@@ -350,10 +352,10 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         if not path.endswith(f"/{collection_id}"):
             path = f"{path}/{collection_id}"
 
-        self_href = str(request.base_url).rstrip("/") + path
+        base_url = get_base_url(request)
+        self_href = f"{base_url}{path}"
 
         # For scoped endpoint, generate links pointing to this specific catalog
-        base_url = str(request.base_url).rstrip("/")
         collection["links"] = CatalogsClient._generate_base_collection_links(
             collection_id, catalog_id, base_url, self_href
         )
@@ -494,11 +496,12 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
         # Add parent link if not present
         if request and not any(link.get("rel") == "parent" for link in response_links):
+            base_url = get_base_url(request)
             response_links.append(
                 {
                     "rel": "parent",
                     "type": "application/json",
-                    "href": str(request.base_url).rstrip("/") + f"/catalogs/{catalog_id}",
+                    "href": f"{base_url}/catalogs/{catalog_id}",
                 }
             )
 
@@ -917,8 +920,6 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         next_token, prev_token = CatalogsClient._extract_pagination_tokens(extra_links)
 
         # Generate pagination links for the scoped endpoint
-        from stac_fastapi.pgstac.models.links import PagingLinks
-
         pagination_links = await PagingLinks(
             request=request,
             next=next_token,
@@ -931,10 +932,11 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         ).get_links(extra_links=[])
 
         # Rewrite self link to point to scoped endpoint
+        base_url = get_base_url(request)
         for link in links:
             if link.get("rel") == "self":
                 link["href"] = (
-                    f"{str(request.base_url).rstrip('/')}/catalogs/{catalog_id}/collections/{collection_id}/items"
+                    f"{base_url}/catalogs/{catalog_id}/collections/{collection_id}/items"
                 )
                 if limit != 10:  # Only add limit if it's not the default
                     link["href"] += f"?limit={limit}"

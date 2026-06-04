@@ -53,11 +53,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
         landing_page = await super().landing_page(**kwargs)
 
         # Add catalogs link if the extension is enabled
-        request = kwargs.get("request")
-        if isinstance(request, Request) and self.extension_is_enabled(
-            "CatalogsExtension"
-        ):
-            base_url = str(request.base_url).rstrip("/")
+        if self.extension_is_enabled("CatalogsExtension"):
+            request: Request = kwargs["request"]
+            base_url = get_base_url(request)
             landing_page["links"].append(
                 {
                     "rel": "catalogs",
