@@ -1736,3 +1736,59 @@ async def test_create_sub_catalog_parent_not_found(app_client):
     )
     assert resp.status_code == 404, resp.text
     assert "not found" in resp.text.lower()
+
+
+@pytest.mark.asyncio
+async def test_link_existing_catalog_to_existing_parent(app_client):
+    """Test linking an existing catalog to another existing catalog as parent."""
+    # Create two independent catalogs
+    await create_catalog(
+        app_client,
+        "existing-parent-catalog",
+        description="Existing parent catalog",
+    )
+    resp = await app_client.post(
+        "/catalogs",
+        json={
+            "id": "existing-child-catalog",
+            "type": "Catalog",
+            "description": "Existing child catalog",
+            "stac_version": "1.0.0",
+            "links": [],
+        },
+    )
+    assert resp.status_code == 201
+    existing_child = resp.json()
+
+    # Test 1: Link using just the ID (minimal body)
+    resp = await app_client.post(
+        "/catalogs/existing-parent-catalog/catalogs",
+        json={"id": "existing-child-catalog"},
+    )
+    assert resp.status_code == 200, resp.text
+
+    # Verify the child is now linked to the parent
+    resp = await app_client.get("/catalogs/existing-parent-catalog/catalogs")
+    assert resp.status_code == 200
+    sub_catalogs = resp.json()
+    sub_catalog_ids = [cat["id"] for cat in sub_catalogs.get("catalogs", [])]
+    assert "existing-child-catalog" in sub_catalog_ids
+
+    # Test 2: Link using the full catalog object (should also work)
+    await create_catalog(
+        app_client,
+        "second-parent-catalog",
+        description="Second parent catalog",
+    )
+    resp = await app_client.post(
+        "/catalogs/second-parent-catalog/catalogs",
+        json=existing_child,  # Post the full existing catalog object
+    )
+    assert resp.status_code == 200, resp.text
+
+    # Verify the child is now linked to the second parent
+    resp = await app_client.get("/catalogs/second-parent-catalog/catalogs")
+    assert resp.status_code == 200
+    sub_catalogs = resp.json()
+    sub_catalog_ids = [cat["id"] for cat in sub_catalogs.get("catalogs", [])]
+    assert "existing-child-catalog" in sub_catalog_ids

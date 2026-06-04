@@ -696,6 +696,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             raise NotFoundError(f"Parent catalog {catalog_id} not found") from e
 
         try:
+            # Mode B: Link existing catalog
             # Try to find existing catalog
             existing = await self.database.find_catalog(cat_id, request=request)
 
@@ -731,7 +732,8 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             # Re-raise HTTP exceptions (like cycle detection errors)
             raise
         except NotFoundError:
-            # Create new catalog
+            # Mode A: Create new catalog
+            # Catalog doesn't exist, so create it with the parent_id
             catalog_dict["type"] = "Catalog"
             catalog_dict["parent_ids"] = [catalog_id]
             await self.database.create_catalog(
