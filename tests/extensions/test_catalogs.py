@@ -1650,3 +1650,89 @@ async def test_update_catalog_rejects_parent_ids_modification(app_client):
     )
     assert resp.status_code == 400, resp.text
     assert "Cannot modify parent_ids" in resp.text
+
+
+@pytest.mark.asyncio
+async def test_unlink_sub_catalog_not_linked(app_client):
+    """Test that unlinking a catalog that is not linked raises an error."""
+    # Create two parent catalogs
+    await create_catalog(
+        app_client,
+        "catalog-parent-1-for-unlink-test",
+        description="Parent 1 for unlink test",
+    )
+    await create_catalog(
+        app_client,
+        "catalog-parent-2-for-unlink-test",
+        description="Parent 2 for unlink test",
+    )
+
+    # Create a sub-catalog under parent 1
+    await create_sub_catalog(
+        app_client,
+        "catalog-parent-1-for-unlink-test",
+        "catalog-child-for-unlink-test",
+        description="Child for unlink test",
+    )
+
+    # Try to unlink from parent 2 (which it's not linked to) - should fail
+    resp = await app_client.delete(
+        "/catalogs/catalog-parent-2-for-unlink-test/catalogs/catalog-child-for-unlink-test"
+    )
+    assert resp.status_code == 404, resp.text
+    assert "not a child" in resp.text or "not linked" in resp.text
+
+
+@pytest.mark.asyncio
+async def test_unlink_collection_not_linked(app_client):
+    """Test that unlinking a collection that is not linked raises an error."""
+    # Create a catalog
+    await create_catalog(
+        app_client,
+        "catalog-for-collection-unlink-test",
+        description="Catalog for collection unlink test",
+    )
+
+    # Create a collection (without linking it to the catalog)
+    collection_id = "collection-not-linked"
+    resp = await app_client.post(
+        "/collections",
+        json={
+            "id": collection_id,
+            "type": "Collection",
+            "description": "Test collection",
+            "stac_version": "1.0.0",
+            "license": "proprietary",
+            "links": [],
+            "extent": {
+                "spatial": {"bbox": [[-180, -90, 180, 90]]},
+                "temporal": {"interval": [[None, None]]},
+            },
+        },
+    )
+    assert resp.status_code == 201
+
+    # Try to unlink the collection from the catalog (it was never linked) - should fail
+    resp = await app_client.delete(
+        "/catalogs/catalog-for-collection-unlink-test/collections/collection-not-linked"
+    )
+    assert resp.status_code == 404, resp.text
+    assert "not linked" in resp.text
+
+
+@pytest.mark.asyncio
+async def test_create_sub_catalog_parent_not_found(app_client):
+    """Test that creating a sub-catalog with a non-existent parent raises an error."""
+    # Try to create a sub-catalog under a non-existent parent
+    resp = await app_client.post(
+        "/catalogs/nonexistent-parent/catalogs",
+        json={
+            "id": "new-child-catalog",
+            "type": "Catalog",
+            "description": "Child catalog",
+            "stac_version": "1.0.0",
+            "links": [],
+        },
+    )
+    assert resp.status_code == 404, resp.text
+    assert "not found" in resp.text.lower()

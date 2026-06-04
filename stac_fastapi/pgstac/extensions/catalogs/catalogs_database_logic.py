@@ -750,6 +750,9 @@ class CatalogsDatabaseLogic:
             catalog_id: The parent catalog ID.
             sub_catalog_id: The sub-catalog ID to unlink.
             request: The FastAPI request object.
+
+        Raises:
+            NotFoundError: If the sub-catalog is not a child of the parent catalog.
         """
         if request is None:
             return
@@ -759,9 +762,14 @@ class CatalogsDatabaseLogic:
             sub_catalog = await self.find_catalog(sub_catalog_id, request=request)
             parent_ids = sub_catalog.get("parent_ids", [])
 
+            # Check if catalog_id is in parent_ids
+            if catalog_id not in parent_ids:
+                raise NotFoundError(
+                    f"Catalog {sub_catalog_id} is not a child of {catalog_id}"
+                )
+
             # Remove the parent from parent_ids
-            if catalog_id in parent_ids:
-                parent_ids = [p for p in parent_ids if p != catalog_id]
+            parent_ids = [p for p in parent_ids if p != catalog_id]
 
             # If no other parents, adopt to root (empty parent_ids means root)
             sub_catalog["parent_ids"] = parent_ids
@@ -795,6 +803,9 @@ class CatalogsDatabaseLogic:
             catalog_id: The parent catalog ID.
             collection_id: The collection ID to unlink.
             request: The FastAPI request object.
+
+        Raises:
+            NotFoundError: If the collection is not linked to the parent catalog.
         """
         if request is None:
             return
@@ -804,9 +815,14 @@ class CatalogsDatabaseLogic:
             collection = await self.find_collection(collection_id, request=request)
             parent_ids = collection.get("parent_ids", [])
 
+            # Check if catalog_id is in parent_ids
+            if catalog_id not in parent_ids:
+                raise NotFoundError(
+                    f"Collection {collection_id} is not linked to catalog {catalog_id}"
+                )
+
             # Remove the parent from parent_ids
-            if catalog_id in parent_ids:
-                parent_ids = [p for p in parent_ids if p != catalog_id]
+            parent_ids = [p for p in parent_ids if p != catalog_id]
 
             # If no other parents, adopt to root (empty parent_ids means root)
             collection["parent_ids"] = parent_ids

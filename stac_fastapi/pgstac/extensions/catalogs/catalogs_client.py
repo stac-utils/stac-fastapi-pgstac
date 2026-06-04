@@ -679,6 +679,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
         Raises:
             HTTPException: 400 Bad Request if linking would create a cycle.
+            NotFoundError: If the parent catalog does not exist.
         """
         # Convert Pydantic model to dict if needed
         if hasattr(catalog, "model_dump"):
@@ -687,6 +688,12 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             catalog_dict = dict(catalog) if not isinstance(catalog, dict) else catalog
 
         cat_id = catalog_dict.get("id")
+
+        # Validate that the parent catalog exists
+        try:
+            await self.database.find_catalog(catalog_id, request=request)
+        except NotFoundError as e:
+            raise NotFoundError(f"Parent catalog {catalog_id} not found") from e
 
         try:
             # Try to find existing catalog
