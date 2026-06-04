@@ -2,7 +2,7 @@
 
 import json
 import re
-from typing import Any
+from typing import Any, cast
 from urllib.parse import unquote_plus, urljoin
 
 import attr
@@ -54,7 +54,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         # Add catalogs link if the extension is enabled
         if self.extension_is_enabled("CatalogsExtension"):
-            request: Request = kwargs["request"]
+            request: Request = cast(Request, kwargs["request"])
             base_url = get_base_url(request)
             landing_page["links"].append(
                 {
