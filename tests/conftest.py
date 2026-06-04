@@ -140,8 +140,9 @@ def api_client(request):
         BulkTransactionExtension(client=BulkTransactionsClient()),
     ]
 
-    # Add catalogs extensions if available
-    if CatalogsExtension is not None and CatalogsTransactionExtension is not None:
+    # Add catalogs extension if available
+    catalogs_client = None
+    if CatalogsExtension is not None:
         catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
 
         # Register the read-only catalogs extension
@@ -150,6 +151,11 @@ def api_client(request):
             settings={"enable_response_models": api_settings.enable_response_models},
         )
         application_extensions.append(catalogs_extension)
+
+    # Add catalogs transaction extension if available
+    if CatalogsTransactionExtension is not None:
+        if catalogs_client is None:
+            catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
 
         # Register the transaction extension
         catalogs_transaction_extension = CatalogsTransactionExtension(

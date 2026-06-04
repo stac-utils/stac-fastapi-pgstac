@@ -176,7 +176,7 @@ if "collection_search" in enabled_extensions:
 logger.info("ENABLE_CATALOGS_EXTENSION is set to %s", settings.enable_catalogs_extension)
 
 if settings.enable_catalogs_extension:
-    if CatalogsExtension is None or CatalogsTransactionExtension is None:
+    if CatalogsExtension is None:
         raise ImportError(
             "ENABLE_CATALOGS_EXTENSION is set to true, but the catalogs extension is not installed. "
             "Please install it with: pip install stac-fastapi-pgstac[catalogs]."
@@ -192,8 +192,8 @@ if settings.enable_catalogs_extension:
         application_extensions.append(catalogs_extension)
         logger.info("CatalogsExtension (read-only) enabled successfully.")
 
-        # Register the transaction extension if transactions are enabled
-        if with_transactions:
+        # Register the transaction extension if both transactions and catalogs transaction extension are available
+        if with_transactions and CatalogsTransactionExtension is not None:
             catalogs_transaction_extension = CatalogsTransactionExtension(
                 client=catalogs_client,
                 settings={"enable_response_models": settings.enable_response_models},
