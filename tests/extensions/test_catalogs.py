@@ -1581,3 +1581,38 @@ async def test_landing_page_includes_catalogs_link(app_client):
     assert catalogs_link["type"] == "application/json"
     assert catalogs_link["title"] == "Catalogs available for this API"
     assert "/catalogs" in catalogs_link["href"]
+
+
+@pytest.mark.asyncio
+async def test_link_existing_sub_catalog_to_second_parent(app_client):
+    """Test linking an existing catalog as a sub-catalog of another parent."""
+    await create_catalog(
+        app_client,
+        "catalog-poly-parent-1",
+        description="First parent catalog for sub-catalog poly-hierarchy",
+    )
+    await create_catalog(
+        app_client,
+        "catalog-poly-parent-2",
+        description="Second parent catalog for sub-catalog poly-hierarchy",
+    )
+
+    await create_sub_catalog(
+        app_client,
+        "catalog-poly-parent-1",
+        "catalog-poly-child",
+        description="Sub-catalog linked to multiple parents",
+    )
+
+    # Link the existing child to the second parent
+    resp = await app_client.post(
+        "/catalogs/catalog-poly-parent-2/catalogs", json={"id": "catalog-poly-child"}
+    )
+    assert resp.status_code == 200, resp.text
+
+    # Verify the child is now linked to the second parent
+    resp = await app_client.get("/catalogs/catalog-poly-parent-2/catalogs")
+    assert resp.status_code == 200
+    sub_catalogs = resp.json()
+    sub_catalog_ids = [cat["id"] for cat in sub_catalogs.get("catalogs", [])]
+    assert "catalog-poly-child" in sub_catalog_ids

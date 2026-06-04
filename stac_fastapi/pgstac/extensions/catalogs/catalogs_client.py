@@ -694,7 +694,9 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             if catalog_id not in parent_ids:
                 parent_ids.append(catalog_id)
             existing["parent_ids"] = parent_ids
-            await self.database.create_catalog(existing, refresh=True, request=request)
+            await self.database.update_catalog(
+                cat_id, existing, refresh=True, request=request
+            )
 
             # Rewrite links before returning the response
             if request:
@@ -704,7 +706,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
                     request=request,
                 )
 
-            return JSONResponse(content=existing, status_code=201)
+            return JSONResponse(content=existing, status_code=200)
         except HTTPException:
             # Re-raise HTTP exceptions (like cycle detection errors)
             raise

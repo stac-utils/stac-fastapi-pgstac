@@ -270,11 +270,14 @@ class CatalogsDatabaseLogic:
         try:
             # Get existing catalog to preserve parent_ids
             existing = await self.find_catalog(catalog_id, request=request)
-            parent_ids = existing.get("parent_ids", [])
 
-            # Merge with existing data, preserving parent_ids
+            # Only preserve parent_ids if not explicitly provided in the update
+            if "parent_ids" not in catalog:
+                parent_ids = existing.get("parent_ids", [])
+                catalog["parent_ids"] = parent_ids
+
+            # Merge with existing data
             catalog["id"] = catalog_id
-            catalog["parent_ids"] = parent_ids
 
             async with request.app.state.get_connection(request, "w") as conn:
                 q, p = render(
