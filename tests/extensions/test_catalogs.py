@@ -1616,3 +1616,37 @@ async def test_link_existing_sub_catalog_to_second_parent(app_client):
     sub_catalogs = resp.json()
     sub_catalog_ids = [cat["id"] for cat in sub_catalogs.get("catalogs", [])]
     assert "catalog-poly-child" in sub_catalog_ids
+
+
+@pytest.mark.asyncio
+async def test_update_catalog_rejects_parent_ids_modification(app_client):
+    """Test that updating a catalog with parent_ids raises an error."""
+    # Create a parent catalog
+    await create_catalog(
+        app_client,
+        "catalog-parent-for-update-test",
+        description="Parent catalog for update test",
+    )
+
+    # Create a sub-catalog
+    await create_sub_catalog(
+        app_client,
+        "catalog-parent-for-update-test",
+        "catalog-child-for-update-test",
+        description="Child catalog for update test",
+    )
+
+    # Try to update the catalog with a different parent_ids - should fail
+    resp = await app_client.put(
+        "/catalogs/catalog-child-for-update-test",
+        json={
+            "id": "catalog-child-for-update-test",
+            "type": "Catalog",
+            "description": "Updated description",
+            "stac_version": "1.0.0",
+            "links": [],
+            "parent_ids": ["some-other-parent"],  # Attempting to modify parent_ids
+        },
+    )
+    assert resp.status_code == 400, resp.text
+    assert "Cannot modify parent_ids" in resp.text

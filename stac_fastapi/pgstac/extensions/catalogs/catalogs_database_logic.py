@@ -273,8 +273,7 @@ class CatalogsDatabaseLogic:
 
             # Only preserve parent_ids if not explicitly provided in the update
             if "parent_ids" not in catalog:
-                parent_ids = existing.get("parent_ids", [])
-                catalog["parent_ids"] = parent_ids
+                catalog["parent_ids"] = existing.get("parent_ids", [])
 
             # Merge with existing data
             catalog["id"] = catalog_id

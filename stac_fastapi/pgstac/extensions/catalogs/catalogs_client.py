@@ -271,6 +271,9 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
         Returns:
             The updated catalog.
+
+        Raises:
+            HTTPException: 400 Bad Request if parent_ids is provided in the update.
         """
         # Convert Pydantic model to dict if needed
         catalog_dict = cast(
@@ -279,6 +282,14 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             if hasattr(catalog, "model_dump")
             else catalog,
         )
+
+        # Reject attempts to modify parent_ids through the update endpoint
+        if "parent_ids" in catalog_dict:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot modify parent_ids through the update endpoint. "
+                "Use the create_sub_catalog endpoint to modify catalog hierarchy.",
+            )
 
         await self.database.update_catalog(
             catalog_id, dict(catalog_dict), refresh=True, request=request
