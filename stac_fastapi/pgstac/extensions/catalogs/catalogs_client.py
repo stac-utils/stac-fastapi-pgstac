@@ -59,12 +59,12 @@ class CatalogsClient(AsyncBaseCatalogsClient):
     database: Any = attr.ib()
 
     @staticmethod
-    async def _generate_catalog_links(
+    async def _add_catalog_links(
         catalog: dict,
         database: Any,
         request: Request,
     ) -> None:
-        """Generate links for a catalog and remove internal metadata.
+        """Generate links for a catalog and remove parent_ids.
 
         This method extracts parent_ids, fetches child catalogs, generates
         appropriate links using CatalogLinks, and removes internal metadata
@@ -138,7 +138,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         # Generate links dynamically for each catalog
         if request and catalogs_list:
             for catalog in catalogs_list:
-                await CatalogsClient._generate_catalog_links(
+                await CatalogsClient._add_catalog_links(
                     catalog=catalog,
                     database=self.database,
                     request=request,
@@ -191,7 +191,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             catalog = await self.database.find_catalog(catalog_id, request=request)
 
             if request:
-                await CatalogsClient._generate_catalog_links(
+                await CatalogsClient._add_catalog_links(
                     catalog=catalog,
                     database=self.database,
                     request=request,
@@ -249,7 +249,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
         # Generate links dynamically for response
         if request:
-            await CatalogsClient._generate_catalog_links(
+            await CatalogsClient._add_catalog_links(
                 catalog=catalog_dict,
                 database=self.database,
                 request=request,
@@ -700,7 +700,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
             # Rewrite links before returning the response
             if request:
-                await CatalogsClient._generate_catalog_links(
+                await CatalogsClient._add_catalog_links(
                     catalog=existing,
                     database=self.database,
                     request=request,
