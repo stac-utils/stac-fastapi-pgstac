@@ -771,7 +771,10 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             )
 
         coll_id = collection_dict.get("id")
-
+        try:
+            await self.database.find_catalog(catalog_id, request=request)
+        except NotFoundError as e:
+            raise NotFoundError(f"Parent catalog {catalog_id} not found") from e
         # Filter out inferred links before storing to avoid overwriting generated links
         if "links" in collection_dict:
             collection_dict["links"] = filter_links(collection_dict["links"])
