@@ -1792,3 +1792,26 @@ async def test_link_existing_catalog_to_existing_parent(app_client):
     sub_catalogs = resp.json()
     sub_catalog_ids = [cat["id"] for cat in sub_catalogs.get("catalogs", [])]
     assert "existing-child-catalog" in sub_catalog_ids
+
+
+@pytest.mark.asyncio
+async def test_create_catalog_collection_parent_not_found(app_client):
+    """Test that creating a collection in a non-existent catalog raises an error."""
+    # Try to create a collection in a non-existent catalog
+    resp = await app_client.post(
+        "/catalogs/nonexistent-catalog/collections",
+        json={
+            "id": "new-collection",
+            "type": "Collection",
+            "description": "Test collection",
+            "stac_version": "1.0.0",
+            "license": "proprietary",
+            "links": [],
+            "extent": {
+                "spatial": {"bbox": [[-180, -90, 180, 90]]},
+                "temporal": {"interval": [[None, None]]},
+            },
+        },
+    )
+    assert resp.status_code == 404, resp.text
+    assert "not found" in resp.text.lower()
