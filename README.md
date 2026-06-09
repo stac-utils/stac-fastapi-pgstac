@@ -50,6 +50,17 @@ To configure **stac-fastapi-pgstac** to [hydrate search result items at the API 
 |                False |              False |    PgSTAC |
 |                 True |               True |       API |
 
+### Multi-Tenant Catalogs Extension
+
+**stac-fastapi-pgstac** supports the optional [Multi-Tenant Catalogs Extension](https://github.com/StacLabs/multi-tenant-catalogs) for managing hierarchical catalog structures with support for Directed Acyclic Graphs (DAG).
+This enables flexible catalog hierarchies where collections and catalogs can have multiple parents.
+
+To enable this extension, install the `stac-fastapi-catalogs-extension` package and set the `ENABLE_CATALOGS_EXTENSION=TRUE` environment variable.
+
+For write operations (creating, updating, and deleting catalogs, and linking/unlinking collections and catalogs), also set `ENABLE_TRANSACTIONS_EXTENSIONS=TRUE`.
+
+For more details, see the [settings documentation](./docs/src/settings.md#multi-tenant-catalogs-extension).
+
 ### Migrations
 
 There is a Python utility as part of PgSTAC ([pypgstac](https://stac-utils.github.io/pgstac/pypgstac/)) that includes a migration utility.

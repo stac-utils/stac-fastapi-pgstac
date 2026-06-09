@@ -774,6 +774,7 @@ dependencies = [
     { name = "griffecli" },
     { name = "griffelib" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/04/56/28a0accac339c164b52a92c6cfc45a903acc0c174caa5c1713803467b533/griffe-2.0.0.tar.gz", hash = "sha256:c68979cd8395422083a51ea7cf02f9c119d889646d99b7b656ee43725de1b80f", size = 293906, upload-time = "2026-03-23T21:06:53.402Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/94/ee21d41e7eb4f823b94603b9d40f86d3c7fde80eacc2c3c71845476dddaa/griffe-2.0.0-py3-none-any.whl", hash = "sha256:5418081135a391c3e6e757a7f3f156f1a1a746cc7b4023868ff7d5e2f9a980aa", size = 5214, upload-time = "2026-02-09T19:09:44.105Z" },
 ]
@@ -798,6 +799,7 @@ dependencies = [
     { name = "colorama" },
     { name = "griffelib" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/a4/f8/2e129fd4a86e52e58eefe664de05e7d502decf766e7316cc9e70fdec3e18/griffecli-2.0.0.tar.gz", hash = "sha256:312fa5ebb4ce6afc786356e2d0ce85b06c1c20d45abc42d74f0cda65e159f6ef", size = 56213, upload-time = "2026-03-23T21:06:54.8Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e6/ed/d93f7a447bbf7a935d8868e9617cbe1cadf9ee9ee6bd275d3040fbf93d60/griffecli-2.0.0-py3-none-any.whl", hash = "sha256:9f7cd9ee9b21d55e91689358978d2385ae65c22f307a63fb3269acf3f21e643d", size = 9345, upload-time = "2026-02-09T19:09:42.554Z" },
 ]
@@ -806,6 +808,7 @@ wheels = [
 name = "griffelib"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ad/06/eccbd311c9e2b3ca45dbc063b93134c57a1ccc7607c5e545264ad092c4a9/griffelib-2.0.0.tar.gz", hash = "sha256:e504d637a089f5cab9b5daf18f7645970509bf4f53eda8d79ed71cce8bd97934", size = 166312, upload-time = "2026-03-23T21:06:55.954Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4d/51/c936033e16d12b627ea334aaaaf42229c37620d0f15593456ab69ab48161/griffelib-2.0.0-py3-none-any.whl", hash = "sha256:01284878c966508b6d6f1dbff9b6fa607bc062d8261c5c7253cb285b06422a7f", size = 142004, upload-time = "2026-02-09T19:09:40.561Z" },
 ]
@@ -870,17 +873,18 @@ wheels = [
 
 [[package]]
 name = "httpx"
-version = "0.28.1"
+version = "0.27.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
     { name = "certifi" },
     { name = "httpcore" },
     { name = "idna" },
+    { name = "sniffio" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b1/df/48c586a5fe32a0f01324ee087459e112ebb7224f646c0b5023f5e79e9956/httpx-0.28.1.tar.gz", hash = "sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc", size = 141406, upload-time = "2024-12-06T15:37:23.222Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/78/82/08f8c936781f67d9e6b9eeb8a0c8b4e406136ea4c3d1f89a5db71d42e0e6/httpx-0.27.2.tar.gz", hash = "sha256:f7c2be1d2f3c3c3160d441802406b206c2b76f5947b11115e6df10c6c65e66c2", size = 144189, upload-time = "2024-08-27T12:54:01.334Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2a/39/e50c7c3a983047577ee07d2a9e53faf5a69493943ec3f6a384bdc792deb2/httpx-0.28.1-py3-none-any.whl", hash = "sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad", size = 73517, upload-time = "2024-12-06T15:37:21.509Z" },
+    { url = "https://files.pythonhosted.org/packages/56/95/9377bcb415797e44274b51d46e3249eba641711cf3348050f76ee7b15ffc/httpx-0.27.2-py3-none-any.whl", hash = "sha256:7bb2708e112d8fdd7829cd4243970f0c223274051cb35ee80c03301ee29a3df0", size = 76395, upload-time = "2024-08-27T12:53:59.653Z" },
 ]
 
 [[package]]
@@ -2690,6 +2694,15 @@ wheels = [
 ]
 
 [[package]]
+name = "sniffio"
+version = "1.3.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a2/87/a6771e1546d97e7e041b6ae58d80074f81b7d5121207425c964ddf5cfdbd/sniffio-1.3.1.tar.gz", hash = "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc", size = 20372, upload-time = "2024-02-25T23:20:04.057Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e9/44/75a9c9421471a6c4805dbf2356f7c181a29c1879239abab1ea2cc8f38b40/sniffio-1.3.1-py3-none-any.whl", hash = "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2", size = 10235, upload-time = "2024-02-25T23:20:01.196Z" },
+]
+
+[[package]]
 name = "soupsieve"
 version = "2.8.3"
 source = { registry = "https://pypi.org/simple" }
@@ -2709,6 +2722,26 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f0/c9/ae4f5141e1b4c06937c674fb98c3ae6a32dd7972b3384edb842277df9fb5/stac_fastapi_api-6.2.0.tar.gz", hash = "sha256:01e6f2414c6ba095a34955db56204684d33086f68646c490552268ab69055a0e", size = 11650, upload-time = "2026-01-13T11:46:27.703Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/06/8d/1098de9e1976bb680f50221f52b23209b33537de7edab4b4a03f53634455/stac_fastapi_api-6.2.0-py3-none-any.whl", hash = "sha256:3f41f9a41c5f34b71fd2bcbafa4d16da923be66c7b2eac7bac08dcfabc2221db", size = 13905, upload-time = "2026-01-13T11:46:28.946Z" },
+]
+
+[[package]]
+name = "stac-fastapi-catalogs-extension"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "attrs" },
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "stac-fastapi-api" },
+    { name = "stac-fastapi-types" },
+    { name = "stac-pydantic" },
+    { name = "starlette" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b2/f3/09f8a9fe4089ebc4d90d9e663d6fe4d11580c0b2f1529ee7923c5bacf6af/stac_fastapi_catalogs_extension-0.3.0.tar.gz", hash = "sha256:00c44235d828298bfe271c96655eddca2b76883ad155a3f39fdd8bb599dbe912", size = 18573, upload-time = "2026-05-20T16:26:22.758Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1c/e4/f1749a69fe076cb96cbff0ffba7d828208ee580a67bdc4526b056319d644/stac_fastapi_catalogs_extension-0.3.0-py3-none-any.whl", hash = "sha256:5a6ca8e19dc2dec1fea6a97d7d1dce876b6bbb22a04c938c8457d2e7ba087222", size = 13678, upload-time = "2026-05-20T16:26:21.364Z" },
 ]
 
 [[package]]
@@ -2745,6 +2778,9 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+catalogs = [
+    { name = "stac-fastapi-catalogs-extension" },
+]
 server = [
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -2766,6 +2802,7 @@ dev = [
     { name = "pytest-postgresql" },
     { name = "requests" },
     { name = "shapely" },
+    { name = "stac-fastapi-catalogs-extension" },
 ]
 docs = [
     { name = "black" },
@@ -2790,12 +2827,13 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.4,<3.0" },
     { name = "pydantic-settings", specifier = ">=2.7,<3.0" },
     { name = "stac-fastapi-api", specifier = ">=6.1,<7.0" },
+    { name = "stac-fastapi-catalogs-extension", marker = "extra == 'catalogs'", specifier = "==0.3.0" },
     { name = "stac-fastapi-extensions", specifier = ">=6.1,<7.0" },
     { name = "stac-fastapi-types", specifier = ">=6.1,<7.0" },
     { name = "stac-pydantic", extras = ["validation"], marker = "extra == 'validation'" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'server'", specifier = "==0.38.0" },
 ]
-provides-extras = ["server", "validation"]
+provides-extras = ["catalogs", "server", "validation"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -2811,6 +2849,7 @@ dev = [
     { name = "pytest-postgresql", specifier = ">=7.0" },
     { name = "requests" },
     { name = "shapely" },
+    { name = "stac-fastapi-catalogs-extension", specifier = "==0.3.0" },
 ]
 docs = [
     { name = "black", specifier = ">=23.10.1" },
