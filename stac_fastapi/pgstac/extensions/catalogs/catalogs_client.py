@@ -364,7 +364,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         if not path.endswith(f"/{collection_id}"):
             path = f"{path}/{collection_id}"
 
-        base_url = get_base_url(request)
+        base_url = get_base_url(request).rstrip("/")
         self_href = f"{base_url}{path}"
 
         # For scoped endpoint, generate links pointing to this specific catalog
@@ -508,7 +508,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
         # Add parent link if not present
         if request and not any(link.get("rel") == "parent" for link in response_links):
-            base_url = get_base_url(request)
+            base_url = get_base_url(request).rstrip("/")
             response_links.append(
                 {
                     "rel": "parent",
@@ -961,7 +961,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         ).get_links(extra_links=[])
 
         # Rewrite self link to point to scoped endpoint
-        base_url = get_base_url(request)
+        base_url = get_base_url(request).rstrip("/")
         for link in links:
             if link.get("rel") == "self":
                 link["href"] = (
