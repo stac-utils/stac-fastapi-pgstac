@@ -199,7 +199,9 @@ class Settings(ApiSettings):
     invalid_id_chars: list[str] = DEFAULT_INVALID_ID_CHARS
     base_item_cache: type[BaseItemCache] = DefaultBaseItemCache
 
-    enabled_extensions: str = ""
+    enabled_extensions: (
+        Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] | None
+    ) = None
     enable_transactions_extensions: bool = False
     validate_extensions: bool = False
     """

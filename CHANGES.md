@@ -8,11 +8,13 @@
 - simplify `extensions.query.Operator` class, by removing unused `operator` method and unncessary dependencies ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
 - handle `ENABLE_TRANSACTIONS_EXTENSIONS`, `ENABLED_EXTENSIONS` and `UVICORN_ROOT_PATH` environment configuration variables via the `config.Settings` class ([#368](https://github.com/stac-utils/stac-fastapi-pgstac/pull/368))
 - Refactor Docker Compose files and Makefile for better organization and modularity. ([#379](https://github.com/stac-utils/stac-fastapi-pgstac/pull/379))
+- introduce `app.instantiate_api` function to make API customisation easier ([#381](https://github.com/stac-utils/stac-fastapi-pgstac/pull/381))
 
 ### Added
 
 - implement `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
 - add api test for `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
+- add tests for new `app.instantiate_api` function ([#381](https://github.com/stac-utils/stac-fastapi-pgstac/pull/381))
 
 ### Fixed
 

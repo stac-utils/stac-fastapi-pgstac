@@ -29,14 +29,16 @@ async def app_with_root_path(pgstac, monkeypatch):
 
     importlib.reload(stac_fastapi.pgstac.app)
 
-    from stac_fastapi.pgstac.app import app, with_transactions
+    from stac_fastapi.pgstac.app import app, settings
 
     # Ensure the app's root_path is configured as expected
     assert (
         app.root_path == ROOT_PATH
     ), f"app_with_root_path fixture: app.root_path is '{app.root_path}', expected '{ROOT_PATH}'"
 
-    await connect_to_db(app, add_write_connection_pool=with_transactions)
+    await connect_to_db(
+        app, add_write_connection_pool=settings.enable_transactions_extensions
+    )
     yield app
     await close_db_connection(app)
 
