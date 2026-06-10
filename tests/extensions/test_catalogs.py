@@ -1815,3 +1815,178 @@ async def test_create_catalog_collection_parent_not_found(app_client):
     )
     assert resp.status_code == 404, resp.text
     assert "not found" in resp.text.lower()
+
+
+# ============================================================================
+# hide_alternate_parents Tests
+# ============================================================================
+
+
+@pytest.mark.asyncio
+async def test_hide_alternate_parents_suppresses_related_links_on_global_collection(
+    app, app_client, monkeypatch
+):
+    """Test that hide_alternate_parents=True suppresses rel=related links on global /collections."""
+    monkeypatch.setattr(app.state, "catalogs_hide_alternate_parents", True)
+
+    # Create two parent catalogs
+    parent_catalog_1 = await create_catalog(app_client, "parent-catalog-1")
+    parent_id_1 = parent_catalog_1["id"]
+
+    parent_catalog_2 = await create_catalog(app_client, "parent-catalog-2")
+    parent_id_2 = parent_catalog_2["id"]
+
+    # Create a collection linked to both catalogs
+    collection_id = "test-collection-global"
+    coll_resp = await create_catalog_collection(
+        app_client, parent_id_1, collection_id, description="Test collection"
+    )
+    assert coll_resp["id"] == collection_id
+
+    link_resp = await app_client.post(
+        f"/catalogs/{parent_id_2}/collections", json={"id": collection_id}
+    )
+    assert link_resp.status_code == 200
+
+    resp = await app_client.get(f"/collections/{collection_id}")
+    assert resp.status_code == 200
+
+    links = resp.json().get("links", [])
+    related_links = [link for link in links if link.get("rel") == "related"]
+    assert (
+        len(related_links) == 0
+    ), f"Expected no related links with hide_alternate_parents=True, got: {related_links}"
+
+    duplicate_links = [link for link in links if link.get("rel") == "duplicate"]
+    assert (
+        len(duplicate_links) == 0
+    ), f"Expected no duplicate links with hide_alternate_parents=True, got: {duplicate_links}"
+
+    # Parent link should still point to root
+    parent_links = [link for link in links if link.get("rel") == "parent"]
+    assert len(parent_links) == 1, "Should still have exactly 1 parent link"
+
+
+@pytest.mark.asyncio
+async def test_hide_alternate_parents_suppresses_related_links_on_scoped_collection(
+    app, app_client, monkeypatch
+):
+    """Test that hide_alternate_parents=True suppresses rel=related on scoped /catalogs/{id}/collections/{id}."""
+    monkeypatch.setattr(app.state, "catalogs_hide_alternate_parents", True)
+
+    # Create two parent catalogs
+    parent_catalog_1 = await create_catalog(app_client, "parent-catalog-scoped-1")
+    parent_id_1 = parent_catalog_1["id"]
+
+    parent_catalog_2 = await create_catalog(app_client, "parent-catalog-scoped-2")
+    parent_id_2 = parent_catalog_2["id"]
+
+    # Create a collection linked to both catalogs
+    collection_id = "test-collection-scoped"
+    coll_resp = await create_catalog_collection(
+        app_client, parent_id_1, collection_id, description="Test collection"
+    )
+    assert coll_resp["id"] == collection_id
+
+    link_resp = await app_client.post(
+        f"/catalogs/{parent_id_2}/collections", json={"id": collection_id}
+    )
+    assert link_resp.status_code == 200
+
+    resp = await app_client.get(f"/catalogs/{parent_id_1}/collections/{collection_id}")
+    assert resp.status_code == 200
+
+    links = resp.json().get("links", [])
+    related_links = [link for link in links if link.get("rel") == "related"]
+    assert (
+        len(related_links) == 0
+    ), f"Expected no related links with hide_alternate_parents=True, got: {related_links}"
+
+    duplicate_links = [link for link in links if link.get("rel") == "duplicate"]
+    assert (
+        len(duplicate_links) == 0
+    ), f"Expected no duplicate links with hide_alternate_parents=True, got: {duplicate_links}"
+
+    # Parent link should still point to the contextual catalog
+    parent_links = [link for link in links if link.get("rel") == "parent"]
+    assert len(parent_links) == 1, "Should still have exactly 1 parent link"
+    assert (
+        f"/catalogs/{parent_id_1}" in parent_links[0]["href"]
+    ), "Parent link should point to contextual catalog, not alternate"
+
+
+@pytest.mark.asyncio
+async def test_hide_alternate_parents_suppresses_related_links_on_catalog(
+    app, app_client, monkeypatch
+):
+    """Test that hide_alternate_parents=True suppresses rel=related on catalog with multiple parents."""
+    monkeypatch.setattr(app.state, "catalogs_hide_alternate_parents", True)
+
+    # Create two parent catalogs
+    parent_catalog_1 = await create_catalog(app_client, "parent-catalog-cat-1")
+    parent_id_1 = parent_catalog_1["id"]
+
+    parent_catalog_2 = await create_catalog(app_client, "parent-catalog-cat-2")
+    parent_id_2 = parent_catalog_2["id"]
+
+    # Create a child catalog under parent_1
+    child_id = "child-catalog"
+    child_resp = await create_sub_catalog(app_client, parent_id_1, child_id)
+    assert child_resp["id"] == child_id
+
+    # Also link the child to parent_2 (poly-hierarchy)
+    link_resp = await app_client.post(
+        f"/catalogs/{parent_id_2}/catalogs", json={"id": child_id}
+    )
+    assert link_resp.status_code in [200, 201]
+
+    resp = await app_client.get(f"/catalogs/{child_id}")
+    assert resp.status_code == 200
+
+    links = resp.json().get("links", [])
+    related_links = [link for link in links if link.get("rel") == "related"]
+    assert (
+        len(related_links) == 0
+    ), f"Expected no related links with hide_alternate_parents=True, got: {related_links}"
+
+    # Parent link should still be present
+    parent_links = [link for link in links if link.get("rel") == "parent"]
+    assert len(parent_links) == 1, "Should still have exactly 1 parent link"
+
+
+@pytest.mark.asyncio
+async def test_hide_alternate_parents_false_shows_related_links(app_client):
+    """Test that hide_alternate_parents=False (default) still shows rel=related links."""
+    # Create two parent catalogs
+    parent_catalog_1 = await create_catalog(app_client, "parent-catalog-false-1")
+    parent_id_1 = parent_catalog_1["id"]
+
+    parent_catalog_2 = await create_catalog(app_client, "parent-catalog-false-2")
+    parent_id_2 = parent_catalog_2["id"]
+
+    # Create a collection linked to both catalogs
+    collection_id = "test-collection-false"
+    coll_resp = await create_catalog_collection(
+        app_client, parent_id_1, collection_id, description="Test collection"
+    )
+    assert coll_resp["id"] == collection_id
+
+    link_resp = await app_client.post(
+        f"/catalogs/{parent_id_2}/collections", json={"id": collection_id}
+    )
+    assert link_resp.status_code == 200
+
+    # Check scoped collection endpoint (where related links are added)
+    resp = await app_client.get(f"/catalogs/{parent_id_1}/collections/{collection_id}")
+    assert resp.status_code == 200
+
+    links = resp.json().get("links", [])
+    related_links = [link for link in links if link.get("rel") == "related"]
+    assert (
+        len(related_links) >= 1
+    ), "Expected related links when hide_alternate_parents=False, got none"
+
+    duplicate_links = [link for link in links if link.get("rel") == "duplicate"]
+    assert (
+        len(duplicate_links) >= 1
+    ), "Expected duplicate links when hide_alternate_parents=False, got none"

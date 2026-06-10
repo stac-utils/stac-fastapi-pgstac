@@ -22,6 +22,7 @@ from stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic import (
 from stac_fastapi.pgstac.extensions.catalogs.catalogs_links import (
     CatalogLinks,
     ChildLinks,
+    ScopedCollectionLinks,
     SubCatalogLinks,
 )
 from stac_fastapi.pgstac.models.links import (
@@ -372,10 +373,28 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             collection_id, catalog_id, base_url, self_href
         )
 
-        # Add related links for poly-hierarchy
-        CatalogsClient._add_related_links(
-            collection, parent_ids, catalog_id, collection_id, base_url
+        # Add poly-hierarchy links using ScopedCollectionLinks
+        scoped_links = ScopedCollectionLinks(
+            collection_id=collection_id,
+            catalog_id=catalog_id,
+            parent_ids=parent_ids,
+            request=request,
         )
+
+        # Add related links if present
+        related = scoped_links.link_related()
+        if related:
+            collection["links"].extend(related)
+
+        # Add canonical link if present
+        canonical = scoped_links.link_canonical()
+        if canonical:
+            collection["links"].append(canonical)
+
+        # Add duplicate links if present
+        duplicate = scoped_links.link_duplicate()
+        if duplicate:
+            collection["links"].extend(duplicate)
 
         # Remove internal metadata
         collection.pop("parent_ids", None)
@@ -393,11 +412,6 @@ class CatalogsClient(AsyncBaseCatalogsClient):
                 "rel": "self",
                 "type": "application/json",
                 "href": self_href,
-            },
-            {
-                "rel": "canonical",
-                "type": "application/json",
-                "href": base_url + f"/collections/{collection_id}",
             },
             {
                 "rel": "items",
@@ -428,33 +442,6 @@ class CatalogsClient(AsyncBaseCatalogsClient):
                 "href": base_url + f"/collections/{collection_id}/sortables",
             },
         ]
-
-    @staticmethod
-    def _add_related_links(
-        collection: dict,
-        parent_ids: list[str],
-        catalog_id: str,
-        collection_id: str,
-        base_url: str,
-    ) -> None:
-        """Add related links for poly-hierarchy."""
-        if parent_ids and len(parent_ids) > 1:
-            for parent_id in parent_ids:
-                if parent_id != catalog_id:  # Don't link to self
-                    related_href = (
-                        base_url + f"/catalogs/{parent_id}/collections/{collection_id}"
-                    )
-                    collection["links"].append(
-                        {
-                            "rel": "related",
-                            "type": "application/json",
-                            "href": related_href,
-                            "title": f"Collection in {parent_id}",
-                        }
-                    )
-
-        # Remove internal metadata
-        collection.pop("parent_ids", None)
 
     @staticmethod
     def _extract_limit_and_token(

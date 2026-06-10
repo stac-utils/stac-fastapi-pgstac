@@ -200,6 +200,13 @@ class ChildLinks(BaseLinks):
         if not self.parent_ids or len(self.parent_ids) <= 1:
             return None
 
+        # Check if hide_alternate_parents is enabled
+        hide_alternate_parents = getattr(
+            self.request.app.state, "catalogs_hide_alternate_parents", False
+        )
+        if hide_alternate_parents:
+            return None
+
         related_links = []
         for parent_id in self.parent_ids:
             if parent_id != self.catalog_id:  # Don't link to self
@@ -284,6 +291,13 @@ class SubCatalogLinks(BaseLinks):
         if not self.parent_ids or len(self.parent_ids) <= 1:
             return None
 
+        # Check if hide_alternate_parents is enabled
+        hide_alternate_parents = getattr(
+            self.request.app.state, "catalogs_hide_alternate_parents", False
+        )
+        if hide_alternate_parents:
+            return None
+
         related_links = []
         for parent_id in self.parent_ids:
             if parent_id != self.catalog_id:  # Don't link to self
@@ -356,3 +370,98 @@ class CatalogSubcatalogsLinks(BaseLinks):
                 ),
             }
         return None
+
+
+@attr.s
+class ScopedCollectionLinks(BaseLinks):
+    """Create inferred links for a collection in a scoped catalog context.
+
+    Generates related, duplicate, and canonical links for a collection accessed
+    through a specific catalog endpoint (/catalogs/{catalogId}/collections/{collectionId}).
+
+    Attributes:
+        collection_id: The ID of the collection.
+        catalog_id: The ID of the parent catalog (current context).
+        parent_ids: List of parent catalog IDs (for poly-hierarchy).
+    """
+
+    collection_id: str = attr.ib()
+    catalog_id: str = attr.ib()
+    parent_ids: list[str] = attr.ib(kw_only=True, factory=list)
+
+    def link_related(self) -> list[dict] | None:
+        """Create related links for alternative parents (poly-hierarchy).
+
+        Returns:
+            A list of link dicts with rel='related' for other parents, or None.
+        """
+        if not self.parent_ids or len(self.parent_ids) <= 1:
+            return None
+
+        # Check if hide_alternate_parents is enabled
+        hide_alternate_parents = getattr(
+            self.request.app.state, "catalogs_hide_alternate_parents", False
+        )
+        if hide_alternate_parents:
+            return None
+
+        related_links = []
+        for parent_id in self.parent_ids:
+            if parent_id != self.catalog_id:  # Don't link to self
+                related_links.append(
+                    {
+                        "rel": "related",
+                        "type": MimeTypes.json.value,
+                        "href": self.resolve(
+                            f"catalogs/{parent_id}/collections/{self.collection_id}"
+                        ),
+                        "title": f"Collection in {parent_id}",
+                    }
+                )
+        return related_links if related_links else None
+
+    def link_canonical(self) -> dict | None:
+        """Create canonical link pointing to global collection endpoint.
+
+        Returns:
+            A link dict with rel='canonical' pointing to /collections/{collectionId}, or None.
+        """
+        if not self.parent_ids:
+            return None
+
+        return {
+            "rel": "canonical",
+            "type": MimeTypes.json.value,
+            "href": self.resolve(f"collections/{self.collection_id}"),
+        }
+
+    def link_duplicate(self) -> list[dict] | None:
+        """Create duplicate links for alternative scoped paths (poly-hierarchy).
+
+        Returns:
+            A list of link dicts with rel='duplicate' for other scoped paths, or None.
+        """
+        if not self.parent_ids or len(self.parent_ids) <= 1:
+            return None
+
+        # Check if hide_alternate_parents is enabled
+        hide_alternate_parents = getattr(
+            self.request.app.state, "catalogs_hide_alternate_parents", False
+        )
+        if hide_alternate_parents:
+            return None
+
+        # Create duplicate links for each alternative parent's scoped path
+        duplicate_links = []
+        for parent_id in self.parent_ids:
+            if parent_id != self.catalog_id:  # Don't link to self
+                duplicate_links.append(
+                    {
+                        "rel": "duplicate",
+                        "type": MimeTypes.json.value,
+                        "href": self.resolve(
+                            f"catalogs/{parent_id}/collections/{self.collection_id}"
+                        ),
+                    }
+                )
+        return duplicate_links if duplicate_links else None

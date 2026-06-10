@@ -56,7 +56,7 @@ server  = [
     "uvicorn[standard]==0.38.0"
 ]
 catalogs = [
-    "stac-fastapi-catalogs-extension==0.3.0",
+    "stac-fastapi-catalogs-extension==0.4.0",
 ]
 
 [dependency-groups]

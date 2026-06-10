@@ -260,6 +260,9 @@ async def app(api_client, pgstac):
         add_write_connection_pool=True,
     )
 
+    # Initialize catalogs extension state
+    app.state.catalogs_hide_alternate_parents = False
+
     yield app
 
     await close_db_connection(app)

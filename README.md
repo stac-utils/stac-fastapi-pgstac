@@ -59,7 +59,18 @@ To enable this extension, install the `stac-fastapi-catalogs-extension` package 
 
 For write operations (creating, updating, and deleting catalogs, and linking/unlinking collections and catalogs), also set `ENABLE_TRANSACTIONS_EXTENSIONS=TRUE`.
 
-For more details, see the [settings documentation](./docs/src/settings.md#multi-tenant-catalogs-extension).
+#### Poly-Hierarchy Links
+
+When a catalog or collection has multiple parents, the API exposes the catalog hierarchy through STAC link relations:
+
+- `rel="parent"`: Points to the contextual parent (the catalog through which the resource was accessed)
+- `rel="related"`: Links to alternative parents in the poly-hierarchy (for catalogs and scoped collections)
+- `rel="duplicate"`: Links to alternative scoped paths where a collection can be accessed (e.g., `/catalogs/{parentId}/collections/{collectionId}`)
+- `rel="canonical"`: Points to the global collection endpoint for scoped collections
+
+To prevent information leakage about other tenants in multi-tenant deployments, set `HIDE_ALTERNATE_PARENTS=TRUE` to suppress `rel="related"` and `rel="duplicate"` links. When enabled, only the contextual `rel="parent"` link is advertised.
+
+**Note:** The link relation names for poly-hierarchy navigation are subject to change as the OGC and STAC communities continue to standardize on terminology. These names may be updated in future releases to align with emerging standards.
 
 ### Migrations
 
