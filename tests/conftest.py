@@ -425,8 +425,7 @@ async def default_app(pgstac, monkeypatch):
 
     from stac_fastapi.pgstac.app import instantiate_api
 
-    settings = Settings()
-    api = instantiate_api(settings=settings)
+    api = instantiate_api()
     app = api.app
 
     await connect_to_db(app, add_write_connection_pool=True)

@@ -1,66 +1,106 @@
-import pytest
+from stac_fastapi.extensions.core import CollectionSearchExtension
 from stac_fastapi.types.extension import ApiExtension
 
-from stac_fastapi.pgstac.models.extensions import (
-    DEFAULT_EXTENSIONS,
-    Extensions,
-    get_stac_api_extensions,
-)
+from stac_fastapi.pgstac.config import Settings
+from stac_fastapi.pgstac.models.extensions import DEFAULT_EXTENSIONS, Extensions
 
 
-def test_get_stac_api_extensions():
-    """Test that get_stac_api_extensions returns the correct extensions."""
-    default_extensions = {
-        "query": "default_query_extension",
-        "filter": "default_filter_extension",
-    }
-    update_extensions = {
-        "query": "updated_query_extension",
-        "new_extension": "new_extension",
-    }
+class TestApiExtension(ApiExtension):
+    def register(self, app) -> None:
+        pass
 
-    extensions = get_stac_api_extensions(
-        default=default_extensions, update=update_extensions
+
+class CustomQueryExtension(TestApiExtension):
+    pass
+
+
+class CustomNewExtension(TestApiExtension):
+    pass
+
+
+def test_extensions_default():
+    extensions = Extensions()
+    assert extensions.search == list(DEFAULT_EXTENSIONS["search_map"].values())
+    assert (
+        extensions.collection_search.conformance_classes
+        == CollectionSearchExtension.from_extensions(
+            list(DEFAULT_EXTENSIONS["collection_search_map"].values())
+        ).conformance_classes
     )
-
-    assert extensions["query"] == "updated_query_extension"
-    assert extensions["filter"] == "default_filter_extension"
-    assert extensions["new_extension"] == "new_extension"
-
-
-def test_get_stac_api_extensions_no_update():
-    """Test that get_stac_api_extensions returns the default extensions when no update is provided."""
-    default_extensions = {
-        "query": "default_query_extension",
-        "filter": "default_filter_extension",
-    }
-
-    extensions = get_stac_api_extensions(default=default_extensions)
-
-    assert extensions == default_extensions
+    assert extensions.item_collection == list(
+        DEFAULT_EXTENSIONS["item_collection_map"].values()
+    )
+    assert extensions.transaction == []
+    assert extensions.extra == []
 
 
-def test_extensions_type_error():
-    """Test that a TypeError is raised when non-ApiExtension values are provided."""
-    with pytest.raises(TypeError) as exc_info:
-        Extensions(search={"query": "not_an_extension"})
-    assert "contains values that are not ApiExtension instances" in str(exc_info.value)
+def test_extensions_enabled():
+    settings = Settings(enabled_extensions=["query", "sort", "collection_search"])
+    extensions = Extensions(settings=settings)
+    assert extensions.search == [
+        DEFAULT_EXTENSIONS["search_map"]["query"],
+        DEFAULT_EXTENSIONS["search_map"]["sort"],
+    ]
+    assert (
+        extensions.collection_search.conformance_classes
+        == CollectionSearchExtension.from_extensions(
+            [
+                DEFAULT_EXTENSIONS["collection_search_map"]["query"],
+                DEFAULT_EXTENSIONS["collection_search_map"]["sort"],
+            ]
+        ).conformance_classes
+    )
+    assert extensions.item_collection == [
+        DEFAULT_EXTENSIONS["item_collection_map"]["query"],
+        DEFAULT_EXTENSIONS["item_collection_map"]["sort"],
+    ]
+    assert extensions.transaction == []
+    assert extensions.extra == []
 
 
-def test_extensions_default_enabled():
-    """Test that default_enabled returns the correct set of enabled extensions."""
+def test_extensions_enabled_no_collection_search():
+    settings = Settings(enabled_extensions=["query", "sort"])
+    extensions = Extensions(settings=settings)
+    assert extensions.search == [
+        DEFAULT_EXTENSIONS["search_map"]["query"],
+        DEFAULT_EXTENSIONS["search_map"]["sort"],
+    ]
+    assert extensions.collection_search is None
+    assert extensions.item_collection == [
+        DEFAULT_EXTENSIONS["item_collection_map"]["query"],
+        DEFAULT_EXTENSIONS["item_collection_map"]["sort"],
+    ]
+    assert extensions.transaction == []
+    assert extensions.extra == []
 
-    class CustomNewExtension(ApiExtension):
-        def register(self, app) -> None:
-            pass
 
+def test_extensions_enabled_transactions():
+    settings = Settings(enable_transactions_extensions=True)
+    extensions = Extensions(settings=settings)
+    assert len(extensions.transaction) == 2
+
+
+def test_extensions_custom():
+    custom_query_extension = CustomQueryExtension()
+    custom_new_extension = CustomNewExtension()
     extensions = Extensions(
-        search={"new_extension": CustomNewExtension()},
+        search_map={"query": custom_query_extension},
+        extra_map={"new": custom_new_extension},
     )
-    expected_enabled = set(
-        list(DEFAULT_EXTENSIONS["search"].keys())
-        + list(DEFAULT_EXTENSIONS["collection_search"].keys())
-        + list(DEFAULT_EXTENSIONS["item_collection"].keys())
-        + ["collection_search", "new_extension"]
+    assert extensions.search == list(
+        {
+            **DEFAULT_EXTENSIONS["search_map"],
+            **{"query": custom_query_extension},
+        }.values()
     )
-    assert extensions.default_enabled == expected_enabled
+    assert (
+        extensions.collection_search.conformance_classes
+        == CollectionSearchExtension.from_extensions(
+            list(DEFAULT_EXTENSIONS["collection_search_map"].values())
+        ).conformance_classes
+    )
+    assert extensions.item_collection == list(
+        DEFAULT_EXTENSIONS["item_collection_map"].values()
+    )
+    assert extensions.transaction == []
+    assert extensions.extra == [custom_new_extension]

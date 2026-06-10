@@ -29,7 +29,10 @@ async def app_with_root_path(pgstac, monkeypatch):
 
     importlib.reload(stac_fastapi.pgstac.app)
 
-    from stac_fastapi.pgstac.app import app, settings
+    from stac_fastapi.pgstac.app import app
+    from stac_fastapi.pgstac.config import Settings
+
+    settings = Settings()
 
     # Ensure the app's root_path is configured as expected
     assert (

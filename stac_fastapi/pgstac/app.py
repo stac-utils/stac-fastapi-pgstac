@@ -20,9 +20,6 @@ from stac_fastapi.api.models import (
     create_post_request_model,
     create_request_model,
 )
-from stac_fastapi.extensions.core import CollectionSearchExtension, TransactionExtension
-from stac_fastapi.extensions.third_party import BulkTransactionExtension
-from stac_fastapi.types.extension import ApiExtension
 from stac_fastapi.types.search import APIRequest
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
@@ -31,17 +28,13 @@ from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
 from stac_fastapi.pgstac.models.extensions import Extensions
-from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
-
-settings = Settings()
-extensions = Extensions()
 
 
 def instantiate_api(
-    settings: Settings = settings,
+    settings: Settings | None = None,
     client: Type[CoreCrudClient] = CoreCrudClient,
-    extensions: Extensions = extensions,
+    extensions: Extensions | None = None,
 ) -> StacApi:
     """Instantiate the STAC API.
 
@@ -53,90 +46,41 @@ def instantiate_api(
     Returns:
         An instance of the STAC API.
     """
-    if not isinstance(settings, Settings):
-        raise TypeError(
-            f"Expected `settings` to be an instance of `Settings`, got {type(settings)}"
-        )
-    if not isinstance(client, type) or not issubclass(client, CoreCrudClient):
-        raise TypeError(
-            f"Expected `client` to be a subclass of `CoreCrudClient`, got {type(client)}"
-        )
-    if not isinstance(extensions, Extensions):
-        raise TypeError(
-            f"Expected `extensions` to be an instance of `Extensions`, got {type(extensions)}"
-        )
-
-    enabled_extensions = settings.enabled_extensions or extensions.default_enabled
+    settings = settings or Settings()
+    extensions = extensions or Extensions()
 
     # /search models
-    search_extensions = [
-        extension
-        for key, extension in extensions.search.items()
-        if key in enabled_extensions
-    ]
     post_request_model = create_post_request_model(
-        search_extensions, base_model=PgstacSearch
+        extensions.search, base_model=PgstacSearch
     )
-    get_request_model = create_get_request_model(search_extensions)
+    get_request_model = create_get_request_model(extensions.search)
 
     # /collections/{collectionId}/items model
     items_get_request_model: type[APIRequest] = ItemCollectionUri
-    itm_col_extensions = [
-        extension
-        for key, extension in extensions.item_collection.items()
-        if key in enabled_extensions
-    ]
-    if itm_col_extensions:
+    if extensions.item_collection:
         items_get_request_model = cast(
             type[APIRequest],
             create_request_model(
                 model_name="ItemCollectionUri",
                 base_model=ItemCollectionUri,
-                extensions=itm_col_extensions,
+                extensions=extensions.item_collection,
                 request_type="GET",
             ),
         )
 
     # /collections model
     collections_get_request_model: type[APIRequest] = EmptyRequest
-    collection_search_extension = None
-    if "collection_search" in enabled_extensions:
-        cs_extensions = [
-            extension
-            for key, extension in extensions.collection_search.items()
-            if key in enabled_extensions
-        ]
-        collection_search_extension = CollectionSearchExtension.from_extensions(
-            cs_extensions
-        )
+    collection_search_extension = extensions.collection_search
+    if collection_search_extension is not None:
         collections_get_request_model = collection_search_extension.GET
 
-    with_transactions = settings.enable_transactions_extensions
-
-    transaction_extensions: list[ApiExtension] = []
-    if with_transactions:
-        transaction_extensions.append(
-            TransactionExtension(
-                client=TransactionsClient(),
-                settings=settings,
-                response_class=JSONResponse,
-            ),
-        )
-        transaction_extensions.append(
-            BulkTransactionExtension(client=BulkTransactionsClient()),
-        )
-
-    extra_extensions = [
-        extension
-        for key, extension in extensions.extra.items()
-        if key in enabled_extensions
-    ]
+    transaction_extensions = extensions.transaction
 
     application_extensions = [
-        *search_extensions,
-        *itm_col_extensions,
+        *extensions.search,
+        *extensions.item_collection,
         *transaction_extensions,
-        *extra_extensions,
+        *extensions.extra,
     ]
     if collection_search_extension is not None:
         application_extensions.append(collection_search_extension)
@@ -144,7 +88,7 @@ def instantiate_api(
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         """FastAPI Lifespan."""
-        await connect_to_db(app, add_write_connection_pool=with_transactions)
+        await connect_to_db(app, add_write_connection_pool=bool(transaction_extensions))
         yield
         await close_db_connection(app)
 
@@ -196,6 +140,10 @@ def run():
     """Run app from command line using uvicorn if available."""
     try:
         import uvicorn
+
+        from stac_fastapi.pgstac.config import Settings
+
+        settings = Settings()
 
         uvicorn.run(
             "stac_fastapi.pgstac.app:app",
