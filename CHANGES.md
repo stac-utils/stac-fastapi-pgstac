@@ -14,7 +14,7 @@
 - implement `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
 - add api test for `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
 - Multi-Tenant Catalogs Extension: Integrated optional `stac-fastapi-catalogs-extension` to support native DAG (Directed Acyclic Graph) traversal of Catalogs and Collections. Enabled via `ENABLE_CATALOGS_EXTENSION` environment variable ([#366](https://github.com/stac-utils/stac-fastapi-pgstac/pull/366))
-- Added `HIDE_ALTERNATE_PARENTS` environment variable (default `False`) to suppress `rel="related"` and `rel="duplicate"` links for alternate parents in poly-hierarchy. Useful for multi-tenant deployments to prevent information leakage about other tenants. When enabled, only the contextual `rel="parent"` link is advertised. Requires `ENABLE_CATALOGS_ROUTE=true`. ([#387](https://github.com/stac-utils/stac-fastapi-pgstac/pull/387))
+- Added `HIDE_ALTERNATE_PARENTS` environment variable (default `False`) to suppress `rel="related"` and `rel="duplicate"` links for alternate parents in poly-hierarchy. Useful for multi-tenant deployments to prevent information leakage about other tenants. When enabled, only the contextual `rel="parent"` link is advertised. Requires `ENABLE_CATALOGS_EXTENSION=true`. ([#387](https://github.com/stac-utils/stac-fastapi-pgstac/pull/387))
 - Added `rel="duplicate"` links for scoped collection endpoints (`/catalogs/{catalogId}/collections/{collectionId}`) to expose alternative scoped paths where collections can be accessed through other parent catalogs in poly-hierarchy. ([#387](https://github.com/stac-utils/stac-fastapi-pgstac/pull/387))
 
 
