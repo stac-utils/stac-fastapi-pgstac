@@ -390,10 +390,10 @@ class ScopedCollectionLinks(BaseLinks):
     parent_ids: list[str] = attr.ib(kw_only=True, factory=list)
 
     def link_related(self) -> list[dict] | None:
-        """Create related links for alternative parents (poly-hierarchy).
+        """Create related links for alternative parent catalogs (poly-hierarchy).
 
         Returns:
-            A list of link dicts with rel='related' for other parents, or None.
+            A list of link dicts with rel='related' for other parent catalogs, or None.
         """
         if not self.parent_ids or len(self.parent_ids) <= 1:
             return None
@@ -412,10 +412,8 @@ class ScopedCollectionLinks(BaseLinks):
                     {
                         "rel": "related",
                         "type": MimeTypes.json.value,
-                        "href": self.resolve(
-                            f"catalogs/{parent_id}/collections/{self.collection_id}"
-                        ),
-                        "title": f"Collection in {parent_id}",
+                        "href": self.resolve(f"catalogs/{parent_id}"),
+                        "title": parent_id,
                     }
                 )
         return related_links if related_links else None
@@ -436,10 +434,10 @@ class ScopedCollectionLinks(BaseLinks):
         }
 
     def link_duplicate(self) -> list[dict] | None:
-        """Create duplicate links for alternative scoped paths (poly-hierarchy).
+        """Create duplicate links for alternative scoped collection paths (poly-hierarchy).
 
         Returns:
-            A list of link dicts with rel='duplicate' for other scoped paths, or None.
+            A list of link dicts with rel='duplicate' for other scoped collection paths, or None.
         """
         if not self.parent_ids or len(self.parent_ids) <= 1:
             return None
@@ -451,7 +449,6 @@ class ScopedCollectionLinks(BaseLinks):
         if hide_alternate_parents:
             return None
 
-        # Create duplicate links for each alternative parent's scoped path
         duplicate_links = []
         for parent_id in self.parent_ids:
             if parent_id != self.catalog_id:  # Don't link to self

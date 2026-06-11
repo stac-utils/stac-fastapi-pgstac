@@ -1916,6 +1916,46 @@ async def test_hide_alternate_parents_suppresses_related_links_on_scoped_collect
 
 
 @pytest.mark.asyncio
+async def test_hide_alternate_parents_false_shows_related_and_duplicate_links(
+    app_client,
+):
+    """Test that hide_alternate_parents=False (default) shows both related and duplicate links on scoped collections."""
+    # Create two parent catalogs
+    parent_catalog_1 = await create_catalog(app_client, "parent-catalog-false-1")
+    parent_id_1 = parent_catalog_1["id"]
+
+    parent_catalog_2 = await create_catalog(app_client, "parent-catalog-false-2")
+    parent_id_2 = parent_catalog_2["id"]
+
+    # Create a collection linked to both catalogs
+    collection_id = "test-collection-false"
+    coll_resp = await create_catalog_collection(
+        app_client, parent_id_1, collection_id, description="Test collection"
+    )
+    assert coll_resp["id"] == collection_id
+
+    link_resp = await app_client.post(
+        f"/catalogs/{parent_id_2}/collections", json={"id": collection_id}
+    )
+    assert link_resp.status_code == 200
+
+    # Check scoped collection endpoint (where related and duplicate links are added)
+    resp = await app_client.get(f"/catalogs/{parent_id_1}/collections/{collection_id}")
+    assert resp.status_code == 200
+
+    links = resp.json().get("links", [])
+    related_links = [link for link in links if link.get("rel") == "related"]
+    assert (
+        len(related_links) >= 1
+    ), "Expected related links when hide_alternate_parents=False, got none"
+
+    duplicate_links = [link for link in links if link.get("rel") == "duplicate"]
+    assert (
+        len(duplicate_links) >= 1
+    ), "Expected duplicate links when hide_alternate_parents=False, got none"
+
+
+@pytest.mark.asyncio
 async def test_hide_alternate_parents_suppresses_related_links_on_catalog(
     app, app_client, monkeypatch
 ):
@@ -1952,41 +1992,3 @@ async def test_hide_alternate_parents_suppresses_related_links_on_catalog(
     # Parent link should still be present
     parent_links = [link for link in links if link.get("rel") == "parent"]
     assert len(parent_links) == 1, "Should still have exactly 1 parent link"
-
-
-@pytest.mark.asyncio
-async def test_hide_alternate_parents_false_shows_related_links(app_client):
-    """Test that hide_alternate_parents=False (default) still shows rel=related links."""
-    # Create two parent catalogs
-    parent_catalog_1 = await create_catalog(app_client, "parent-catalog-false-1")
-    parent_id_1 = parent_catalog_1["id"]
-
-    parent_catalog_2 = await create_catalog(app_client, "parent-catalog-false-2")
-    parent_id_2 = parent_catalog_2["id"]
-
-    # Create a collection linked to both catalogs
-    collection_id = "test-collection-false"
-    coll_resp = await create_catalog_collection(
-        app_client, parent_id_1, collection_id, description="Test collection"
-    )
-    assert coll_resp["id"] == collection_id
-
-    link_resp = await app_client.post(
-        f"/catalogs/{parent_id_2}/collections", json={"id": collection_id}
-    )
-    assert link_resp.status_code == 200
-
-    # Check scoped collection endpoint (where related links are added)
-    resp = await app_client.get(f"/catalogs/{parent_id_1}/collections/{collection_id}")
-    assert resp.status_code == 200
-
-    links = resp.json().get("links", [])
-    related_links = [link for link in links if link.get("rel") == "related"]
-    assert (
-        len(related_links) >= 1
-    ), "Expected related links when hide_alternate_parents=False, got none"
-
-    duplicate_links = [link for link in links if link.get("rel") == "duplicate"]
-    assert (
-        len(duplicate_links) >= 1
-    ), "Expected duplicate links when hide_alternate_parents=False, got none"
