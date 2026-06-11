@@ -1827,7 +1827,7 @@ async def test_hide_alternate_parents_suppresses_related_links_on_global_collect
     app, app_client, monkeypatch
 ):
     """Test that hide_alternate_parents=True suppresses rel=related links on global /collections."""
-    monkeypatch.setattr(app.state, "catalogs_hide_alternate_parents", True)
+    monkeypatch.setattr(app.state, "catalogs_hide_alternate_parents", True, raising=False)
 
     # Create two parent catalogs
     parent_catalog_1 = await create_catalog(app_client, "parent-catalog-1")
@@ -1872,7 +1872,7 @@ async def test_hide_alternate_parents_suppresses_related_links_on_scoped_collect
     app, app_client, monkeypatch
 ):
     """Test that hide_alternate_parents=True suppresses rel=related on scoped /catalogs/{id}/collections/{id}."""
-    monkeypatch.setattr(app.state, "catalogs_hide_alternate_parents", True)
+    monkeypatch.setattr(app.state, "catalogs_hide_alternate_parents", True, raising=False)
 
     # Create two parent catalogs
     parent_catalog_1 = await create_catalog(app_client, "parent-catalog-scoped-1")
@@ -1920,7 +1920,7 @@ async def test_hide_alternate_parents_suppresses_related_links_on_catalog(
     app, app_client, monkeypatch
 ):
     """Test that hide_alternate_parents=True suppresses rel=related on catalog with multiple parents."""
-    monkeypatch.setattr(app.state, "catalogs_hide_alternate_parents", True)
+    monkeypatch.setattr(app.state, "catalogs_hide_alternate_parents", True, raising=False)
 
     # Create two parent catalogs
     parent_catalog_1 = await create_catalog(app_client, "parent-catalog-cat-1")
