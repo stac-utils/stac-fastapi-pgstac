@@ -252,8 +252,6 @@ api = StacApi(
 )
 app = api.app
 
-app.state.catalogs_hide_alternate_parents = settings.hide_alternate_parents
-
 
 def run():
     """Run app from command line using uvicorn if available."""
