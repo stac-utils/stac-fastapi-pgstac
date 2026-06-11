@@ -174,6 +174,7 @@ if "collection_search" in enabled_extensions:
 
 # Optional catalogs extension
 logger.info("ENABLE_CATALOGS_EXTENSION is set to %s", settings.enable_catalogs_extension)
+logger.info("HIDE_ALTERNATE_PARENTS is set to %s", settings.hide_alternate_parents)
 
 if settings.enable_catalogs_extension:
     if CatalogsExtension is None:
@@ -188,6 +189,7 @@ if settings.enable_catalogs_extension:
         catalogs_extension = CatalogsExtension(
             client=catalogs_client,
             settings={"enable_response_models": settings.enable_response_models},
+            hide_alternate_parents=settings.hide_alternate_parents,
         )
         application_extensions.append(catalogs_extension)
         logger.info("CatalogsExtension (read-only) enabled successfully.")
