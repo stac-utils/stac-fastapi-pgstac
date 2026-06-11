@@ -199,7 +199,6 @@ if settings.enable_catalogs_extension:
             catalogs_transaction_extension = CatalogsTransactionExtension(
                 client=catalogs_client,
                 settings={"enable_response_models": settings.enable_response_models},
-                hide_alternate_parents=settings.hide_alternate_parents,
             )
             application_extensions.append(catalogs_transaction_extension)
             logger.info("CatalogsTransactionExtension enabled successfully.")
