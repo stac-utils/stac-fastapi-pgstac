@@ -2,8 +2,9 @@ ARG PYTHON_VERSION=3.13
 
 FROM python:${PYTHON_VERSION}-slim as base
 
-# Any python libraries that require system libraries to be installed will likely
-# need the following packages in order to build
+# 1. Install uv directly from Astral's official Docker image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 RUN apt-get update && \
     apt-get -y upgrade && \
     apt-get install -y build-essential git libpq-dev postgresql-17-postgis-3  && \
@@ -14,6 +15,12 @@ RUN useradd -ms /bin/bash newuser
 USER newuser
 
 WORKDIR /app
-COPY . /app
 
-RUN python -m pip install .[catalogs] --user --group dev
+# 2. Copy files and ensure newuser has permissions to create the virtual environment
+COPY --chown=newuser:newuser . /app
+
+# 3. Use uv sync to install dependencies strictly from uv.lock
+RUN uv sync --extra catalogs
+
+# 4. Put the uv virtual environment on the PATH 
+ENV PATH="/app/.venv/bin:$PATH"
