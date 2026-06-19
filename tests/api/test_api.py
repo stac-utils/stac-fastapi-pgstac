@@ -70,6 +70,47 @@ DEFAULT_EXTENT = Extent(
 )
 
 
+def get_flattened_routes(router_obj, prefix=""):
+    """
+    Recursively extracts all flattened routes from a FastAPI app,
+    navigating through Mounts, APIRouters, and FastAPI >= 0.137 _IncludedRouters.
+    """
+    api_routes = set()
+    routes = getattr(router_obj, "routes", [])
+
+    for route in routes:
+        # 1. Standard Endpoints (APIRoute)
+        if hasattr(route, "methods") and route.methods:
+            for m in route.methods:
+                if m == "HEAD":
+                    continue
+                r_path = getattr(route, "path", "")
+                full_path = f"{prefix}{r_path}".replace("//", "/")
+                api_routes.add(f"{m} {full_path}")
+
+        # 2. Recurse into Mounts (Starlette)
+        if hasattr(route, "app") and hasattr(route.app, "routes"):
+            r_path = getattr(route, "path", getattr(route, "prefix", ""))
+            next_prefix = f"{prefix}{r_path}"
+            api_routes.update(get_flattened_routes(route.app, next_prefix))
+
+        # 3. Recurse into FastAPI >= 0.137 _IncludedRouter wrappers
+        if hasattr(route, "original_router"):
+            r_prefix = getattr(route, "prefix", "")
+            if not r_prefix and hasattr(route, "include_context"):
+                r_prefix = getattr(route.include_context, "prefix", "")
+            next_prefix = f"{prefix}{r_prefix}"
+            api_routes.update(get_flattened_routes(route.original_router, next_prefix))
+
+        # 4. Recurse into classic FastAPI/Starlette Routers (< 0.137)
+        elif hasattr(route, "routes") and route is not router_obj:
+            r_path = getattr(route, "path", getattr(route, "prefix", ""))
+            next_prefix = f"{prefix}{r_path}"
+            api_routes.update(get_flattened_routes(route, next_prefix))
+
+    return api_routes
+
+
 async def test_default_app_no_transactions(
     app_client_no_transaction, load_test_data, load_test_collection
 ):
@@ -149,9 +190,7 @@ async def test_core_router(api_client, app):
         method, path = core_route.split(" ")
         core_routes.add("{} {}".format(method, app.state.router_prefix + path))
 
-    api_routes = {
-        f"{list(route.methods)[0]} {route.path}" for route in api_client.app.routes
-    }
+    api_routes = get_flattened_routes(api_client.app)
     assert not core_routes - api_routes
 
 
@@ -168,9 +207,7 @@ async def test_transactions_router(api_client, app):
         method, path = transaction_route.split(" ")
         transaction_routes.add("{} {}".format(method, app.state.router_prefix + path))
 
-    api_routes = {
-        f"{list(route.methods)[0]} {route.path}" for route in api_client.app.routes
-    }
+    api_routes = get_flattened_routes(api_client.app)
     assert not transaction_routes - api_routes
 
 
@@ -1014,9 +1051,7 @@ async def test_no_extension(hydrate, validation, load_test_data, pgstac) -> None
 
 
 async def test_default_app(default_client, default_app, load_test_data):
-    api_routes = {
-        f"{list(route.methods)[0]} {route.path}" for route in default_app.routes
-    }
+    api_routes = get_flattened_routes(default_app)
     assert set(STAC_CORE_ROUTES).issubset(api_routes)
     assert set(STAC_TRANSACTION_ROUTES).issubset(api_routes)
 
