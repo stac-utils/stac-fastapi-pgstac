@@ -26,6 +26,7 @@
 ### Updated
 
 - Update stac-fastapi-catalogs-extension to v0.4.0 ([#387](https://github.com/stac-utils/stac-fastapi-pgstac/pull/387))
+- Transitioned Dockerfile.tests to use uv sync for strict lockfile adherence in local development. ([#390](https://github.com/stac-utils/stac-fastapi-pgstac/pull/390))
 
 ## [6.2.2] - 2026-01-09
 
