@@ -22,7 +22,7 @@
 
 - preprocess `fields` to give the `include` set precendence over the `exclude` set ([#370](https://github.com/stac-utils/stac-fastapi-pgstac/pull/370))
 - Fix route extraction in router tests to handle FastAPI >= 0.137.0 `_IncludedRouter` wrappers with `original_router` and `include_context` attributes ([#389](https://github.com/stac-utils/stac-fastapi-pgstac/pull/389))
-- Fixed import paths changed in stac-fastapi v6.3.0 ([#392](https://github.com/stac-utils/stac-fastapi-pgstac/pull/392))
+- Fixed extensions import paths changed in stac-fastapi v6.3.0 ([#392](https://github.com/stac-utils/stac-fastapi-pgstac/pull/392))
 
 ### Updated
 
