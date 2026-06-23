@@ -12,12 +12,12 @@ from pystac import Collection, Extent, Item, SpatialExtent, TemporalExtent
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.middleware import ProxyHeaderMiddleware
 from stac_fastapi.api.models import create_get_request_model, create_post_request_model
-from stac_fastapi.extensions.core import (
+from stac_fastapi.extensions import (
     CollectionSearchExtension,
     FieldsExtension,
     TransactionExtension,
 )
-from stac_fastapi.extensions.core.fields import FieldsConformanceClasses
+from stac_fastapi.extensions.fields import FieldsConformanceClasses
 from stac_fastapi.types import stac as stac_types
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
