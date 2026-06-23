@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel
-from stac_fastapi.extensions.core.query import QueryExtension as QueryExtensionBase
+from stac_fastapi.extensions.query import QueryExtension as QueryExtensionBase
 
 
 class Operator(str, Enum):
