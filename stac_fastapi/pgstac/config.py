@@ -174,6 +174,8 @@ class ExtensionsSettings(BaseModel):
         Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] | None
     ) = None
     enable_transactions_extensions: bool = False
+    enable_catalogs_extension: bool = False
+    hide_alternate_parents: bool = False
     validate_extensions: bool = False
     """
     Validate `stac_extensions` schemas against submitted data when creating or updated STAC objects.

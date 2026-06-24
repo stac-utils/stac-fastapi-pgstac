@@ -1,7 +1,8 @@
+import logging
 from dataclasses import dataclass, field
 
 from stac_fastapi.api.models import JSONResponse
-from stac_fastapi.extensions.core import (
+from stac_fastapi.extensions import (
     CollectionSearchExtension,
     CollectionSearchFilterExtension,
     FieldsExtension,
@@ -12,10 +13,10 @@ from stac_fastapi.extensions.core import (
     TokenPaginationExtension,
     TransactionExtension,
 )
-from stac_fastapi.extensions.core.fields import FieldsConformanceClasses
-from stac_fastapi.extensions.core.free_text import FreeTextConformanceClasses
-from stac_fastapi.extensions.core.query import QueryConformanceClasses
-from stac_fastapi.extensions.core.sort import SortConformanceClasses
+from stac_fastapi.extensions.fields import FieldsConformanceClasses
+from stac_fastapi.extensions.free_text import FreeTextConformanceClasses
+from stac_fastapi.extensions.query import QueryConformanceClasses
+from stac_fastapi.extensions.sort import SortConformanceClasses
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
 from stac_fastapi.types.extension import ApiExtension
 
@@ -58,6 +59,8 @@ DEFAULT_EXTENSIONS = {
         "pagination": TokenPaginationExtension(),
     },
 }
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -119,6 +122,72 @@ class Extensions:
                 BulkTransactionExtension(client=BulkTransactionsClient()),
             )
         return extensions_enabled
+
+    @property
+    def catalog(self) -> list[ApiExtension]:
+        logger.info(
+            "ENABLE_CATALOGS_EXTENSION is set to %s",
+            self.settings.enable_catalogs_extension,
+        )
+        logger.info(
+            "HIDE_ALTERNATE_PARENTS is set to %s", self.settings.hide_alternate_parents
+        )
+
+        if self.settings.enable_catalogs_extension:
+            try:
+                from stac_fastapi_catalogs_extension import (
+                    CatalogsExtension,
+                    CatalogsTransactionExtension,
+                )
+            except ImportError:
+                CatalogsExtension = None
+                CatalogsTransactionExtension = None
+
+            assert CatalogsExtension, (
+                "`stac-fastapi-catalogs-extension` must be installed to enable the catalog extension. "
+                "Please install it with: pip install stac-fastapi-pgstac[catalogs]."
+            )
+
+            from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import (
+                CatalogsClient,
+            )
+            from stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic import (
+                CatalogsDatabaseLogic,
+            )
+
+            try:
+                catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
+
+                # Register the read-only catalogs extension
+                catalogs_extension = CatalogsExtension(
+                    client=catalogs_client,
+                    settings={
+                        "enable_response_models": self.settings.enable_response_models
+                    },
+                    hide_alternate_parents=self.settings.hide_alternate_parents,
+                )
+                logger.info("CatalogsExtension (read-only) enabled successfully.")
+
+                # Register the transaction extension if both transactions and catalogs transaction extension are available
+                if (
+                    self.settings.enable_transactions_extensions
+                    and CatalogsTransactionExtension is not None
+                ):
+                    catalogs_transaction_extension = CatalogsTransactionExtension(
+                        client=catalogs_client,
+                        settings={
+                            "enable_response_models": self.settings.enable_response_models
+                        },
+                    )
+                    logger.info("CatalogsTransactionExtension enabled successfully.")
+                    return [catalogs_extension, catalogs_transaction_extension]
+                else:
+                    return [catalogs_extension]
+            except Exception as e:  # pragma: no cover - defensive
+                logger.error("Failed to enable CatalogsExtension: %s", e)
+                raise
+        else:
+            return []
 
     @property
     def extra(self) -> list[ApiExtension]:

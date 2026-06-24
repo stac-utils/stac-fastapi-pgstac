@@ -1,4 +1,4 @@
-from stac_fastapi.extensions.core import CollectionSearchExtension
+from stac_fastapi.extensions import CollectionSearchExtension
 from stac_fastapi.types.extension import ApiExtension
 
 from stac_fastapi.pgstac.config import Settings

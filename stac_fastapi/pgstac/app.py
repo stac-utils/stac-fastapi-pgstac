@@ -80,6 +80,7 @@ def instantiate_api(
         *extensions.search,
         *extensions.item_collection,
         *transaction_extensions,
+        *extensions.catalog,
         *extensions.extra,
     ]
     if collection_search_extension is not None:
