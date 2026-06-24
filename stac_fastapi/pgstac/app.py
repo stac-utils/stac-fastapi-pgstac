@@ -177,7 +177,7 @@ logger.info("ENABLE_CATALOGS_EXTENSION is set to %s", settings.enable_catalogs_e
 logger.info("HIDE_ALTERNATE_PARENTS is set to %s", settings.hide_alternate_parents)
 
 if settings.enable_catalogs_extension:
-    if CatalogsExtension is None:
+    if CatalogsExtension is None or CatalogsClient is None:
         raise ImportError(
             "ENABLE_CATALOGS_EXTENSION is set to true, but the catalogs extension is not installed. "
             "Please install it with: pip install stac-fastapi-pgstac[catalogs]."
