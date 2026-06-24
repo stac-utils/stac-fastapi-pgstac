@@ -52,16 +52,6 @@ from stac_fastapi.pgstac.types.search import PgstacSearch
 
 logger = logging.getLogger(__name__)
 
-# Optional catalogs extension (optional dependency)
-try:
-    from stac_fastapi_catalogs_extension import (
-        CatalogsExtension,
-        CatalogsTransactionExtension,
-    )
-except ImportError:
-    CatalogsExtension = None
-    CatalogsTransactionExtension = None
-
 settings = Settings()
 
 
@@ -173,23 +163,23 @@ logger.info("HIDE_ALTERNATE_PARENTS is set to %s", settings.hide_alternate_paren
 
 if settings.enable_catalogs_extension:
     try:
-        from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import (
-            CatalogsClient,
+        from stac_fastapi_catalogs_extension import (
+            CatalogsExtension,
+            CatalogsTransactionExtension,
         )
-        from stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic import (
-            CatalogsDatabaseLogic,
-        )
-    except ImportError as err:
-        raise ImportError(
-            "`stac-fastapi-catalogs-extension` must be installed to enable the catalog extension. "
-            "Please install it with: pip install stac-fastapi-pgstac[catalogs]."
-        ) from err
+    except ImportError:
+        CatalogsExtension = None
+        CatalogsTransactionExtension = None
 
-    if CatalogsExtension is None:
-        raise ImportError(
-            "`stac-fastapi-catalogs-extension` must be installed to enable the catalog extension. "
-            "Please install it with: pip install stac-fastapi-pgstac[catalogs]."
-        )
+    assert CatalogsExtension, (
+        "`stac-fastapi-catalogs-extension` must be installed to enable the catalog extension. "
+        "Please install it with: pip install stac-fastapi-pgstac[catalogs]."
+    )
+
+    from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import CatalogsClient
+    from stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic import (
+        CatalogsDatabaseLogic,
+    )
 
     try:
         catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
