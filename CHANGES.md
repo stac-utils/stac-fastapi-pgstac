@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [6.3.1] - 2026-06-24
+
+### Fixed
+
+- Make catalogs extension imports conditional to allow running app without the optional `[catalogs]` extra
+
 ## [6.3.0] - 2026-06-23
 
 ### Changed
