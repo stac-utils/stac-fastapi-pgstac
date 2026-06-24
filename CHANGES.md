@@ -4,10 +4,6 @@
 
 ## [6.3.1] - 2026-06-24
 
-### Added
-
-- Add `tests/test_app_import.py` to validate main app configuration and optional catalogs extension toggle behavior ([#396](https://github.com/stac-utils/stac-fastapi-pgstac/pull/396))
-
 ### Fixed
 
 - Make catalogs extension imports conditional to allow running app without the optional `[catalogs]` extra ([#396](https://github.com/stac-utils/stac-fastapi-pgstac/pull/396))
