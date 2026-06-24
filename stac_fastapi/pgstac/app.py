@@ -45,12 +45,7 @@ from starlette.middleware.cors import CORSMiddleware
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
-from stac_fastapi.pgstac.extensions import (
-    CatalogsClient,
-    CatalogsDatabaseLogic,
-    FreeTextExtension,
-    QueryExtension,
-)
+from stac_fastapi.pgstac.extensions import FreeTextExtension, QueryExtension
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
@@ -177,11 +172,25 @@ logger.info("ENABLE_CATALOGS_EXTENSION is set to %s", settings.enable_catalogs_e
 logger.info("HIDE_ALTERNATE_PARENTS is set to %s", settings.hide_alternate_parents)
 
 if settings.enable_catalogs_extension:
-    if CatalogsExtension is None or CatalogsClient is None:
+    try:
+        from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import (
+            CatalogsClient,
+        )
+        from stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic import (
+            CatalogsDatabaseLogic,
+        )
+    except ImportError as err:
         raise ImportError(
-            "ENABLE_CATALOGS_EXTENSION is set to true, but the catalogs extension is not installed. "
+            "`stac-fastapi-catalogs-extension` must be installed to enable the catalog extension. "
+            "Please install it with: pip install stac-fastapi-pgstac[catalogs]."
+        ) from err
+
+    if CatalogsExtension is None:
+        raise ImportError(
+            "`stac-fastapi-catalogs-extension` must be installed to enable the catalog extension. "
             "Please install it with: pip install stac-fastapi-pgstac[catalogs]."
         )
+
     try:
         catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
 
