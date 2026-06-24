@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [6.3.1] - 2026-06-24
+
+### Fixed
+
+- Make catalogs extension imports conditional to allow running app without the optional `[catalogs]` extra ([#396](https://github.com/stac-utils/stac-fastapi-pgstac/pull/396))
+
+### Removed
+
+- Removed optional catalogs imports from extensions init ([#396](https://github.com/stac-utils/stac-fastapi-pgstac/pull/396))
+
+## [6.3.0] - 2026-06-23
+
 ### Changed
 
 - remove pgstac 0.8.6 in tests and update documentation ([#354](https://github.com/stac-utils/stac-fastapi-pgstac/pull/354))
@@ -22,11 +34,13 @@
 
 - preprocess `fields` to give the `include` set precendence over the `exclude` set ([#370](https://github.com/stac-utils/stac-fastapi-pgstac/pull/370))
 - Fix route extraction in router tests to handle FastAPI >= 0.137.0 `_IncludedRouter` wrappers with `original_router` and `include_context` attributes ([#389](https://github.com/stac-utils/stac-fastapi-pgstac/pull/389))
+- Fixed extensions import paths changed in stac-fastapi v6.3.0 ([#392](https://github.com/stac-utils/stac-fastapi-pgstac/pull/392))
 
 ### Updated
 
 - Update stac-fastapi-catalogs-extension to v0.4.0 ([#387](https://github.com/stac-utils/stac-fastapi-pgstac/pull/387))
 - Transitioned Dockerfile.tests to use uv sync for strict lockfile adherence in local development. ([#390](https://github.com/stac-utils/stac-fastapi-pgstac/pull/390))
+- Updated stac-fastapi dependencies to >= v6.3.0 ([#392](https://github.com/stac-utils/stac-fastapi-pgstac/pull/392))
 
 ## [6.2.2] - 2026-01-09
 
@@ -593,7 +607,9 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.2..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.1..main>
+[6.3.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.0..6.3.1>
+[6.3.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.2..6.3.0>
 [6.2.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.1..6.2.2>
 [6.2.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.0..6.2.1>
 [6.2.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.5..6.2.0>
