@@ -53,6 +53,10 @@ from stac_fastapi.pgstac.config import PostgresSettings, Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
 from stac_fastapi.pgstac.extensions import FreeTextExtension, QueryExtension
+from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import CatalogsClient
+from stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic import (
+    CatalogsDatabaseLogic,
+)
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
@@ -138,13 +142,6 @@ def api_client(request):
     # Add catalogs extension if available
     catalogs_client = None
     if CatalogsExtension is not None:
-        from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import (
-            CatalogsClient,
-        )
-        from stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic import (
-            CatalogsDatabaseLogic,
-        )
-
         catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
 
         # Register the read-only catalogs extension
@@ -156,13 +153,6 @@ def api_client(request):
 
     # Add catalogs transaction extension if available
     if CatalogsTransactionExtension is not None:
-        from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import (
-            CatalogsClient,
-        )
-        from stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic import (
-            CatalogsDatabaseLogic,
-        )
-
         if catalogs_client is None:
             catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
 
