@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [6.3.1] - 2026-06-24
+
+### Fixed
+
+- Make catalogs extension imports conditional to allow running app without the optional `[catalogs]` extra ([#396](https://github.com/stac-utils/stac-fastapi-pgstac/pull/396))
+
+### Removed
+
+- Removed optional catalogs imports from extensions init ([#396](https://github.com/stac-utils/stac-fastapi-pgstac/pull/396))
+
 ## [6.3.0] - 2026-06-23
 
 ### Changed
@@ -597,7 +607,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.0..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.1..main>
+[6.3.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.0..6.3.1>
 [6.3.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.2..6.3.0>
 [6.2.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.1..6.2.2>
 [6.2.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.0..6.2.1>
