@@ -10,7 +10,7 @@
 
 ### Removed
 
-- Removed catalogs imports for extensions init ([#396](https://github.com/stac-utils/stac-fastapi-pgstac/pull/396))
+- Removed optional catalogs imports from extensions init ([#396](https://github.com/stac-utils/stac-fastapi-pgstac/pull/396))
 
 ## [6.3.0] - 2026-06-23
 
