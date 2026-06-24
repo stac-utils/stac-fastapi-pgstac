@@ -5,7 +5,6 @@ the ENABLED_EXTENSIONS environment variable (e.g. `transactions,sort,query`).
 If the variable is not set, enables all extensions.
 """
 
-import logging
 from contextlib import asynccontextmanager
 from typing import Type, cast
 
