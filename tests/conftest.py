@@ -39,12 +39,6 @@ from stac_fastapi.extensions.fields import FieldsConformanceClasses
 from stac_fastapi.extensions.free_text import FreeTextConformanceClasses
 from stac_fastapi.extensions.query import QueryConformanceClasses
 from stac_fastapi.extensions.sort import SortConformanceClasses
-
-# Catalogs extension (required for tests)
-from stac_fastapi_catalogs_extension import (
-    CatalogsExtension,
-    CatalogsTransactionExtension,
-)
 from stac_pydantic import Collection, Item
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
@@ -53,12 +47,23 @@ from stac_fastapi.pgstac.config import PostgresSettings, Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
 from stac_fastapi.pgstac.extensions import (
+    CatalogsClient,
     CatalogsDatabaseLogic,
     FreeTextExtension,
     QueryExtension,
 )
-from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import CatalogsClient
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
+
+# Optional catalogs extension
+try:
+    from stac_fastapi_catalogs_extension import (
+        CatalogsExtension,
+        CatalogsTransactionExtension,
+    )
+except ImportError:
+    CatalogsExtension = None  # type: ignore [assignment, misc]
+    CatalogsTransactionExtension = None  # type: ignore [assignment, misc]
+
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
 
