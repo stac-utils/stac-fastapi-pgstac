@@ -3,7 +3,7 @@
 import json
 import re
 from typing import Any, cast
-from urllib.parse import unquote_plus, urljoin
+from urllib.parse import unquote_plus, urljoin, urlsplit
 
 import attr
 import orjson
@@ -91,6 +91,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
             collections by default.
         """
         base_url = get_base_url(request)
+        path = urlsplit(base_url).path.rstrip("/")
 
         next_link: dict[str, Any] | None = None
         prev_link: dict[str, Any] | None = None
@@ -173,7 +174,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                         "type": MimeTypes.jsonschema.value,
                         "title": "Queryables",
                         "href": urljoin(
-                            base_url, f"collections/{collection['id']}/queryables"
+                            base_url, f"{path}/collections/{collection['id']}/queryables"
                         ),
                     }
                 )
@@ -240,12 +241,16 @@ class CoreCrudClient(AsyncBaseCoreClient):
             "ItemCollectionFilterExtension"
         ):
             base_url = get_base_url(request)
+            path = urlsplit(base_url).path.rstrip("/")
+
             collection["links"].append(
                 {
                     "rel": Relations.queryables.value,
                     "type": MimeTypes.jsonschema.value,
                     "title": "Queryables",
-                    "href": urljoin(base_url, f"collections/{collection_id}/queryables"),
+                    "href": urljoin(
+                        base_url, f"{path}/collections/{collection_id}/queryables"
+                    ),
                 }
             )
 

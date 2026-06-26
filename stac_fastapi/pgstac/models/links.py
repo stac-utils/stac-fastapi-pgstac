@@ -1,7 +1,7 @@
 """link helpers."""
 
 from typing import Any
-from urllib.parse import ParseResult, parse_qs, urlencode, urljoin, urlparse
+from urllib.parse import ParseResult, parse_qs, urlencode, urljoin, urlparse, urlsplit
 
 import attr
 from stac_fastapi.types.requests import get_base_url
@@ -74,7 +74,8 @@ class BaseLinks:
 
     def resolve(self, url):
         """Resolve url to the current request url."""
-        return urljoin(str(self.base_url), str(url))
+        path = urlsplit(self.base_url).path.rstrip("/")
+        return urljoin(str(self.base_url), f"{path}/{url}")
 
     def link_self(self) -> dict:
         """Return the self link."""
