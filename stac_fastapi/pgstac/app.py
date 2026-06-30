@@ -6,7 +6,7 @@ If the variable is not set, enables all extensions.
 """
 
 from contextlib import asynccontextmanager
-from typing import Type, cast
+from typing import AsyncContextManager, Callable, Type, cast
 
 from brotli_asgi import BrotliMiddleware
 from fastapi import APIRouter, FastAPI
@@ -24,7 +24,7 @@ from stac_fastapi.types.search import APIRequest
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 
-from stac_fastapi.pgstac.config import Settings
+from stac_fastapi.pgstac.config import PostgresSettings, Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
 from stac_fastapi.pgstac.models.extensions import Extensions
@@ -32,21 +32,30 @@ from stac_fastapi.pgstac.types.search import PgstacSearch
 
 
 def instantiate_api(
-    settings: Settings | None = None,
     client: Type[CoreCrudClient] = CoreCrudClient,
     extensions: Extensions | None = None,
+    lifespan: Callable[[FastAPI], AsyncContextManager] | None = None,
+    settings_app: Settings | None = None,
+    settings_db: PostgresSettings | None = None,
+    settings_db_write: PostgresSettings | None = None,
 ) -> StacApi:
     """Instantiate the STAC API.
 
     Args:
-        settings: The application settings, must be an instance of `Settings`.
         client: The client class to use for the API, must be a subclass of `CoreCrudClient`.
         extensions: The extensions to use for the API, must be an instance of `Extensions`.
         Provided extensions will be merged with the default extensions.
+        lifespan: A custom lifespan context manager to fully replace the default one.
+            When provided, the caller is responsible for managing db connections.
+        settings_app: The application settings, must be an instance of `Settings`.
+        settings_db: The database settings, must be an instance of `PostgresSettings`.
+        settings_db_write: The write database settings, must be an instance of `PostgresSettings`.
     Returns:
         An instance of the STAC API.
     """
-    settings = settings or Settings()
+    settings_app = settings_app or Settings()
+    settings_db = settings_db or PostgresSettings()
+    settings_db_write = settings_db_write or PostgresSettings()
     extensions = extensions or Extensions()
 
     # /search models
@@ -87,25 +96,30 @@ def instantiate_api(
         application_extensions.append(collection_search_extension)
 
     @asynccontextmanager
-    async def lifespan(app: FastAPI):
+    async def default_lifespan(app: FastAPI):
         """FastAPI Lifespan."""
-        await connect_to_db(app, add_write_connection_pool=bool(transaction_extensions))
+        await connect_to_db(
+            app,
+            add_write_connection_pool=bool(transaction_extensions),
+            postgres_settings=settings_db,
+            write_postgres_settings=settings_db_write,
+        )
         yield
         await close_db_connection(app)
 
     api = StacApi(
         app=FastAPI(
-            openapi_url=settings.openapi_url,
-            docs_url=settings.docs_url,
+            openapi_url=settings_app.openapi_url,
+            docs_url=settings_app.docs_url,
             redoc_url=None,
-            root_path=settings.root_path,
-            title=settings.stac_fastapi_title,
-            version=settings.stac_fastapi_version,
-            description=settings.stac_fastapi_description,
-            lifespan=lifespan,
+            root_path=settings_app.root_path,
+            title=settings_app.stac_fastapi_title,
+            version=settings_app.stac_fastapi_version,
+            description=settings_app.stac_fastapi_description,
+            lifespan=lifespan if lifespan is not None else default_lifespan,
         ),
-        router=APIRouter(prefix=settings.prefix_path),
-        settings=settings,
+        router=APIRouter(prefix=settings_app.prefix_path),
+        settings=settings_app,
         extensions=application_extensions,
         client=client(pgstac_search_model=post_request_model),  # type: ignore [arg-type]
         response_class=JSONResponse,
@@ -118,11 +132,11 @@ def instantiate_api(
             Middleware(ProxyHeaderMiddleware),
             Middleware(
                 CORSMiddleware,
-                allow_origins=settings.cors_origins,
-                allow_origin_regex=settings.cors_origin_regex,
-                allow_methods=settings.cors_methods,
-                allow_credentials=settings.cors_credentials,
-                allow_headers=settings.cors_headers,
+                allow_origins=settings_app.cors_origins,
+                allow_origin_regex=settings_app.cors_origin_regex,
+                allow_methods=settings_app.cors_methods,
+                allow_credentials=settings_app.cors_credentials,
+                allow_headers=settings_app.cors_headers,
                 max_age=600,
             ),
         ],
