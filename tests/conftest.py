@@ -457,7 +457,10 @@ async def default_app(pgstac, monkeypatch):
     monkeypatch.setenv("USE_API_HYDRATE", "TRUE")
     monkeypatch.setenv("ENABLE_RESPONSE_MODELS", "TRUE")
 
-    from stac_fastapi.pgstac.app import app
+    from stac_fastapi.pgstac.app import instantiate_api
+
+    api = instantiate_api()
+    app = api.app
 
     await connect_to_db(app, add_write_connection_pool=True)
     yield app

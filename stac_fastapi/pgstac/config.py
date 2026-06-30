@@ -167,7 +167,24 @@ def str_to_list(value: Any) -> Any:
         return value
 
 
-class Settings(ApiSettings):
+class ExtensionsSettings(BaseModel):
+    """STAC API extensions settings."""
+
+    enabled_extensions: (
+        Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] | None
+    ) = None
+    enable_transactions_extensions: bool = False
+    enable_catalogs_extension: bool = False
+    hide_alternate_parents: bool = False
+    validate_extensions: bool = False
+    """
+    Validate `stac_extensions` schemas against submitted data when creating or updated STAC objects.
+
+    Implies that the `Transactions` extension is enabled.
+    """
+
+
+class Settings(ApiSettings, ExtensionsSettings):
     """API settings.
 
     Attributes:
@@ -198,17 +215,6 @@ class Settings(ApiSettings):
 
     invalid_id_chars: list[str] = DEFAULT_INVALID_ID_CHARS
     base_item_cache: type[BaseItemCache] = DefaultBaseItemCache
-
-    enabled_extensions: str = ""
-    enable_transactions_extensions: bool = False
-    enable_catalogs_extension: bool = False
-    hide_alternate_parents: bool = False
-    validate_extensions: bool = False
-    """
-    Validate `stac_extensions` schemas against submitted data when creating or updated STAC objects.
-
-    Implies that the `Transactions` extension is enabled.
-    """
 
     cors_origins: Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] = (
         "*",
