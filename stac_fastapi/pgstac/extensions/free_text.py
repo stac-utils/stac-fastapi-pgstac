@@ -1,20 +1,17 @@
 """Free-Text model for PgSTAC."""
 
-from typing import List, Optional
+from typing import Annotated
 
 from pydantic import BaseModel, Field
 from pydantic.functional_serializers import PlainSerializer
-from stac_fastapi.extensions.core.free_text import (
-    FreeTextExtension as FreeTextExtensionBase,
-)
-from typing_extensions import Annotated
+from stac_fastapi.extensions.free_text import FreeTextExtension as FreeTextExtensionBase
 
 
 class FreeTextExtensionPostRequest(BaseModel):
     """Free-text Extension POST request model."""
 
     q: Annotated[
-        Optional[List[str]],
+        list[str] | None,
         PlainSerializer(lambda x: " OR ".join(x), return_type=str, when_used="json"),
     ] = Field(
         None,

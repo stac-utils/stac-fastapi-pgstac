@@ -1,7 +1,8 @@
 """base_item_cache classes for pgstac fastapi."""
 
 import abc
-from typing import Any, Callable, Coroutine, Dict
+from collections.abc import Callable, Coroutine
+from typing import Any
 
 from starlette.requests import Request
 
@@ -16,7 +17,7 @@ class BaseItemCache(abc.ABC):
 
     def __init__(
         self,
-        fetch_base_item: Callable[[str], Coroutine[Any, Any, Dict[str, Any]]],
+        fetch_base_item: Callable[[str], Coroutine[Any, Any, dict[str, Any]]],
         request: Request,
     ):
         """
@@ -30,7 +31,7 @@ class BaseItemCache(abc.ABC):
         self._request = request
 
     @abc.abstractmethod
-    async def get(self, collection_id: str) -> Dict[str, Any]:
+    async def get(self, collection_id: str) -> dict[str, Any]:
         """Return the base item for the collection and cache by collection id."""
         pass
 
@@ -40,11 +41,11 @@ class DefaultBaseItemCache(BaseItemCache):
 
     def __init__(
         self,
-        fetch_base_item: Callable[[str], Coroutine[Any, Any, Dict[str, Any]]],
+        fetch_base_item: Callable[[str], Coroutine[Any, Any, dict[str, Any]]],
         request: Request,
     ):
         """Initialize the base item cache."""
-        self._base_items: Dict = {}
+        self._base_items: dict = {}
         super().__init__(fetch_base_item, request)
 
     async def get(self, collection_id: str):

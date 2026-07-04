@@ -5,14 +5,16 @@ from typing import Callable, Dict
 from urllib.parse import quote_plus as quote
 from urllib.parse import urljoin
 
-import asyncpg
+import psycopg
 import pytest
+from brotli_asgi import BrotliMiddleware
 from fastapi import APIRouter
 from httpx import ASGITransport, AsyncClient
 from pypgstac.db import PgstacDB
 from pypgstac.migrate import Migrate
 from pytest_postgresql.janitor import DatabaseJanitor
 from stac_fastapi.api.app import StacApi
+from stac_fastapi.api.middleware import ProxyHeaderMiddleware
 from stac_fastapi.api.models import (
     ItemCollectionUri,
     JSONResponse,
@@ -20,7 +22,8 @@ from stac_fastapi.api.models import (
     create_post_request_model,
     create_request_model,
 )
-from stac_fastapi.extensions.core import (
+from stac_fastapi.extensions import (
+    BulkTransactionExtension,
     CollectionSearchExtension,
     CollectionSearchFilterExtension,
     FieldsExtension,
@@ -32,17 +35,28 @@ from stac_fastapi.extensions.core import (
     TokenPaginationExtension,
     TransactionExtension,
 )
-from stac_fastapi.extensions.core.fields import FieldsConformanceClasses
-from stac_fastapi.extensions.core.free_text import FreeTextConformanceClasses
-from stac_fastapi.extensions.core.query import QueryConformanceClasses
-from stac_fastapi.extensions.core.sort import SortConformanceClasses
-from stac_fastapi.extensions.third_party import BulkTransactionExtension
+from stac_fastapi.extensions.fields import FieldsConformanceClasses
+from stac_fastapi.extensions.free_text import FreeTextConformanceClasses
+from stac_fastapi.extensions.query import QueryConformanceClasses
+from stac_fastapi.extensions.sort import SortConformanceClasses
+
+# Catalogs extension (required for tests)
+from stac_fastapi_catalogs_extension import (
+    CatalogsExtension,
+    CatalogsTransactionExtension,
+)
 from stac_pydantic import Collection, Item
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 
 from stac_fastapi.pgstac.config import PostgresSettings, Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
 from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
 from stac_fastapi.pgstac.extensions import FreeTextExtension, QueryExtension
+from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import CatalogsClient
+from stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic import (
+    CatalogsDatabaseLogic,
+)
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 from stac_fastapi.pgstac.types.search import PgstacSearch
@@ -63,37 +77,31 @@ def database(postgresql_proc):
         version=postgresql_proc.version,
         password="a2Vw:yk=)CdSis[fek]tW=/o",
     ) as jan:
-        connection = f"postgresql://{jan.user}:{quote(jan.password)}@{jan.host}:{jan.port}/{jan.dbname}"
-        with PgstacDB(dsn=connection) as db:
-            migrator = Migrate(db)
-            version = migrator.run_migration()
-            assert version
-
         yield jan
 
 
 @pytest.fixture(
     params=[
-        "0.8.6",
-        "0.9.8",
+        "0.9.9",
     ],
-    autouse=True,
 )
-async def pgstac(database):
+def pgstac(request, database):
+    pgstac_version = request.param
+
     connection = f"postgresql://{database.user}:{quote(database.password)}@{database.host}:{database.port}/{database.dbname}"
-    yield
-    conn = await asyncpg.connect(dsn=connection)
-    await conn.execute(
-        """
-        DROP SCHEMA IF EXISTS pgstac CASCADE;
-        """
-    )
-    await conn.close()
+    # Clear PgSTAC
+    with psycopg.connect(connection) as conn:
+        with conn.cursor() as cur:
+            cur.execute("DROP SCHEMA IF EXISTS pgstac CASCADE;")
+
     with PgstacDB(dsn=connection) as db:
         migrator = Migrate(db)
-        version = migrator.run_migration()
+        version = migrator.run_migration(toversion=pgstac_version)
 
+    assert version == request.param
     logger.info(f"PGStac Migrated to {version}")
+
+    yield database
 
 
 # Run all the tests that use the api_client in both db hydrate and api hydrate mode
@@ -130,6 +138,30 @@ def api_client(request):
         TransactionExtension(client=TransactionsClient(), settings=api_settings),
         BulkTransactionExtension(client=BulkTransactionsClient()),
     ]
+
+    # Add catalogs extension if available
+    catalogs_client = None
+    if CatalogsExtension is not None:
+        catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
+
+        # Register the read-only catalogs extension
+        catalogs_extension = CatalogsExtension(
+            client=catalogs_client,
+            settings={"enable_response_models": api_settings.enable_response_models},
+        )
+        application_extensions.append(catalogs_extension)
+
+    # Add catalogs transaction extension if available
+    if CatalogsTransactionExtension is not None:
+        if catalogs_client is None:
+            catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
+
+        # Register the transaction extension
+        catalogs_transaction_extension = CatalogsTransactionExtension(
+            client=catalogs_client,
+            settings={"enable_response_models": api_settings.enable_response_models},
+        )
+        application_extensions.append(catalogs_transaction_extension)
 
     search_extensions = [
         QueryExtension(),
@@ -192,19 +224,32 @@ def api_client(request):
         response_class=JSONResponse,
         router=APIRouter(prefix=prefix),
         health_check=health_check,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=api_settings.cors_origins,
+                allow_origin_regex=api_settings.cors_origin_regex,
+                allow_methods=api_settings.cors_methods,
+                allow_credentials=api_settings.cors_credentials,
+                allow_headers=api_settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
 
     return api
 
 
 @pytest.fixture(scope="function")
-async def app(api_client, database):
+async def app(api_client, pgstac):
     postgres_settings = PostgresSettings(
-        pguser=database.user,
-        pgpassword=database.password,
-        pghost=database.host,
-        pgport=database.port,
-        pgdatabase=database.dbname,
+        pguser=pgstac.user,
+        pgpassword=pgstac.password,
+        pghost=pgstac.host,
+        pgport=pgstac.port,
+        pgdatabase=pgstac.dbname,
     )
     logger.info("Creating app Fixture")
     app = api_client.app
@@ -293,7 +338,7 @@ async def load_test2_item(app_client, load_test_data, load_test2_collection):
 
 
 @pytest.fixture(scope="function")
-async def app_no_ext(database):
+async def app_no_ext(pgstac):
     """Default stac-fastapi-pgstac application without only the transaction extensions."""
     api_settings = Settings(testing=True)
     api_client_no_ext = StacApi(
@@ -303,14 +348,27 @@ async def app_no_ext(database):
         ],
         client=CoreCrudClient(),
         health_check=health_check,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=api_settings.cors_origins,
+                allow_origin_regex=api_settings.cors_origin_regex,
+                allow_methods=api_settings.cors_methods,
+                allow_credentials=api_settings.cors_credentials,
+                allow_headers=api_settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
 
     postgres_settings = PostgresSettings(
-        pguser=database.user,
-        pgpassword=database.password,
-        pghost=database.host,
-        pgport=database.port,
-        pgdatabase=database.dbname,
+        pguser=pgstac.user,
+        pgpassword=pgstac.password,
+        pghost=pgstac.host,
+        pgport=pgstac.port,
+        pgdatabase=pgstac.dbname,
     )
     logger.info("Creating app Fixture")
     await connect_to_db(
@@ -334,7 +392,7 @@ async def app_client_no_ext(app_no_ext):
 
 
 @pytest.fixture(scope="function")
-async def app_no_transaction(database):
+async def app_no_transaction(pgstac):
     """Default stac-fastapi-pgstac application without any extensions."""
     api_settings = Settings(testing=True)
     api = StacApi(
@@ -342,14 +400,27 @@ async def app_no_transaction(database):
         extensions=[],
         client=CoreCrudClient(),
         health_check=health_check,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=api_settings.cors_origins,
+                allow_origin_regex=api_settings.cors_origin_regex,
+                allow_methods=api_settings.cors_methods,
+                allow_credentials=api_settings.cors_credentials,
+                allow_headers=api_settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
 
     postgres_settings = PostgresSettings(
-        pguser=database.user,
-        pgpassword=database.password,
-        pghost=database.host,
-        pgport=database.port,
-        pgdatabase=database.dbname,
+        pguser=pgstac.user,
+        pgpassword=pgstac.password,
+        pghost=pgstac.host,
+        pgport=pgstac.port,
+        pgdatabase=pgstac.dbname,
     )
     logger.info("Creating app Fixture")
     await connect_to_db(
@@ -373,13 +444,13 @@ async def app_client_no_transaction(app_no_transaction):
 
 
 @pytest.fixture(scope="function")
-async def default_app(database, monkeypatch):
+async def default_app(pgstac, monkeypatch):
     """Test default stac-fastapi-pgstac application."""
-    monkeypatch.setenv("PGUSER", database.user)
-    monkeypatch.setenv("PGPASSWORD", database.password)
-    monkeypatch.setenv("PGHOST", database.host)
-    monkeypatch.setenv("PGPORT", str(database.port))
-    monkeypatch.setenv("PGDATABASE", database.dbname)
+    monkeypatch.setenv("PGUSER", pgstac.user)
+    monkeypatch.setenv("PGPASSWORD", pgstac.password)
+    monkeypatch.setenv("PGHOST", pgstac.host)
+    monkeypatch.setenv("PGPORT", str(pgstac.port))
+    monkeypatch.setenv("PGDATABASE", pgstac.dbname)
     monkeypatch.delenv("ENABLED_EXTENSIONS", raising=False)
 
     monkeypatch.setenv("ENABLE_TRANSACTIONS_EXTENSIONS", "TRUE")
@@ -402,7 +473,7 @@ async def default_client(default_app):
 
 
 @pytest.fixture(scope="function")
-async def app_advanced_freetext(database):
+async def app_advanced_freetext(pgstac):
     """Default stac-fastapi-pgstac application without only the transaction extensions."""
     api_settings = Settings(testing=True)
 
@@ -425,14 +496,27 @@ async def app_advanced_freetext(database):
         client=CoreCrudClient(),
         health_check=health_check,
         collections_get_request_model=collection_search_extension.GET,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=api_settings.cors_origins,
+                allow_origin_regex=api_settings.cors_origin_regex,
+                allow_methods=api_settings.cors_methods,
+                allow_credentials=api_settings.cors_credentials,
+                allow_headers=api_settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
 
     postgres_settings = PostgresSettings(
-        pguser=database.user,
-        pgpassword=database.password,
-        pghost=database.host,
-        pgport=database.port,
-        pgdatabase=database.dbname,
+        pguser=pgstac.user,
+        pgpassword=pgstac.password,
+        pghost=pgstac.host,
+        pgport=pgstac.port,
+        pgdatabase=pgstac.dbname,
     )
     logger.info("Creating app Fixture")
     await connect_to_db(
@@ -456,7 +540,7 @@ async def app_client_advanced_freetext(app_advanced_freetext):
 
 
 @pytest.fixture(scope="function")
-async def app_transaction_validation_ext(database):
+async def app_transaction_validation_ext(pgstac):
     """Default stac-fastapi-pgstac application with extension validation in transaction."""
     api_settings = Settings(testing=True, validate_extensions=True)
     api = StacApi(
@@ -469,14 +553,27 @@ async def app_transaction_validation_ext(database):
         ],
         client=CoreCrudClient(),
         health_check=health_check,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=api_settings.cors_origins,
+                allow_origin_regex=api_settings.cors_origin_regex,
+                allow_methods=api_settings.cors_methods,
+                allow_credentials=api_settings.cors_credentials,
+                allow_headers=api_settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
 
     postgres_settings = PostgresSettings(
-        pguser=database.user,
-        pgpassword=database.password,
-        pghost=database.host,
-        pgport=database.port,
-        pgdatabase=database.dbname,
+        pguser=pgstac.user,
+        pgpassword=pgstac.password,
+        pghost=pgstac.host,
+        pgport=pgstac.port,
+        pgdatabase=pgstac.dbname,
     )
     logger.info("Creating app Fixture")
     await connect_to_db(

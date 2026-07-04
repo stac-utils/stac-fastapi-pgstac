@@ -10,12 +10,22 @@ Available values for `ENABLED_EXTENSIONS`:
 - `fields`
 - `filter`
 - `free_text` (only for collection-search)
-- `pagination`
+- `pagination` (see [Pagination](#pagination) details)
 - `collection_search`
 
 Example: `ENABLED_EXTENSIONS="pagination,sort"`
 
 Since `6.0.0`, the transaction extension is not enabled by default. To add the transaction endpoints, users can set `ENABLE_TRANSACTIONS_EXTENSIONS=TRUE/YES/1`.
+
+### Multi-Tenant Catalogs Extension
+
+The optional Multi-Tenant Catalogs Extension provides discovery and management endpoints for a multi-tenant STAC architecture. It requires the `stac-fastapi-catalogs-extension` package to be installed.
+
+For more information about the Multi-Tenant Catalogs specification, see [StacLabs/multi-tenant-catalogs](https://github.com/StacLabs/multi-tenant-catalogs).
+
+To enable the catalogs extension, set `ENABLE_CATALOGS_EXTENSION=TRUE/YES/1`.
+
+When `ENABLE_TRANSACTIONS_EXTENSIONS=TRUE`, additional write endpoints are available for creating, updating, and deleting catalogs and managing relationships (linking/unlinking catalogs and collections).
 
 ### Database config
 
@@ -48,6 +58,19 @@ In version `6.0.0` we've renamed the PG configuration variable to match the offi
 
 - `ENABLE_RESPONSE_MODELS`: use pydantic models to validate endpoint responses. Defaults to `False`
 - `ENABLE_DIRECT_RESPONSE`: by-pass the default FastAPI serialization by wrapping the endpoint responses into `starlette.Response` classes. Defaults to `False`
+
+### Pagination
+
+The `limit` query parameter (or its default) will trigger pagination of Collection or Items depending on API request context when more entries exist than requested.
+Each following page will then be accessible from the corresponding `next` link in the response containing the appropriate pagination `token` or `offset`.
+
+This PgSTAC backend only implements [`token`-based pagination for Items](https://github.com/stac-utils/pgstac/blob/df08f9bd66ddb057133bfcc8d7a6228ac791e49e/src/pgstac/sql/004_search.sql#L950)
+and [`offset`-based pagination for Collections](https://github.com/stac-utils/pgstac/blob/df08f9bd66ddb057133bfcc8d7a6228ac791e49e/src/pgstac/sql/004a_collectionsearch.sql#L49).
+Therefore, your [`stac-fastapi` pagination extension configuration](https://github.com/stac-utils/stac-fastapi/tree/main/stac_fastapi/extensions/stac_fastapi/extensions/core/pagination)
+MUST apply the corresponding implementations adequately when using this backend.
+Any other variant will cause search to report incorrect `next` links and will not yield expected Collections or Items responses.
+See [`stac-fastapi-pgstac/stac_fastapi/pgstac/app.py`](https://github.com/stac-utils/stac-fastapi-pgstac/blob/main/stac_fastapi/pgstac/app.py)
+for a concrete example of valid configuration.
 
 ### Misc
 

@@ -1,13 +1,14 @@
 """Postgres API configuration."""
 
+import json
 import warnings
-from typing import Annotated, Any, List, Optional, Sequence, Type
+from collections.abc import Sequence
+from typing import Annotated, Any, Self
 from urllib.parse import quote_plus as quote
 
 from pydantic import BaseModel, BeforeValidator, Field, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 from stac_fastapi.types.config import ApiSettings
-from typing_extensions import Self
 
 from stac_fastapi.pgstac.types.base_item_cache import (
     BaseItemCache,
@@ -63,45 +64,45 @@ class PostgresSettings(BaseSettings):
     """
 
     postgres_user: Annotated[
-        Optional[str],
+        str | None,
         Field(
             deprecated="`postgres_user` is deprecated, please use `pguser`", default=None
         ),
-    ]
+    ] = None
     postgres_pass: Annotated[
-        Optional[str],
+        str | None,
         Field(
             deprecated="`postgres_pass` is deprecated, please use `pgpassword`",
             default=None,
         ),
-    ]
+    ] = None
     postgres_host_reader: Annotated[
-        Optional[str],
+        str | None,
         Field(
             deprecated="`postgres_host_reader` is deprecated, please use `pghost`",
             default=None,
         ),
-    ]
+    ] = None
     postgres_host_writer: Annotated[
-        Optional[str],
+        str | None,
         Field(
             deprecated="`postgres_host_writer` is deprecated, please use `pghost`",
             default=None,
         ),
-    ]
+    ] = None
     postgres_port: Annotated[
-        Optional[int],
+        int | None,
         Field(
             deprecated="`postgres_port` is deprecated, please use `pgport`", default=None
         ),
-    ]
+    ] = None
     postgres_dbname: Annotated[
-        Optional[str],
+        str | None,
         Field(
             deprecated="`postgres_dbname` is deprecated, please use `pgdatabase`",
             default=None,
         ),
-    ]
+    ] = None
 
     pguser: str
     pgpassword: str
@@ -158,8 +159,12 @@ class PostgresSettings(BaseSettings):
 
 def str_to_list(value: Any) -> Any:
     if isinstance(value, str):
-        return [v.strip() for v in value.split(",")]
-    return value
+        if value.startswith("["):
+            return json.loads(value)
+        else:
+            return [v.strip() for v in value.split(",")]
+    else:
+        return value
 
 
 class Settings(ApiSettings):
@@ -191,9 +196,13 @@ class Settings(ApiSettings):
     will exclude those values from the responses.
     """
 
-    invalid_id_chars: List[str] = DEFAULT_INVALID_ID_CHARS
-    base_item_cache: Type[BaseItemCache] = DefaultBaseItemCache
+    invalid_id_chars: list[str] = DEFAULT_INVALID_ID_CHARS
+    base_item_cache: type[BaseItemCache] = DefaultBaseItemCache
 
+    enabled_extensions: str = ""
+    enable_transactions_extensions: bool = False
+    enable_catalogs_extension: bool = False
+    hide_alternate_parents: bool = False
     validate_extensions: bool = False
     """
     Validate `stac_extensions` schemas against submitted data when creating or updated STAC objects.
@@ -201,17 +210,21 @@ class Settings(ApiSettings):
     Implies that the `Transactions` extension is enabled.
     """
 
-    cors_origins: Annotated[Sequence[str], BeforeValidator(str_to_list)] = ("*",)
-    cors_origin_regex: Optional[str] = None
-    cors_methods: Annotated[Sequence[str], BeforeValidator(str_to_list)] = (
+    cors_origins: Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] = (
+        "*",
+    )
+    cors_origin_regex: str | None = None
+    cors_methods: Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] = (
         "GET",
         "POST",
         "OPTIONS",
     )
     cors_credentials: bool = False
-    cors_headers: Annotated[Sequence[str], BeforeValidator(str_to_list)] = (
+    cors_headers: Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] = (
         "Content-Type",
     )
+
+    uvicorn_root_path: str = ""
 
     testing: bool = False
 

@@ -5,20 +5,22 @@ from urllib.parse import quote_plus
 
 import orjson
 import pytest
+from brotli_asgi import BrotliMiddleware
 from fastapi import Request
 from httpx import ASGITransport, AsyncClient
-from pypgstac.db import PgstacDB
-from pypgstac.load import Loader
 from pystac import Collection, Extent, Item, SpatialExtent, TemporalExtent
 from stac_fastapi.api.app import StacApi
+from stac_fastapi.api.middleware import ProxyHeaderMiddleware
 from stac_fastapi.api.models import create_get_request_model, create_post_request_model
-from stac_fastapi.extensions.core import (
+from stac_fastapi.extensions import (
     CollectionSearchExtension,
     FieldsExtension,
     TransactionExtension,
 )
-from stac_fastapi.extensions.core.fields import FieldsConformanceClasses
+from stac_fastapi.extensions.fields import FieldsConformanceClasses
 from stac_fastapi.types import stac as stac_types
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 
 from stac_fastapi.pgstac.config import PostgresSettings
 from stac_fastapi.pgstac.core import CoreCrudClient, Settings
@@ -66,6 +68,47 @@ DEFAULT_EXTENT = Extent(
     SpatialExtent(GLOBAL_BBOX),
     TemporalExtent([[datetime.now(), None]]),
 )
+
+
+def get_flattened_routes(router_obj, prefix=""):
+    """
+    Recursively extracts all flattened routes from a FastAPI app,
+    navigating through Mounts, APIRouters, and FastAPI >= 0.137 _IncludedRouters.
+    """
+    api_routes = set()
+    routes = getattr(router_obj, "routes", [])
+
+    for route in routes:
+        # 1. Standard Endpoints (APIRoute)
+        if hasattr(route, "methods") and route.methods:
+            for m in route.methods:
+                if m == "HEAD":
+                    continue
+                r_path = getattr(route, "path", "")
+                full_path = f"{prefix}{r_path}".replace("//", "/")
+                api_routes.add(f"{m} {full_path}")
+
+        # 2. Recurse into Mounts (Starlette)
+        if hasattr(route, "app") and hasattr(route.app, "routes"):
+            r_path = getattr(route, "path", getattr(route, "prefix", ""))
+            next_prefix = f"{prefix}{r_path}"
+            api_routes.update(get_flattened_routes(route.app, next_prefix))
+
+        # 3. Recurse into FastAPI >= 0.137 _IncludedRouter wrappers
+        if hasattr(route, "original_router"):
+            r_prefix = getattr(route, "prefix", "")
+            if not r_prefix and hasattr(route, "include_context"):
+                r_prefix = getattr(route.include_context, "prefix", "")
+            next_prefix = f"{prefix}{r_prefix}"
+            api_routes.update(get_flattened_routes(route.original_router, next_prefix))
+
+        # 4. Recurse into classic FastAPI/Starlette Routers (< 0.137)
+        elif hasattr(route, "routes") and route is not router_obj:
+            r_path = getattr(route, "path", getattr(route, "prefix", ""))
+            next_prefix = f"{prefix}{r_path}"
+            api_routes.update(get_flattened_routes(route, next_prefix))
+
+    return api_routes
 
 
 async def test_default_app_no_transactions(
@@ -147,9 +190,7 @@ async def test_core_router(api_client, app):
         method, path = core_route.split(" ")
         core_routes.add("{} {}".format(method, app.state.router_prefix + path))
 
-    api_routes = {
-        f"{list(route.methods)[0]} {route.path}" for route in api_client.app.routes
-    }
+    api_routes = get_flattened_routes(api_client.app)
     assert not core_routes - api_routes
 
 
@@ -166,9 +207,7 @@ async def test_transactions_router(api_client, app):
         method, path = transaction_route.split(" ")
         transaction_routes.add("{} {}".format(method, app.state.router_prefix + path))
 
-    api_routes = {
-        f"{list(route.methods)[0]} {route.path}" for route in api_client.app.routes
-    }
+    api_routes = get_flattened_routes(api_client.app)
     assert not transaction_routes - api_routes
 
 
@@ -271,6 +310,73 @@ async def test_app_query_extension_gte(load_test_data, app_client, load_test_col
     assert resp.status_code == 200
     resp_json = resp.json()
     assert len(resp_json["features"]) == 1
+
+
+async def test_app_query_extension_neq(load_test_data, app_client, load_test_collection):
+    coll = load_test_collection
+    item = load_test_data("test_item.json")
+    resp = await app_client.post(f"/collections/{coll['id']}/items", json=item)
+    assert resp.status_code == 201
+
+    params = {"query": {"proj:epsg": {"neq": item["properties"]["proj:epsg"]}}}
+    resp = await app_client.post("/search", json=params)
+    assert resp.status_code == 200
+    resp_json = resp.json()
+    assert len(resp_json["features"]) == 0
+
+    params["query"] = quote_plus(orjson.dumps(params["query"]))
+    resp = await app_client.get("/search", params=params)
+    assert resp.status_code == 200
+    resp_json = resp.json()
+    assert len(resp_json["features"]) == 0
+
+
+async def test_app_collection_fields_extension(
+    load_test_data, app_client, load_test_collection, app
+):
+    res = await app_client.get("/_mgmt/health")
+    pgstac_version = res.json()["pgstac"]["pgstac_version"]
+
+    fields = ["title"]
+    resp = await app_client.get("/collections", params={"fields": ",".join(fields)})
+
+    assert resp.status_code == 200
+
+    resp_json = resp.json()
+    resp_collections = resp_json["collections"]
+
+    assert len(resp_collections) > 0
+    # NOTE: It's a bug that 'collection' is always included; see #327
+    if tuple(map(int, pgstac_version.split("."))) < (0, 9, 9):
+        constant_fields = ["id", "links", "collection"]
+    else:
+        constant_fields = ["id", "links"]
+
+    for collection in resp_collections:
+        assert set(collection.keys()) == set(fields + constant_fields)
+
+
+async def test_app_item_fields_extension(
+    load_test_data, app_client, load_test_collection, load_test_item, app
+):
+    coll = load_test_collection
+    fields = ["id", "geometry"]
+    resp = await app_client.get(
+        f"/collections/{coll['id']}/items", params={"fields": ",".join(fields)}
+    )
+
+    assert resp.status_code == 200
+
+    resp_json = resp.json()
+    features = resp_json["features"]
+
+    assert len(features) > 0
+    # These fields are always included in items
+    constant_fields = ["id", "links"]
+    if not app.state.settings.use_api_hydrate:
+        constant_fields.append("collection")
+    for item in features:
+        assert set(item.keys()) == set(fields + constant_fields)
 
 
 async def test_app_sort_extension(load_test_data, app_client, load_test_collection):
@@ -701,7 +807,7 @@ async def test_sorting_and_paging(app_client, load_test_collection, direction: s
 
 
 @pytest.mark.asyncio
-async def test_wrapped_function(load_test_data, database) -> None:
+async def test_wrapped_function(load_test_data, pgstac) -> None:
     # Ensure wrappers, e.g. Planetary Computer's rate limiting, work.
     # https://github.com/gadomski/planetary-computer-apis/blob/2719ccf6ead3e06de0784c39a2918d4d1811368b/pccommon/pccommon/redis.py#L205-L238
 
@@ -740,11 +846,11 @@ async def test_wrapped_function(load_test_data, database) -> None:
     )
 
     postgres_settings = PostgresSettings(
-        pguser=database.user,
-        pgpassword=database.password,
-        pghost=database.host,
-        pgport=database.port,
-        pgdatabase=database.dbname,
+        pguser=pgstac.user,
+        pgpassword=pgstac.password,
+        pghost=pgstac.host,
+        pgport=pgstac.port,
+        pgdatabase=pgstac.dbname,
     )
 
     extensions = [
@@ -767,6 +873,19 @@ async def test_wrapped_function(load_test_data, database) -> None:
         search_post_request_model=post_request_model,
         search_get_request_model=get_request_model,
         collections_get_request_model=collection_search_extension.GET,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=settings.cors_origins,
+                allow_origin_regex=settings.cors_origin_regex,
+                allow_methods=settings.cors_methods,
+                allow_credentials=settings.cors_credentials,
+                allow_headers=settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
     app = api.app
     await connect_to_db(
@@ -797,35 +916,42 @@ async def test_wrapped_function(load_test_data, database) -> None:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("validation", [True, False])
 @pytest.mark.parametrize("hydrate", [True, False])
-async def test_no_extension(
-    hydrate, validation, load_test_data, database, pgstac
-) -> None:
+async def test_no_extension(hydrate, validation, load_test_data, pgstac) -> None:
     """test PgSTAC with no extension."""
-    connection = f"postgresql://{database.user}:{quote_plus(database.password)}@{database.host}:{database.port}/{database.dbname}"
-    with PgstacDB(dsn=connection) as db:
-        loader = Loader(db=db)
-        loader.load_collections(os.path.join(DATA_DIR, "test_collection.json"))
-        loader.load_items(os.path.join(DATA_DIR, "test_item.json"))
-
     settings = Settings(
         testing=True,
         use_api_hydrate=hydrate,
         enable_response_models=validation,
     )
     postgres_settings = PostgresSettings(
-        pguser=database.user,
-        pgpassword=database.password,
-        pghost=database.host,
-        pgport=database.port,
-        pgdatabase=database.dbname,
+        pguser=pgstac.user,
+        pgpassword=pgstac.password,
+        pghost=pgstac.host,
+        pgport=pgstac.port,
+        pgdatabase=pgstac.dbname,
     )
-    extensions = []
+    extensions = [
+        TransactionExtension(client=TransactionsClient(), settings=settings),
+    ]
     post_request_model = create_post_request_model(extensions, base_model=PgstacSearch)
     api = StacApi(
         client=CoreCrudClient(pgstac_search_model=post_request_model),
         settings=settings,
         extensions=extensions,
         search_post_request_model=post_request_model,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=settings.cors_origins,
+                allow_origin_regex=settings.cors_origin_regex,
+                allow_methods=settings.cors_methods,
+                allow_credentials=settings.cors_credentials,
+                allow_headers=settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
     app = api.app
     await connect_to_db(
@@ -835,6 +961,17 @@ async def test_no_extension(
     )
     try:
         async with AsyncClient(transport=ASGITransport(app=app)) as client:
+            response = await client.post(
+                "http://test/collections",
+                json=load_test_data("test_collection.json"),
+            )
+            assert response.status_code == 201
+            response = await client.post(
+                "http://test/collections/test-collection/items",
+                json=load_test_data("test_item.json"),
+            )
+            assert response.status_code == 201
+
             landing = await client.get("http://test/")
             assert landing.status_code == 200, landing.text
             assert "Queryables" not in [
@@ -914,9 +1051,7 @@ async def test_no_extension(
 
 
 async def test_default_app(default_client, default_app, load_test_data):
-    api_routes = {
-        f"{list(route.methods)[0]} {route.path}" for route in default_app.routes
-    }
+    api_routes = get_flattened_routes(default_app)
     assert set(STAC_CORE_ROUTES).issubset(api_routes)
     assert set(STAC_TRANSACTION_ROUTES).issubset(api_routes)
 

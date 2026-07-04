@@ -14,16 +14,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+        python-version: ['3.11', '3.12', '3.13', '3.14']
 
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v5
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
           version: "0.9.*" 
           enable-cache: true
@@ -37,9 +37,10 @@ jobs:
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
         run: |
           uv run pre-commit run --all-files
+          uv run --with mypy --with types-attrs mypy -p stac_fastapi
 
       - name: install lib postgres
-        uses: nyurik/action-setup-postgis@v2
+        uses: nyurik/action-setup-postgis@228cfe4dd41aad01801a0bdc767040e5024fff1d # v2
 
       - name: Run test suite
         run: uv run pytest --cov stac_fastapi.pgstac --cov-report xml --cov-report term-missing
@@ -67,10 +68,10 @@ jobs:
 
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v5
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
           version: "0.9.*" 
           enable-cache: true
@@ -78,7 +79,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync
+          uv sync --extra server
           uv pip install stac-api-validator==0.6.5
 
       - name: Load data and validate
@@ -97,10 +98,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main
-        uses: actions/checkout@v5
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
           version: "0.9.*" 
           enable-cache: true

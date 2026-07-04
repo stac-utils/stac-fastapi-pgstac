@@ -1,5 +1,9 @@
+from brotli_asgi import BrotliMiddleware
 from httpx import ASGITransport, AsyncClient
 from stac_fastapi.api.app import StacApi
+from stac_fastapi.api.middleware import ProxyHeaderMiddleware
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 
 from stac_fastapi.pgstac.config import PostgresSettings, Settings
 from stac_fastapi.pgstac.core import CoreCrudClient, health_check
@@ -33,15 +37,29 @@ async def test_health(app_client):
     assert body["pgstac"]["pgstac_version"]
 
 
-async def test_health_503(database):
+async def test_health_503(pgstac):
     """Test health endpoint error."""
 
     # No lifespan so no `get_connection` is application state
+    settings = Settings(testing=True)
     api = StacApi(
-        settings=Settings(testing=True),
+        settings=settings,
         extensions=[],
         client=CoreCrudClient(),
         health_check=health_check,
+        middlewares=[
+            Middleware(BrotliMiddleware),
+            Middleware(ProxyHeaderMiddleware),
+            Middleware(
+                CORSMiddleware,
+                allow_origins=settings.cors_origins,
+                allow_origin_regex=settings.cors_origin_regex,
+                allow_methods=settings.cors_methods,
+                allow_credentials=settings.cors_credentials,
+                allow_headers=settings.cors_headers,
+                max_age=600,
+            ),
+        ],
     )
 
     async with AsyncClient(
@@ -58,11 +76,11 @@ async def test_health_503(database):
 
     # No lifespan so no `get_connection` is application state
     postgres_settings = PostgresSettings(
-        pguser=database.user,
-        pgpassword=database.password,
-        pghost=database.host,
-        pgport=database.port,
-        pgdatabase=database.dbname,
+        pguser=pgstac.user,
+        pgpassword=pgstac.password,
+        pghost=pgstac.host,
+        pgport=pgstac.port,
+        pgdatabase=pgstac.dbname,
     )
     # Create connection pool but close it just after
     await connect_to_db(api.app, postgres_settings=postgres_settings)

@@ -10,18 +10,18 @@ ROOT_PATH = "/stac/v1"
 
 
 @pytest.fixture(scope="function")
-async def app_with_root_path(database, monkeypatch):
+async def app_with_root_path(pgstac, monkeypatch):
     """
     Provides the global stac_fastapi.pgstac.app.app instance, configured with a
     specific ROOT_PATH environment variable and connected to the test database.
     """
 
     monkeypatch.setenv("ROOT_PATH", ROOT_PATH)
-    monkeypatch.setenv("PGUSER", database.user)
-    monkeypatch.setenv("PGPASSWORD", database.password)
-    monkeypatch.setenv("PGHOST", database.host)
-    monkeypatch.setenv("PGPORT", str(database.port))
-    monkeypatch.setenv("PGDATABASE", database.dbname)
+    monkeypatch.setenv("PGUSER", pgstac.user)
+    monkeypatch.setenv("PGPASSWORD", pgstac.password)
+    monkeypatch.setenv("PGHOST", pgstac.host)
+    monkeypatch.setenv("PGPORT", str(pgstac.port))
+    monkeypatch.setenv("PGDATABASE", pgstac.dbname)
     monkeypatch.setenv("ENABLE_TRANSACTIONS_EXTENSIONS", "TRUE")
 
     # Reload the app module to pick up the new environment variables
