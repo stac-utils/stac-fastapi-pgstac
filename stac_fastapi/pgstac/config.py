@@ -201,6 +201,7 @@ class Settings(ApiSettings):
 
     enabled_extensions: str = ""
     enable_transactions_extensions: bool = False
+    enable_metrics: bool = False
     enable_catalogs_extension: bool = False
     hide_alternate_parents: bool = False
     validate_extensions: bool = False
