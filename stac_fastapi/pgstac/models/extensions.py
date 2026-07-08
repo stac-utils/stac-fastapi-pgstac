@@ -25,40 +25,56 @@ from stac_fastapi.pgstac.extensions import FreeTextExtension, QueryExtension
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
 
-DEFAULT_EXTENSIONS = {
-    "search_map": {
-        "query": QueryExtension(),
-        "sort": SortExtension(),
-        "fields": FieldsExtension(),
-        "filter": SearchFilterExtension(client=FiltersClient()),
-        "pagination": TokenPaginationExtension(),
-    },
-    "collection_search_map": {
-        "query": QueryExtension(
-            conformance_classes=[QueryConformanceClasses.COLLECTIONS]
-        ),
-        "sort": SortExtension(conformance_classes=[SortConformanceClasses.COLLECTIONS]),
-        "fields": FieldsExtension(
-            conformance_classes=[FieldsConformanceClasses.COLLECTIONS]
-        ),
-        "filter": CollectionSearchFilterExtension(client=FiltersClient()),
-        "free_text": FreeTextExtension(
-            conformance_classes=[FreeTextConformanceClasses.COLLECTIONS],
-        ),
-        "pagination": OffsetPaginationExtension(),
-    },
-    "item_collection_map": {
-        "query": QueryExtension(
-            conformance_classes=[QueryConformanceClasses.ITEMS],
-        ),
-        "sort": SortExtension(
-            conformance_classes=[SortConformanceClasses.ITEMS],
-        ),
-        "fields": FieldsExtension(conformance_classes=[FieldsConformanceClasses.ITEMS]),
-        "filter": ItemCollectionFilterExtension(client=FiltersClient()),
-        "pagination": TokenPaginationExtension(),
-    },
-}
+
+def get_default_extensions_map(key: str) -> dict[str, ApiExtension]:
+    """Get the default extensions map for a specific key.
+
+    Args:
+        key: The key for the extensions map.
+
+    Returns:
+        A dictionary containing the default extensions map for the given key.
+    """
+    DEFAULT_EXTENSIONS = {
+        "search_map": {
+            "query": QueryExtension(),
+            "sort": SortExtension(),
+            "fields": FieldsExtension(),
+            "filter": SearchFilterExtension(client=FiltersClient()),
+            "pagination": TokenPaginationExtension(),
+        },
+        "collection_search_map": {
+            "query": QueryExtension(
+                conformance_classes=[QueryConformanceClasses.COLLECTIONS]
+            ),
+            "sort": SortExtension(
+                conformance_classes=[SortConformanceClasses.COLLECTIONS]
+            ),
+            "fields": FieldsExtension(
+                conformance_classes=[FieldsConformanceClasses.COLLECTIONS]
+            ),
+            "filter": CollectionSearchFilterExtension(client=FiltersClient()),
+            "free_text": FreeTextExtension(
+                conformance_classes=[FreeTextConformanceClasses.COLLECTIONS],
+            ),
+            "pagination": OffsetPaginationExtension(),
+        },
+        "item_collection_map": {
+            "query": QueryExtension(
+                conformance_classes=[QueryConformanceClasses.ITEMS],
+            ),
+            "sort": SortExtension(
+                conformance_classes=[SortConformanceClasses.ITEMS],
+            ),
+            "fields": FieldsExtension(
+                conformance_classes=[FieldsConformanceClasses.ITEMS]
+            ),
+            "filter": ItemCollectionFilterExtension(client=FiltersClient()),
+            "pagination": TokenPaginationExtension(),
+        },
+    }
+    return DEFAULT_EXTENSIONS.get(key, {})
+
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +91,7 @@ class Extensions:
 
     def get_enabled_extensions(self, key: str) -> list[ApiExtension]:
         extensions_map_with_defaults = {
-            **DEFAULT_EXTENSIONS.get(f"{key}_map", {}),
+            **get_default_extensions_map(f"{key}_map"),
             **getattr(self, f"{key}_map", {}),
         }
         enabled_extensions_keys = self.settings.enabled_extensions
