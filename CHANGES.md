@@ -4,7 +4,7 @@
 
 ### Added
 
-- Optional Prometheus metrics support via `prometheus-fastapi-instrumentator`. Install the `[metrics]` extra (`pip install stac-fastapi-pgstac[metrics]`) to expose a `/metrics` endpoint with request counts, latency histograms, and in-progress gauges.
+- Optional Prometheus metrics support via `prometheus-fastapi-instrumentator`. Install the `[metrics]` extra (`pip install stac-fastapi-pgstac[metrics]`) to expose a `/metrics` endpoint with request counts and latency histograms.
 
 ### Fixed
 

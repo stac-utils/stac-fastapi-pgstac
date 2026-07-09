@@ -254,10 +254,7 @@ app = api.app
 try:
     from prometheus_fastapi_instrumentator import Instrumentator
 
-    Instrumentator(
-        should_instrument_requests_inprogress=True,
-        inprogress_labels=True,
-    ).instrument(app).expose(app, endpoint="/metrics")
+    Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 except ImportError:
     logger.warning(
         "prometheus-fastapi-instrumentator not installed; metrics endpoint disabled"

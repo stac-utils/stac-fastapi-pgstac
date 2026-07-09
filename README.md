@@ -88,7 +88,6 @@ Metrics exposed (Prometheus text format):
 
 - `http_requests_total` — request count by method, path, and status code
 - `http_request_duration_seconds` — request latency histogram
-- `http_requests_inprogress` — in-flight request gauge
 
 ### Migrations
 
