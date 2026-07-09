@@ -104,3 +104,14 @@ def test_extensions_custom():
     )
     assert extensions.transaction == []
     assert extensions.extra == [custom_new_extension]
+
+
+def test_extensions_modify_default():
+    extensions_a = Extensions()
+    extensions_b = Extensions()
+    extensions_a.search_map["query"].conformance_classes.append("custom-sort-feature")
+
+    assert "custom-sort-feature" in extensions_a.search_map["query"].conformance_classes
+    assert (
+        "custom-sort-feature" not in extensions_b.search_map["query"].conformance_classes
+    )

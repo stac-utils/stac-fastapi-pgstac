@@ -89,18 +89,25 @@ class Extensions:
     extra_map: dict[str, ApiExtension] = field(default_factory=dict)
     settings: Settings = field(default_factory=Settings)
 
+    def __post_init__(self):
+        for key in [
+            "search_map",
+            "collection_search_map",
+            "item_collection_map",
+            "extra_map",
+        ]:
+            merged = {**get_default_extensions_map(f"{key}"), **getattr(self, key)}
+            setattr(self, key, merged)
+
     def get_enabled_extensions(self, key: str) -> list[ApiExtension]:
-        extensions_map_with_defaults = {
-            **get_default_extensions_map(f"{key}_map"),
-            **getattr(self, f"{key}_map", {}),
-        }
+        extensions_map = getattr(self, f"{key}_map")
         enabled_extensions_keys = self.settings.enabled_extensions
         if enabled_extensions_keys is None:
-            enabled_extensions = list(extensions_map_with_defaults.values())
+            enabled_extensions = list(extensions_map.values())
         else:
             enabled_extensions = [
                 extension
-                for k, extension in extensions_map_with_defaults.items()
+                for k, extension in extensions_map.items()
                 if k in enabled_extensions_keys
             ]
         return enabled_extensions
