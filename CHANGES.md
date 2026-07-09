@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Optional Prometheus metrics support via `prometheus-fastapi-instrumentator`. Install the `[metrics]` extra (`pip install stac-fastapi-pgstac[metrics]`) to expose a `/metrics` endpoint with request counts, latency histograms, and in-progress gauges.
+
 ### Fixed
 
 - Fix multi-platform Docker builds by adding QEMU emulation and correcting workflow_dispatch trigger ([#337](https://github.com/stac-utils/stac-fastapi-pgstac/pull/337))

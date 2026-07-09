@@ -11,7 +11,6 @@ from typing import cast
 
 from brotli_asgi import BrotliMiddleware
 from fastapi import APIRouter, FastAPI
-from prometheus_fastapi_instrumentator import Instrumentator
 from stac_fastapi.api.app import StacApi
 from stac_fastapi.api.middleware import ProxyHeaderMiddleware
 from stac_fastapi.api.models import (
@@ -103,7 +102,6 @@ if ext := settings.enabled_extensions:
 application_extensions: list[ApiExtension] = []
 
 with_transactions = settings.enable_transactions_extensions
-with_metrics = settings.enable_metrics
 if with_transactions:
     application_extensions.append(
         TransactionExtension(
@@ -252,8 +250,18 @@ api = StacApi(
     health_check=health_check,  # type: ignore [arg-type]
 )
 app = api.app
-if with_metrics:
-    Instrumentator().instrument(app).expose(app)
+
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+
+    Instrumentator(
+        should_instrument_requests_inprogress=True,
+        inprogress_labels=True,
+    ).instrument(app).expose(app, endpoint="/metrics")
+except ImportError:
+    logger.warning(
+        "prometheus-fastapi-instrumentator not installed; metrics endpoint disabled"
+    )
 
 
 def run():

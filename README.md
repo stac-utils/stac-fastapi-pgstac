@@ -72,6 +72,24 @@ To prevent information leakage about other tenants in multi-tenant deployments, 
 
 **Note:** The link relation names for poly-hierarchy navigation are subject to change as the OGC and STAC communities continue to standardize on terminology. These names may be updated in future releases to align with emerging standards.
 
+### Prometheus metrics
+
+Optional HTTP request instrumentation for Prometheus via [`prometheus-fastapi-instrumentator`](https://github.com/trallnag/prometheus-fastapi-instrumentator).
+
+Install the `metrics` extra:
+
+```bash
+pip install stac-fastapi-pgstac[metrics]
+```
+
+Once installed, `/metrics` is live on startup. If the package is missing, the app starts normally and logs a warning.
+
+Metrics exposed (Prometheus text format):
+
+- `http_requests_total` — request count by method, path, and status code
+- `http_request_duration_seconds` — request latency histogram
+- `http_requests_inprogress` — in-flight request gauge
+
 ### Migrations
 
 There is a Python utility as part of PgSTAC ([pypgstac](https://stac-utils.github.io/pgstac/pypgstac/)) that includes a migration utility.

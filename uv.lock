@@ -3190,7 +3190,6 @@ dependencies = [
     { name = "json-merge-patch" },
     { name = "jsonpatch" },
     { name = "orjson" },
-    { name = "prometheus-fastapi-instrumentator" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "stac-fastapi-api" },
@@ -3201,6 +3200,9 @@ dependencies = [
 [package.optional-dependencies]
 catalogs = [
     { name = "stac-fastapi-catalogs-extension" },
+]
+metrics = [
+    { name = "prometheus-fastapi-instrumentator" },
 ]
 server = [
     { name = "uvicorn", extra = ["standard"] },
@@ -3214,6 +3216,7 @@ dev = [
     { name = "httpx" },
     { name = "mirakuru" },
     { name = "pre-commit" },
+    { name = "prometheus-fastapi-instrumentator" },
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "pypgstac" },
     { name = "pystac", extra = ["validation"] },
@@ -3245,7 +3248,7 @@ requires-dist = [
     { name = "json-merge-patch", specifier = ">=0.3.0" },
     { name = "jsonpatch", specifier = ">=1.33.0" },
     { name = "orjson" },
-    { name = "prometheus-fastapi-instrumentator", specifier = "<9" },
+    { name = "prometheus-fastapi-instrumentator", marker = "extra == 'metrics'" },
     { name = "pydantic", specifier = ">=2.4,<3.0" },
     { name = "pydantic-settings", specifier = ">=2.7,<3.0" },
     { name = "stac-fastapi-api", specifier = ">=6.3,<7.0" },
@@ -3255,13 +3258,14 @@ requires-dist = [
     { name = "stac-pydantic", extras = ["validation"], marker = "extra == 'validation'" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'server'", specifier = "==0.38.0" },
 ]
-provides-extras = ["catalogs", "server", "validation"]
+provides-extras = ["catalogs", "metrics", "server", "validation"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "httpx" },
     { name = "mirakuru", specifier = ">=2.0,<3.0" },
     { name = "pre-commit" },
+    { name = "prometheus-fastapi-instrumentator" },
     { name = "psycopg", extras = ["pool", "binary"], specifier = "==3.2.*" },
     { name = "pypgstac", specifier = ">=0.9,<0.10" },
     { name = "pystac", extras = ["validation"] },

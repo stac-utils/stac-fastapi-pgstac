@@ -43,7 +43,6 @@ dependencies = [
     "buildpg",
     "brotli_asgi",
     "cql2>=0.3.6",
-    "prometheus-fastapi-instrumentator<9",
     "hydraters>=0.1.3",
     "jsonpatch>=1.33.0",
     "json-merge-patch>=0.3.0",
@@ -58,6 +57,9 @@ server  = [
 ]
 catalogs = [
     "stac-fastapi-catalogs-extension==0.4.0",
+]
+metrics = [
+    "prometheus-fastapi-instrumentator",
 ]
 
 [dependency-groups]
@@ -76,6 +78,7 @@ dev = [
         "httpx",
         "psycopg[pool,binary]==3.2.*",
         "pre-commit",
+        "prometheus-fastapi-instrumentator",
 ]
 docs = [
     "black>=23.10.1",
