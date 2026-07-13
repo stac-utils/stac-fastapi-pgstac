@@ -252,9 +252,9 @@ api = StacApi(
 app = api.app
 
 try:
-    from prometheus_fastapi_instrumentator import Instrumentator
+    from stac_fastapi.pgstac.metrics import instrument_app
 
-    Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+    instrument_app(app)
 except ImportError:
     logger.warning(
         "prometheus-fastapi-instrumentator not installed; metrics endpoint disabled"

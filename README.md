@@ -82,12 +82,14 @@ Install the `metrics` extra:
 pip install stac-fastapi-pgstac[metrics]
 ```
 
-Once installed, `/metrics` is live on startup. If the package is missing, the app starts normally and logs a warning.
+Once installed, `/_mgmt/metrics` is live on startup. If the package is missing, the app starts normally and logs a warning.
 
 Metrics exposed (Prometheus text format):
 
-- `http_requests_total` — request count by method, path, and status code
-- `http_request_duration_seconds` — request latency histogram
+- `http_requests_total` — request count by STAC `operation`, HTTP method, and status code
+- `http_request_duration_seconds` — request latency histogram by STAC `operation` and method
+
+Operation labels group requests into low-cardinality STAC endpoints such as `search`, `list_items`, `get_item`, `edit_item`, `delete_item`, and `bulk`. Management routes under `/_mgmt/` (health, ping, metrics) are excluded from instrumentation.
 
 ### Migrations
 
