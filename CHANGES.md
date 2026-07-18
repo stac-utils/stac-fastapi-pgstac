@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Bump `starlette` to `>=1.0.1` to address CVE-2026-48710 (Host header validation bypass) ([#385](https://github.com/stac-utils/stac-fastapi-pgstac/issues/385))
+
 ## [6.3.1] - 2026-06-24
 
 ### Fixed

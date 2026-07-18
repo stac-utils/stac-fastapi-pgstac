@@ -39,6 +39,10 @@ dependencies = [
     "stac-fastapi-api>=6.3,<7.0",
     "stac-fastapi-extensions>=6.3,<7.0",
     "stac-fastapi-types>=6.3,<7.0",
+    # Security floor for starlette (pulled in transitively via fastapi):
+    # https://github.com/stac-utils/stac-fastapi-pgstac/issues/385
+    # CVE-2026-48710 (Host header validation bypass) is fixed in starlette 1.0.1.
+    "starlette>=1.0.1",
     "asyncpg",
     "buildpg",
     "brotli_asgi",
