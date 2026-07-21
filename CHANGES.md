@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix multi-platform Docker builds by adding QEMU emulation and correcting workflow_dispatch trigger ([#337](https://github.com/stac-utils/stac-fastapi-pgstac/pull/337))
+
 ## [6.3.1] - 2026-06-24
 
 ### Fixed
