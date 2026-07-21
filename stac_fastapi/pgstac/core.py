@@ -2,7 +2,7 @@
 
 import json
 import re
-from typing import Any
+from typing import Any, cast
 from urllib.parse import unquote_plus, urljoin
 
 import attr
@@ -17,7 +17,13 @@ from stac_fastapi.api.models import JSONResponse
 from stac_fastapi.types.core import AsyncBaseCoreClient, Relations
 from stac_fastapi.types.errors import InvalidQueryParameter, NotFoundError
 from stac_fastapi.types.requests import get_base_url
-from stac_fastapi.types.stac import Collection, Collections, Item, ItemCollection
+from stac_fastapi.types.stac import (
+    Collection,
+    Collections,
+    Item,
+    ItemCollection,
+    LandingPage,
+)
 from stac_pydantic.shared import BBox, MimeTypes
 
 from stac_fastapi.pgstac.config import Settings
@@ -40,6 +46,26 @@ class CoreCrudClient(AsyncBaseCoreClient):
     """Client for core endpoints defined by stac."""
 
     pgstac_search_model: type[PgstacSearch] = attr.ib(default=PgstacSearch)
+
+    async def landing_page(self, **kwargs: dict[str, Any]) -> LandingPage:
+        """Landing page with catalogs link if extension is enabled."""
+        # Call the parent method to get the base landing page
+        landing_page = await super().landing_page(**kwargs)
+
+        # Add catalogs link if the extension is enabled
+        if self.extension_is_enabled("CatalogsExtension"):
+            request: Request = cast(Request, kwargs["request"])
+            base_url = get_base_url(request)
+            landing_page["links"].append(
+                {
+                    "rel": "catalogs",
+                    "type": "application/json",
+                    "title": "Catalogs available for this API",
+                    "href": f"{base_url}/catalogs",
+                }
+            )
+
+        return landing_page
 
     async def all_collections(  # type: ignore [override] # noqa: C901
         self,
@@ -70,6 +96,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
         prev_link: dict[str, Any] | None = None
         collections: Collections
 
+        # Always use collection_search() for consistency
+        # If CollectionSearchExtension is enabled, use full search parameters
+        # If disabled, use simple search with just type=Collection filter
         if self.extension_is_enabled("CollectionSearchExtension"):
             base_args = {
                 "bbox": bbox,
@@ -87,42 +116,49 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 filter_lang=filter_lang,
                 **kwargs,
             )
-
-            # NOTE: `FreeTextExtension` - pgstac will only accept `str` so we need to
-            # join the list[str] with ` OR `
-            # ref: https://github.com/stac-utils/stac-fastapi-pgstac/pull/263
-            if q := clean_args.pop("q", None):
-                clean_args["q"] = " OR ".join(q) if isinstance(q, list) else q
-
-            async with request.app.state.get_connection(request, "r") as conn:
-                q, p = render(
-                    """
-                    SELECT * FROM collection_search(:req::text::jsonb);
-                    """,
-                    req=json.dumps(clean_args),
-                )
-                collections = await conn.fetchval(q, *p)
-
-            if links := collections.get("links"):
-                for link in links:
-                    if link["rel"] == "next":
-                        next_link = link
-                    elif link["rel"] == "prev":
-                        prev_link = link
-
         else:
-            async with request.app.state.get_connection(request, "r") as conn:
-                cols: list[Collection] = (
-                    await conn.fetchval(
-                        """
-                    SELECT * FROM all_collections();
-                    """
-                    )
-                    or []
-                )
+            # When CollectionSearchExtension is disabled, use a high limit to return all collections
+            clean_args = {"limit": limit or 10000, "offset": offset or 0}
 
-                collections = Collections(collections=cols, links=[])
+        # Add filter to ensure only Collections are returned (not Catalogs)
+        # This is needed because catalogs are also stored in the collections table
+        if "filter" in clean_args:
+            clean_args["filter"] = {
+                "op": "and",
+                "args": [
+                    clean_args["filter"],
+                    {"op": "=", "args": [{"property": "type"}, "Collection"]},
+                ],
+            }
+        else:
+            clean_args["filter"] = {
+                "op": "=",
+                "args": [{"property": "type"}, "Collection"],
+            }
 
+        # NOTE: `FreeTextExtension` - pgstac will only accept `str` so we need to
+        # join the list[str] with ` OR `
+        # ref: https://github.com/stac-utils/stac-fastapi-pgstac/pull/263
+        if q := clean_args.pop("q", None):
+            clean_args["q"] = " OR ".join(q) if isinstance(q, list) else q
+
+        async with request.app.state.get_connection(request, "r") as conn:
+            q, p = render(
+                """
+                SELECT * FROM collection_search(:req::text::jsonb);
+                """,
+                req=json.dumps(clean_args),
+            )
+            collections = await conn.fetchval(q, *p)
+
+        if links := collections.get("links"):
+            for link in links:
+                if link["rel"] == "next":
+                    next_link = link
+                elif link["rel"] == "prev":
+                    prev_link = link
+
+        # Generate links for each collection
         for collection in collections["collections"]:
             collection["links"] = await CollectionLinks(
                 collection_id=collection["id"], request=request
@@ -141,6 +177,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
                         ),
                     }
                 )
+
+            # Remove internal metadata
+            collection.pop("parent_ids", None)  # type: ignore [typeddict-item]
 
         collections["links"] = await CollectionSearchPagingLinks(
             request=request, next=next_link, prev=prev_link
@@ -189,6 +228,10 @@ class CoreCrudClient(AsyncBaseCoreClient):
         if collection is None:
             raise NotFoundError(f"Collection {collection_id} does not exist.")
 
+        # Ensure the returned object is actually a Collection
+        if collection.get("type") != "Collection":
+            raise NotFoundError(f"Collection {collection_id} does not exist.")
+
         collection["links"] = await CollectionLinks(
             collection_id=collection_id, request=request
         ).get_links(extra_links=collection.get("links"))
@@ -205,6 +248,9 @@ class CoreCrudClient(AsyncBaseCoreClient):
                     "href": urljoin(base_url, f"collections/{collection_id}/queryables"),
                 }
             )
+
+        # Remove internal metadata
+        collection.pop("parent_ids", None)  # type: ignore [typeddict-item]
 
         return collection
 

@@ -28,6 +28,7 @@ nav:
           - db: api/stac_fastapi/pgstac/db.md
           - extensions:
               - module: api/stac_fastapi/pgstac/extensions/index.md
+              - catalogs: api/stac_fastapi/pgstac/extensions/catalogs.md
               - filter: api/stac_fastapi/pgstac/extensions/filter.md
               - query: api/stac_fastapi/pgstac/extensions/query.md
           - models:

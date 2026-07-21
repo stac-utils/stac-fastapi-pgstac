@@ -36,9 +36,9 @@ dependencies = [
     "orjson",
     "pydantic>=2.4,<3.0",
     "pydantic-settings>=2.7,<3.0",
-    "stac-fastapi-api>=6.1,<7.0",
-    "stac-fastapi-extensions>=6.1,<7.0",
-    "stac-fastapi-types>=6.1,<7.0",
+    "stac-fastapi-api>=6.3,<7.0",
+    "stac-fastapi-extensions>=6.3,<7.0",
+    "stac-fastapi-types>=6.3,<7.0",
     "asyncpg",
     "buildpg",
     "brotli_asgi",
@@ -55,6 +55,9 @@ validation = [
 server  = [
     "uvicorn[standard]==0.38.0"
 ]
+catalogs = [
+    "stac-fastapi-catalogs-extension==0.4.0",
+]
 
 [dependency-groups]
 dev = [
@@ -68,6 +71,7 @@ dev = [
         "pypgstac>=0.9,<0.10",
         "requests",
         "shapely",
+        "stac-fastapi-catalogs-extension==0.4.0",
         "httpx",
         "psycopg[pool,binary]==3.2.*",
         "pre-commit",
@@ -140,7 +144,7 @@ ignore = [
 ]
 
 [tool.bumpversion]
-current_version = "6.2.2"
+current_version = "6.3.1"
 parse = """(?x)
     (?P<major>\\d+)\\.
     (?P<minor>\\d+)\\.

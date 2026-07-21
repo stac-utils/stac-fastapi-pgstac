@@ -6,16 +6,45 @@
 
 - Fix multi-platform Docker builds by adding QEMU emulation and correcting workflow_dispatch trigger ([#337](https://github.com/stac-utils/stac-fastapi-pgstac/pull/337))
 
+## [6.3.1] - 2026-06-24
+
+### Fixed
+
+- Make catalogs extension imports conditional to allow running app without the optional `[catalogs]` extra ([#396](https://github.com/stac-utils/stac-fastapi-pgstac/pull/396))
+
+### Removed
+
+- Removed optional catalogs imports from extensions init ([#396](https://github.com/stac-utils/stac-fastapi-pgstac/pull/396))
+
+## [6.3.0] - 2026-06-23
+
 ### Changed
 
 - remove pgstac 0.8.6 in tests and update documentation ([#354](https://github.com/stac-utils/stac-fastapi-pgstac/pull/354))
 - simplify `extensions.query.Operator` class, by removing unused `operator` method and unncessary dependencies ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
 - handle `ENABLE_TRANSACTIONS_EXTENSIONS`, `ENABLED_EXTENSIONS` and `UVICORN_ROOT_PATH` environment configuration variables via the `config.Settings` class ([#368](https://github.com/stac-utils/stac-fastapi-pgstac/pull/368))
+- Refactor Docker Compose files and Makefile for better organization and modularity. ([#379](https://github.com/stac-utils/stac-fastapi-pgstac/pull/379))
 
 ### Added
 
-- implement `neq` query opeartor ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
+- implement `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
 - add api test for `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
+- Multi-Tenant Catalogs Extension: Integrated optional `stac-fastapi-catalogs-extension` to support native DAG (Directed Acyclic Graph) traversal of Catalogs and Collections. Enabled via `ENABLE_CATALOGS_EXTENSION` environment variable ([#366](https://github.com/stac-utils/stac-fastapi-pgstac/pull/366))
+- Added `HIDE_ALTERNATE_PARENTS` environment variable (default `False`) to suppress `rel="related"` and `rel="duplicate"` links for alternate parents in poly-hierarchy. Useful for multi-tenant deployments to prevent information leakage about other tenants. When enabled, only the contextual `rel="parent"` link is advertised. Requires `ENABLE_CATALOGS_EXTENSION=true`. ([#387](https://github.com/stac-utils/stac-fastapi-pgstac/pull/387))
+- Added `rel="duplicate"` links for scoped collection endpoints (`/catalogs/{catalogId}/collections/{collectionId}`) to expose alternative scoped paths where collections can be accessed through other parent catalogs in poly-hierarchy. ([#387](https://github.com/stac-utils/stac-fastapi-pgstac/pull/387))
+
+
+### Fixed
+
+- preprocess `fields` to give the `include` set precendence over the `exclude` set ([#370](https://github.com/stac-utils/stac-fastapi-pgstac/pull/370))
+- Fix route extraction in router tests to handle FastAPI >= 0.137.0 `_IncludedRouter` wrappers with `original_router` and `include_context` attributes ([#389](https://github.com/stac-utils/stac-fastapi-pgstac/pull/389))
+- Fixed extensions import paths changed in stac-fastapi v6.3.0 ([#392](https://github.com/stac-utils/stac-fastapi-pgstac/pull/392))
+
+### Updated
+
+- Update stac-fastapi-catalogs-extension to v0.4.0 ([#387](https://github.com/stac-utils/stac-fastapi-pgstac/pull/387))
+- Transitioned Dockerfile.tests to use uv sync for strict lockfile adherence in local development. ([#390](https://github.com/stac-utils/stac-fastapi-pgstac/pull/390))
+- Updated stac-fastapi dependencies to >= v6.3.0 ([#392](https://github.com/stac-utils/stac-fastapi-pgstac/pull/392))
 
 ## [6.2.2] - 2026-01-09
 
@@ -582,7 +611,9 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.2..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.1..main>
+[6.3.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.0..6.3.1>
+[6.3.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.2..6.3.0>
 [6.2.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.1..6.2.2>
 [6.2.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.0..6.2.1>
 [6.2.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.5..6.2.0>

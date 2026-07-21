@@ -1228,7 +1228,9 @@ async def test_field_extension_exclude_and_include(
 
     resp = await app_client.post("/search", json=body)
     resp_json = resp.json()
-    assert "properties" not in resp_json["features"][0]
+    assert "properties" in resp_json["features"][0]
+    assert "eo:cloud_cover" in resp_json["features"][0]["properties"].keys()
+    assert len(resp_json["features"][0]["properties"].keys()) == 1
 
 
 async def test_field_extension_exclude_default_includes(
@@ -1310,7 +1312,28 @@ async def test_field_extension_exclude_deeply_nested_included_subkeys(
 
     resp_assets = resp_json["features"][0]["assets"]
     assert "type" in resp_assets["ANG"]
-    assert "href" not in resp_assets["ANG"]
+    assert "href" in resp_assets["ANG"]
+
+
+async def test_field_extension_exclude_root_of_included_subkeys(
+    app_client, load_test_item, load_test_collection
+):
+    """Test that a root key of included nested object is not excluded"""
+    body = {
+        "fields": {
+            "include": ["assets.ANG.type"],
+            "exclude": ["assets.ANG"],
+        }
+    }
+
+    resp = await app_client.post("/search", json=body)
+    assert resp.status_code == 200
+    resp_json = resp.json()
+
+    resp_assets = resp_json["features"][0]["assets"]
+    assert "ANG" in resp_assets
+    assert "type" in resp_assets["ANG"]
+    assert len(resp_assets["ANG"].keys()) == 1
 
 
 async def test_field_extension_exclude_links(

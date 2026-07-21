@@ -4,9 +4,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 from pydantic.functional_serializers import PlainSerializer
-from stac_fastapi.extensions.core.free_text import (
-    FreeTextExtension as FreeTextExtensionBase,
-)
+from stac_fastapi.extensions.free_text import FreeTextExtension as FreeTextExtensionBase
 
 
 class FreeTextExtensionPostRequest(BaseModel):
