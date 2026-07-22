@@ -67,7 +67,9 @@ search_extensions_map: dict[str, ApiExtension] = {
 # collection_search extensions
 cs_extensions_map: dict[str, ApiExtension] = {
     "query": QueryExtension(conformance_classes=[QueryConformanceClasses.COLLECTIONS]),
-    "sort": SortExtension(conformance_classes=[SortConformanceClasses.COLLECTIONS]),
+    "sort": SortExtension(
+        conformance_classes=[SortConformanceClasses.COLLECTION_SEARCH_SORT]
+    ),
     "fields": FieldsExtension(conformance_classes=[FieldsConformanceClasses.COLLECTIONS]),
     "filter": CollectionSearchFilterExtension(client=FiltersClient()),
     "free_text": FreeTextExtension(
@@ -82,7 +84,7 @@ itm_col_extensions_map: dict[str, ApiExtension] = {
         conformance_classes=[QueryConformanceClasses.ITEMS],
     ),
     "sort": SortExtension(
-        conformance_classes=[SortConformanceClasses.ITEMS],
+        conformance_classes=[SortConformanceClasses.FEATURES_SORT],
     ),
     "fields": FieldsExtension(conformance_classes=[FieldsConformanceClasses.ITEMS]),
     "filter": ItemCollectionFilterExtension(client=FiltersClient()),

@@ -175,7 +175,9 @@ def api_client(request):
 
     collection_extensions = [
         QueryExtension(conformance_classes=[QueryConformanceClasses.COLLECTIONS]),
-        SortExtension(conformance_classes=[SortConformanceClasses.COLLECTIONS]),
+        SortExtension(
+            conformance_classes=[SortConformanceClasses.COLLECTION_SEARCH_SORT]
+        ),
         FieldsExtension(conformance_classes=[FieldsConformanceClasses.COLLECTIONS]),
         CollectionSearchFilterExtension(client=FiltersClient()),
         FreeTextExtension(
@@ -193,7 +195,7 @@ def api_client(request):
             conformance_classes=[QueryConformanceClasses.ITEMS],
         ),
         SortExtension(
-            conformance_classes=[SortConformanceClasses.ITEMS],
+            conformance_classes=[SortConformanceClasses.FEATURES_SORT],
         ),
         FieldsExtension(conformance_classes=[FieldsConformanceClasses.ITEMS]),
         ItemCollectionFilterExtension(client=FiltersClient()),
