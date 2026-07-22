@@ -239,6 +239,14 @@ def api_client(request):
         ],
     )
 
+    # Instrument before any requests start the middleware stack.
+    try:
+        from stac_fastapi.pgstac.metrics import instrument_app
+
+        instrument_app(api.app)
+    except ImportError:
+        pass
+
     return api
 
 

@@ -3,32 +3,13 @@ from urllib.parse import urljoin
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from stac_fastapi.pgstac.config import PostgresSettings
-from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
-from stac_fastapi.pgstac.metrics import instrument_app, metrics_endpoint
+from stac_fastapi.pgstac.metrics import metrics_endpoint
 
 
 @pytest.fixture
-async def metrics_app(api_client, pgstac):
-    app = api_client.app
-    instrument_app(app)
-
-    postgres_settings = PostgresSettings(
-        pguser=pgstac.user,
-        pgpassword=pgstac.password,
-        pghost=pgstac.host,
-        pgport=pgstac.port,
-        pgdatabase=pgstac.dbname,
-    )
-    await connect_to_db(
-        app,
-        postgres_settings=postgres_settings,
-        add_write_connection_pool=True,
-    )
-
+async def metrics_app(app):
+    """Reuse the shared app fixture (already instrumented at construction)."""
     yield app
-
-    await close_db_connection(app)
 
 
 @pytest.fixture

@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 _INSTRUMENTED_APPS: set[int] = set()
 
+# Core STAC API routes. Keep labels low-cardinality: use route templates only.
 OPERATIONS: dict[tuple[str, str], str] = {
     ("GET", "/"): "landing",
     ("GET", "/conformance"): "conformance",
@@ -33,18 +34,59 @@ OPERATIONS: dict[tuple[str, str], str] = {
     ("POST", "/collections/{collection_id}/bulk_items"): "bulk",
     ("GET", "/queryables"): "queryables",
     ("GET", "/collections/{collection_id}/queryables"): "queryables",
+    # Multi-tenant catalogs extension (pgstac-specific). Same STAC operation
+    # names are reused for scoped collection/item routes to keep cardinality low.
+    ("GET", "/catalogs"): "list_catalogs",
+    ("POST", "/catalogs"): "create_catalog",
+    ("GET", "/catalogs/{catalog_id}"): "get_catalog",
+    ("PUT", "/catalogs/{catalog_id}"): "edit_catalog",
+    ("DELETE", "/catalogs/{catalog_id}"): "delete_catalog",
+    ("GET", "/catalogs/{catalog_id}/catalogs"): "list_subcatalogs",
+    ("POST", "/catalogs/{catalog_id}/catalogs"): "create_subcatalog",
+    ("DELETE", "/catalogs/{catalog_id}/catalogs/{sub_catalog_id}"): "unlink_subcatalog",
+    ("GET", "/catalogs/{catalog_id}/children"): "list_children",
+    ("GET", "/catalogs/{catalog_id}/conformance"): "conformance",
+    ("GET", "/catalogs/{catalog_id}/queryables"): "queryables",
+    ("GET", "/catalogs/{catalog_id}/collections"): "list_collections",
+    ("POST", "/catalogs/{catalog_id}/collections"): "create_collection",
+    ("GET", "/catalogs/{catalog_id}/collections/{collection_id}"): "get_collection",
+    ("PUT", "/catalogs/{catalog_id}/collections/{collection_id}"): "edit_collection",
+    ("DELETE", "/catalogs/{catalog_id}/collections/{collection_id}"): "unlink_collection",
+    (
+        "GET",
+        "/catalogs/{catalog_id}/collections/{collection_id}/items",
+    ): "list_items",
+    (
+        "GET",
+        "/catalogs/{catalog_id}/collections/{collection_id}/items/{item_id}",
+    ): "get_item",
 }
 
 
-def resolve_operation(method: str, route: str | None) -> str:
+def register_operations(operations: dict[tuple[str, str], str]) -> None:
+    """Register or override STAC operation labels for route templates.
+
+    Extensions can call this to add endpoints that are not part of the core map,
+    for example::
+
+        register_operations({("GET", "/my-extension"): "my_extension"})
+    """
+    OPERATIONS.update(operations)
+
+
+def resolve_operation(method: str, route: str | None, prefix: str = "") -> str:
     """Map a request method and route template to a STAC operation label."""
     if not route or route == "none":
         return "unknown"
+
+    if prefix and route.startswith(prefix):
+        route = route[len(prefix) :] or "/"
 
     operation = OPERATIONS.get((method.upper(), route))
     if operation:
         return operation
 
+    # Fallback for unregistered catalogs-extension variants.
     if route.startswith("/catalogs"):
         return "catalog"
     if "bulk" in route:
@@ -85,7 +127,8 @@ def record_stac_metrics(info: Info) -> None:
     """Record request count and latency using STAC operation labels."""
     route = info.request.scope.get("route")
     route_path = getattr(route, "path", None)
-    operation = resolve_operation(info.method, route_path)
+    prefix = getattr(info.request.app.state, "router_prefix", "") or ""
+    operation = resolve_operation(info.method, route_path, prefix=prefix)
 
     if REQUESTS is not None:
         REQUESTS.labels(operation, info.method, info.modified_status).inc()
@@ -100,9 +143,19 @@ def metrics_endpoint(app: FastAPI) -> str:
 
 
 def instrument_app(app: FastAPI, endpoint: str | None = None) -> None:
-    """Instrument a FastAPI app and expose Prometheus metrics."""
+    """Instrument a FastAPI app and expose Prometheus metrics.
+
+    Must be called before the application receives requests. Starlette does not
+    allow adding middleware after the app has started.
+    """
     if id(app) in _INSTRUMENTED_APPS:
         return
+
+    if app.middleware_stack is not None:
+        raise RuntimeError(
+            "Cannot instrument metrics after the application has started; "
+            "call instrument_app() during app construction."
+        )
 
     endpoint = endpoint or metrics_endpoint(app)
 

@@ -89,7 +89,7 @@ Metrics exposed (Prometheus text format):
 - `http_requests_total` — request count by STAC `operation`, HTTP method, and status code
 - `http_request_duration_seconds` — request latency histogram by STAC `operation` and method
 
-Operation labels group requests into low-cardinality STAC endpoints such as `search`, `list_items`, `get_item`, `edit_item`, `delete_item`, and `bulk`. Management routes under `/_mgmt/` (health, ping, metrics) are excluded from instrumentation.
+Operation labels group requests into low-cardinality STAC endpoints such as `search`, `list_items`, `get_item`, `edit_item`, `delete_item`, and `bulk`. Catalogs-extension routes are included with the same style of labels (for example `list_catalogs`, `get_catalog`); additional routes can be registered via `register_operations()`. Management routes under `/_mgmt/` (health, ping, metrics) are excluded from instrumentation.
 
 ### Migrations
 
