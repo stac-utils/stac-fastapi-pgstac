@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fix multi-platform Docker builds by adding QEMU emulation and correcting workflow_dispatch trigger ([#337](https://github.com/stac-utils/stac-fastapi-pgstac/pull/337))
+- Fix conformance classes to use v1.1.0 instead of v1.0.0 ([#397](https://github.com/stac-utils/stac-fastapi-pgstac/pull/397))
 
 ## [6.3.1] - 2026-06-24
 

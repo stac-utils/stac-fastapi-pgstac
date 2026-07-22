@@ -1082,7 +1082,7 @@ async def test_default_app(default_client, default_app, load_test_data):
     assert "https://api.stacspec.org/v1.0.0-rc.1/collection-search" in conf
     assert "https://api.stacspec.org/v1.0.0/collections" in conf
     assert "https://api.stacspec.org/v1.0.0/ogcapi-features#query" in conf
-    assert "https://api.stacspec.org/v1.0.0/ogcapi-features#sort" in conf
+    assert "https://api.stacspec.org/v1.1.0/ogcapi-features#sort" in conf
 
 
 async def test_app_transactions_validate_extension(
