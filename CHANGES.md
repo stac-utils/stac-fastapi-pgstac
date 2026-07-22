@@ -9,6 +9,7 @@
 ### Changed 
 
 - Update stac-fastapi-* requirements to `>=6.4,<7.0`
+- Sort conformance class version to v1.1.0 instead of v1.0.0
 
 ## [6.3.1] - 2026-06-24
 
