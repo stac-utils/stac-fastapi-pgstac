@@ -31,14 +31,17 @@ from stac_fastapi.extensions import (
     ItemCollectionFilterExtension,
     OffsetPaginationExtension,
     SearchFilterExtension,
-    SortExtension,
     TokenPaginationExtension,
     TransactionExtension,
 )
 from stac_fastapi.extensions.fields import FieldsConformanceClasses
 from stac_fastapi.extensions.free_text import FreeTextConformanceClasses
 from stac_fastapi.extensions.query import QueryConformanceClasses
-from stac_fastapi.extensions.sort import SortConformanceClasses
+from stac_fastapi.extensions.sort import (
+    CollectionSearchSortExtension,
+    ItemCollectionSortExtension,
+    SearchSortExtension,
+)
 
 # Catalogs extension (required for tests)
 from stac_fastapi_catalogs_extension import (
@@ -165,7 +168,7 @@ def api_client(request):
 
     search_extensions = [
         QueryExtension(),
-        SortExtension(),
+        SearchSortExtension(),
         FieldsExtension(),
         SearchFilterExtension(client=FiltersClient()),
         TokenPaginationExtension(),
@@ -175,9 +178,7 @@ def api_client(request):
 
     collection_extensions = [
         QueryExtension(conformance_classes=[QueryConformanceClasses.COLLECTIONS]),
-        SortExtension(
-            conformance_classes=[SortConformanceClasses.COLLECTION_SEARCH_SORT]
-        ),
+        CollectionSearchSortExtension(),
         FieldsExtension(conformance_classes=[FieldsConformanceClasses.COLLECTIONS]),
         CollectionSearchFilterExtension(client=FiltersClient()),
         FreeTextExtension(
@@ -194,9 +195,7 @@ def api_client(request):
         QueryExtension(
             conformance_classes=[QueryConformanceClasses.ITEMS],
         ),
-        SortExtension(
-            conformance_classes=[SortConformanceClasses.FEATURES_SORT],
-        ),
+        ItemCollectionSortExtension(),
         FieldsExtension(conformance_classes=[FieldsConformanceClasses.ITEMS]),
         ItemCollectionFilterExtension(client=FiltersClient()),
         TokenPaginationExtension(),
