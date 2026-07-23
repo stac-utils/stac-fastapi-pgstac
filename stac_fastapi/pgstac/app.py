@@ -29,14 +29,17 @@ from stac_fastapi.extensions import (
     ItemCollectionFilterExtension,
     OffsetPaginationExtension,
     SearchFilterExtension,
-    SortExtension,
     TokenPaginationExtension,
     TransactionExtension,
 )
 from stac_fastapi.extensions.fields import FieldsConformanceClasses
 from stac_fastapi.extensions.free_text import FreeTextConformanceClasses
 from stac_fastapi.extensions.query import QueryConformanceClasses
-from stac_fastapi.extensions.sort import SortConformanceClasses
+from stac_fastapi.extensions.sort import (
+    CollectionSearchSortExtension,
+    ItemCollectionSortExtension,
+    SearchSortExtension,
+)
 from stac_fastapi.types.extension import ApiExtension
 from stac_fastapi.types.search import APIRequest
 from starlette.middleware import Middleware
@@ -58,7 +61,7 @@ settings = Settings()
 # search extensions
 search_extensions_map: dict[str, ApiExtension] = {
     "query": QueryExtension(),
-    "sort": SortExtension(),
+    "sort": SearchSortExtension(),
     "fields": FieldsExtension(),
     "filter": SearchFilterExtension(client=FiltersClient()),
     "pagination": TokenPaginationExtension(),
@@ -67,7 +70,7 @@ search_extensions_map: dict[str, ApiExtension] = {
 # collection_search extensions
 cs_extensions_map: dict[str, ApiExtension] = {
     "query": QueryExtension(conformance_classes=[QueryConformanceClasses.COLLECTIONS]),
-    "sort": SortExtension(conformance_classes=[SortConformanceClasses.COLLECTIONS]),
+    "sort": CollectionSearchSortExtension(),
     "fields": FieldsExtension(conformance_classes=[FieldsConformanceClasses.COLLECTIONS]),
     "filter": CollectionSearchFilterExtension(client=FiltersClient()),
     "free_text": FreeTextExtension(
@@ -81,9 +84,7 @@ itm_col_extensions_map: dict[str, ApiExtension] = {
     "query": QueryExtension(
         conformance_classes=[QueryConformanceClasses.ITEMS],
     ),
-    "sort": SortExtension(
-        conformance_classes=[SortConformanceClasses.ITEMS],
-    ),
+    "sort": ItemCollectionSortExtension(),
     "fields": FieldsExtension(conformance_classes=[FieldsConformanceClasses.ITEMS]),
     "filter": ItemCollectionFilterExtension(client=FiltersClient()),
     "pagination": TokenPaginationExtension(),
