@@ -244,14 +244,19 @@ def api_client(request):
 
 
 @pytest.fixture(scope="function")
-async def app(api_client, pgstac):
-    postgres_settings = PostgresSettings(
+def postgres_settings(pgstac):
+    """Create PostgresSettings from pgstac fixture."""
+    return PostgresSettings(
         pguser=pgstac.user,
         pgpassword=pgstac.password,
         pghost=pgstac.host,
         pgport=pgstac.port,
         pgdatabase=pgstac.dbname,
     )
+
+
+@pytest.fixture(scope="function")
+async def app(api_client, postgres_settings):
     logger.info("Creating app Fixture")
     app = api_client.app
     await connect_to_db(
@@ -276,6 +281,7 @@ async def app_client(app):
         base_url = urljoin(base_url, app.state.router_prefix)
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url=base_url) as c:
+        c.app = app
         yield c
 
 
@@ -339,46 +345,33 @@ async def load_test2_item(app_client, load_test_data, load_test2_collection):
 
 
 @pytest.fixture(scope="function")
-async def app_no_ext(pgstac):
-    """Default stac-fastapi-pgstac application without only the transaction extensions."""
-    api_settings = Settings(testing=True)
-    api_client_no_ext = StacApi(
-        settings=api_settings,
-        extensions=[
-            TransactionExtension(client=TransactionsClient(), settings=api_settings)
-        ],
-        client=CoreCrudClient(),
-        health_check=health_check,
-        middlewares=[
-            Middleware(BrotliMiddleware),
-            Middleware(ProxyHeaderMiddleware),
-            Middleware(
-                CORSMiddleware,
-                allow_origins=api_settings.cors_origins,
-                allow_origin_regex=api_settings.cors_origin_regex,
-                allow_methods=api_settings.cors_methods,
-                allow_credentials=api_settings.cors_credentials,
-                allow_headers=api_settings.cors_headers,
-                max_age=600,
-            ),
-        ],
-    )
+async def app_no_ext(postgres_settings, monkeypatch):
+    """Default stac-fastapi-pgstac application with ONLY transaction extensions."""
+    from stac_fastapi.pgstac.app import instantiate_api
 
-    postgres_settings = PostgresSettings(
-        pguser=pgstac.user,
-        pgpassword=pgstac.password,
-        pghost=pgstac.host,
-        pgport=pgstac.port,
-        pgdatabase=pgstac.dbname,
-    )
+    # Disable all core extensions (like pagination) by providing a dummy filter
+    monkeypatch.setenv("ENABLED_EXTENSIONS", "dummy")
+
+    # Ensure transactions are explicitly ON
+    monkeypatch.setenv("ENABLE_TRANSACTIONS_EXTENSIONS", "TRUE")
+
+    api_settings = Settings(testing=True)
+    api = instantiate_api(settings=api_settings)
+
     logger.info("Creating app Fixture")
     await connect_to_db(
-        api_client_no_ext.app,
+        api.app,
         postgres_settings=postgres_settings,
         add_write_connection_pool=True,
     )
-    yield api_client_no_ext.app
-    await close_db_connection(api_client_no_ext.app)
+
+    # Clean up any existing collections/items from previous tests
+    async with api.app.state.readpool.acquire() as conn:
+        await conn.execute("DELETE FROM items")
+        await conn.execute("DELETE FROM collections")
+
+    yield api.app
+    await close_db_connection(api.app)
 
     logger.info("Closed Pools.")
 
@@ -389,40 +382,24 @@ async def app_client_no_ext(app_no_ext):
     async with AsyncClient(
         transport=ASGITransport(app=app_no_ext), base_url="http://test"
     ) as c:
+        c.app = app_no_ext
         yield c
 
 
 @pytest.fixture(scope="function")
-async def app_no_transaction(pgstac):
+async def app_no_transaction(postgres_settings, monkeypatch):
     """Default stac-fastapi-pgstac application without any extensions."""
-    api_settings = Settings(testing=True)
-    api = StacApi(
-        settings=api_settings,
-        extensions=[],
-        client=CoreCrudClient(),
-        health_check=health_check,
-        middlewares=[
-            Middleware(BrotliMiddleware),
-            Middleware(ProxyHeaderMiddleware),
-            Middleware(
-                CORSMiddleware,
-                allow_origins=api_settings.cors_origins,
-                allow_origin_regex=api_settings.cors_origin_regex,
-                allow_methods=api_settings.cors_methods,
-                allow_credentials=api_settings.cors_credentials,
-                allow_headers=api_settings.cors_headers,
-                max_age=600,
-            ),
-        ],
-    )
+    from stac_fastapi.pgstac.app import instantiate_api
 
-    postgres_settings = PostgresSettings(
-        pguser=pgstac.user,
-        pgpassword=pgstac.password,
-        pghost=pgstac.host,
-        pgport=pgstac.port,
-        pgdatabase=pgstac.dbname,
-    )
+    # Disable all core extensions by providing a dummy filter
+    monkeypatch.setenv("ENABLED_EXTENSIONS", "dummy")
+
+    # Ensure transactions are explicitly OFF
+    monkeypatch.setenv("ENABLE_TRANSACTIONS_EXTENSIONS", "FALSE")
+
+    api_settings = Settings(testing=True)
+    api = instantiate_api(settings=api_settings)
+
     logger.info("Creating app Fixture")
     await connect_to_db(
         api.app,
@@ -441,6 +418,7 @@ async def app_client_no_transaction(app_no_transaction):
     async with AsyncClient(
         transport=ASGITransport(app=app_no_transaction), base_url="http://test"
     ) as c:
+        c.app = app_no_transaction
         yield c
 
 
@@ -473,11 +451,12 @@ async def default_client(default_app):
     async with AsyncClient(
         transport=ASGITransport(app=default_app), base_url="http://test"
     ) as c:
+        c.app = default_app
         yield c
 
 
 @pytest.fixture(scope="function")
-async def app_advanced_freetext(pgstac):
+async def app_advanced_freetext(postgres_settings):
     """Default stac-fastapi-pgstac application without only the transaction extensions."""
     api_settings = Settings(testing=True)
 
@@ -515,13 +494,6 @@ async def app_advanced_freetext(pgstac):
         ],
     )
 
-    postgres_settings = PostgresSettings(
-        pguser=pgstac.user,
-        pgpassword=pgstac.password,
-        pghost=pgstac.host,
-        pgport=pgstac.port,
-        pgdatabase=pgstac.dbname,
-    )
     logger.info("Creating app Fixture")
     await connect_to_db(
         app.app,
@@ -540,11 +512,12 @@ async def app_client_advanced_freetext(app_advanced_freetext):
     async with AsyncClient(
         transport=ASGITransport(app=app_advanced_freetext), base_url="http://test"
     ) as c:
+        c.app = app_advanced_freetext
         yield c
 
 
 @pytest.fixture(scope="function")
-async def app_transaction_validation_ext(pgstac):
+async def app_transaction_validation_ext(postgres_settings):
     """Default stac-fastapi-pgstac application with extension validation in transaction."""
     api_settings = Settings(testing=True, validate_extensions=True)
     api = StacApi(
@@ -572,13 +545,6 @@ async def app_transaction_validation_ext(pgstac):
         ],
     )
 
-    postgres_settings = PostgresSettings(
-        pguser=pgstac.user,
-        pgpassword=pgstac.password,
-        pghost=pgstac.host,
-        pgport=pgstac.port,
-        pgdatabase=pgstac.dbname,
-    )
     logger.info("Creating app Fixture")
     await connect_to_db(
         api.app,
@@ -598,4 +564,5 @@ async def app_client_validate_ext(app_transaction_validation_ext):
         transport=ASGITransport(app=app_transaction_validation_ext),
         base_url="http://test",
     ) as c:
+        c.app = app_transaction_validation_ext
         yield c

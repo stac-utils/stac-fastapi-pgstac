@@ -29,10 +29,13 @@ async def app_with_root_path(pgstac, monkeypatch):
 
     importlib.reload(stac_fastapi.pgstac.app)
 
-    from stac_fastapi.pgstac.app import app
+    from stac_fastapi.pgstac.app import create_app
     from stac_fastapi.pgstac.config import Settings
 
     settings = Settings()
+
+    # Create a new app instance with the updated environment variables
+    app = create_app()
 
     # Ensure the app's root_path is configured as expected
     assert (

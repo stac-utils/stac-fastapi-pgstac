@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- add tests for new `app.instantiate_api` function ([#381](https://github.com/stac-utils/stac-fastapi-pgstac/pull/381))
+
 ### Fixed
 
 - Fix multi-platform Docker builds by adding QEMU emulation and correcting workflow_dispatch trigger ([#337](https://github.com/stac-utils/stac-fastapi-pgstac/pull/337))
@@ -11,6 +15,8 @@
 - Update stac-fastapi-* requirements to `>=6.4,<7.0`
 - Sort conformance class version to v1.1.0 instead of v1.0.0
 - Update sort extension to use new conformance classes in app.py for search, collection search, and item search endpoints ([#404](https://github.com/stac-utils/stac-fastapi-pgstac/pull/404))
+- introduce `app.instantiate_api` function to make API customisation easier ([#381](https://github.com/stac-utils/stac-fastapi-pgstac/pull/381))
+- Refactored application initialization to completely eliminate global state and natively support the Uvicorn `--factory` pattern. Replaced the global `app` variable with a `create_app()` factory wrapper in `app.py`, ensuring pristine memory isolation per worker and preventing unintended import side-effects. Additionally, updated the test suite to use the new factory pattern (eliminating shadow implementations) and fixed `httpx` async client compatibility. [#XXX](https://github.com/stac-utils/stac-fastapi-pgstac/pull/XXX)
 
 ### Removed
 
@@ -32,13 +38,11 @@
 - simplify `extensions.query.Operator` class, by removing unused `operator` method and unncessary dependencies ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
 - handle `ENABLE_TRANSACTIONS_EXTENSIONS`, `ENABLED_EXTENSIONS` and `UVICORN_ROOT_PATH` environment configuration variables via the `config.Settings` class ([#368](https://github.com/stac-utils/stac-fastapi-pgstac/pull/368))
 - Refactor Docker Compose files and Makefile for better organization and modularity. ([#379](https://github.com/stac-utils/stac-fastapi-pgstac/pull/379))
-- introduce `app.instantiate_api` function to make API customisation easier ([#381](https://github.com/stac-utils/stac-fastapi-pgstac/pull/381))
 
 ### Added
 
 - implement `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
 - add api test for `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
-- add tests for new `app.instantiate_api` function ([#381](https://github.com/stac-utils/stac-fastapi-pgstac/pull/381))
 - Multi-Tenant Catalogs Extension: Integrated optional `stac-fastapi-catalogs-extension` to support native DAG (Directed Acyclic Graph) traversal of Catalogs and Collections. Enabled via `ENABLE_CATALOGS_EXTENSION` environment variable ([#366](https://github.com/stac-utils/stac-fastapi-pgstac/pull/366))
 - Added `HIDE_ALTERNATE_PARENTS` environment variable (default `False`) to suppress `rel="related"` and `rel="duplicate"` links for alternate parents in poly-hierarchy. Useful for multi-tenant deployments to prevent information leakage about other tenants. When enabled, only the contextual `rel="parent"` link is advertised. Requires `ENABLE_CATALOGS_EXTENSION=true`. ([#387](https://github.com/stac-utils/stac-fastapi-pgstac/pull/387))
 - Added `rel="duplicate"` links for scoped collection endpoints (`/catalogs/{catalogId}/collections/{collectionId}`) to expose alternative scoped paths where collections can be accessed through other parent catalogs in poly-hierarchy. ([#387](https://github.com/stac-utils/stac-fastapi-pgstac/pull/387))
