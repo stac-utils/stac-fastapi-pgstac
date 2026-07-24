@@ -30,4 +30,4 @@ RUN groupadd -g 1000 user && \
     useradd -u 1000 -g user -s /bin/bash -m user
 USER user
 
-CMD ["uvicorn", "stac_fastapi.pgstac.app:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "stac_fastapi.pgstac.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8080"]

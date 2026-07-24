@@ -16,7 +16,8 @@
 - Sort conformance class version to v1.1.0 instead of v1.0.0
 - Update sort extension to use new conformance classes in app.py for search, collection search, and item search endpoints ([#404](https://github.com/stac-utils/stac-fastapi-pgstac/pull/404))
 - introduce `app.instantiate_api` function to make API customisation easier ([#381](https://github.com/stac-utils/stac-fastapi-pgstac/pull/381))
-- Refactored application initialization to completely eliminate global state and natively support the Uvicorn `--factory` pattern. Replaced the global `app` variable with a `create_app()` factory wrapper in `app.py`, ensuring pristine memory isolation per worker and preventing unintended import side-effects. Additionally, updated the test suite to use the new factory pattern (eliminating shadow implementations) and fixed `httpx` async client compatibility. [#405](https://github.com/stac-utils/stac-fastapi-pgstac/pull/405)
+- Refactored application initialization to completely eliminate global state and natively support the Uvicorn `--factory` pattern. Replaced the global `app` variable with a `create_app()` factory wrapper in `app.py`, ensuring pristine memory isolation per worker and preventing unintended import side-effects. Additionally, updated the test suite to use the new factory pattern (eliminating shadow implementations) and fixed `httpx` async client compatibility. ([#405](https://github.com/stac-utils/stac-fastapi-pgstac/pull/405))
+- Updated Dockerfile CMD to use the new `create_app` factory function with `--factory` flag for Uvicorn compatibility ([#406](https://github.com/stac-utils/stac-fastapi-pgstac/pull/406))
 
 ### Removed
 
