@@ -361,7 +361,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         parent_ids = collection.get("parent_ids", [])
 
         # Correct the self link by ensuring it ends with the collection ID
-        path = request.url.path.rstrip("/")
+        path = request.scope["path"].rstrip("/")
         if not path.endswith(f"/{collection_id}"):
             path = f"{path}/{collection_id}"
 

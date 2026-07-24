@@ -6,6 +6,14 @@
 
 - Fix multi-platform Docker builds by adding QEMU emulation and correcting workflow_dispatch trigger ([#337](https://github.com/stac-utils/stac-fastapi-pgstac/pull/337))
 
+### Changed 
+
+- Update stac-fastapi-* requirements to `>=6.4,<7.0`
+- Sort conformance class version to v1.1.0 instead of v1.0.0
+- Update sort extension to use new conformance classes in app.py for search, collection search, and item search endpoints ([#404](https://github.com/stac-utils/stac-fastapi-pgstac/pull/404))
+
+### Removed
+
 ## [6.3.1] - 2026-06-24
 
 ### Fixed

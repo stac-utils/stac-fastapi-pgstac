@@ -53,7 +53,7 @@ class BaseLinks:
     def url(self):
         """Get the current request url."""
         base_url = self.request.base_url
-        path = self.request.url.path
+        path = self.request.scope["path"]
 
         # root path can be set in the request scope in two different ways:
         # - by uvicorn when running with --root-path
