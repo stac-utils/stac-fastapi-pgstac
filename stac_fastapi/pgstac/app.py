@@ -138,9 +138,14 @@ def instantiate_api(
     return api
 
 
-api = instantiate_api()
+def create_app() -> FastAPI:
+    """Create a new FastAPI application instance using the factory pattern.
 
-app = api.app
+    This function is designed to be used with Uvicorn's --factory flag:
+    uvicorn stac_fastapi.pgstac.app:create_app --factory
+    """
+    api = instantiate_api()
+    return api.app
 
 
 def run():
@@ -153,7 +158,8 @@ def run():
         settings = Settings()
 
         uvicorn.run(
-            "stac_fastapi.pgstac.app:app",
+            "stac_fastapi.pgstac.app:create_app",
+            factory=True,
             host=settings.app_host,
             port=settings.app_port,
             log_level="info",
