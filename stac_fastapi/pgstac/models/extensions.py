@@ -9,14 +9,17 @@ from stac_fastapi.extensions import (
     ItemCollectionFilterExtension,
     OffsetPaginationExtension,
     SearchFilterExtension,
-    SortExtension,
     TokenPaginationExtension,
     TransactionExtension,
 )
 from stac_fastapi.extensions.fields import FieldsConformanceClasses
 from stac_fastapi.extensions.free_text import FreeTextConformanceClasses
 from stac_fastapi.extensions.query import QueryConformanceClasses
-from stac_fastapi.extensions.sort import SortConformanceClasses
+from stac_fastapi.extensions.sort import (
+    CollectionSearchSortExtension,
+    ItemCollectionSortExtension,
+    SearchSortExtension,
+)
 from stac_fastapi.extensions.third_party import BulkTransactionExtension
 from stac_fastapi.types.extension import ApiExtension
 
@@ -38,7 +41,7 @@ def get_default_extensions_map(key: str) -> dict[str, ApiExtension]:
     DEFAULT_EXTENSIONS = {
         "search_map": {
             "query": QueryExtension(),
-            "sort": SortExtension(),
+            "sort": SearchSortExtension(),
             "fields": FieldsExtension(),
             "filter": SearchFilterExtension(client=FiltersClient()),
             "pagination": TokenPaginationExtension(),
@@ -47,9 +50,7 @@ def get_default_extensions_map(key: str) -> dict[str, ApiExtension]:
             "query": QueryExtension(
                 conformance_classes=[QueryConformanceClasses.COLLECTIONS]
             ),
-            "sort": SortExtension(
-                conformance_classes=[SortConformanceClasses.COLLECTIONS]
-            ),
+            "sort": CollectionSearchSortExtension(),
             "fields": FieldsExtension(
                 conformance_classes=[FieldsConformanceClasses.COLLECTIONS]
             ),
@@ -63,9 +64,7 @@ def get_default_extensions_map(key: str) -> dict[str, ApiExtension]:
             "query": QueryExtension(
                 conformance_classes=[QueryConformanceClasses.ITEMS],
             ),
-            "sort": SortExtension(
-                conformance_classes=[SortConformanceClasses.ITEMS],
-            ),
+            "sort": ItemCollectionSortExtension(),
             "fields": FieldsExtension(
                 conformance_classes=[FieldsConformanceClasses.ITEMS]
             ),
