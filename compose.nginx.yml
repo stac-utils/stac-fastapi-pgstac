@@ -1,10 +1,11 @@
 services:
-  app:
-    command: >
-      bash -c "
-      scripts/wait-for-it.sh database:5432 && 
-      uvicorn stac_fastapi.pgstac.app:app --host 0.0.0.0 --port 8082 --proxy-headers --forwarded-allow-ips=* --root-path=/api/v1/pgstac
-      "
+  app-nginx:
+    ports:
+      - "8083:8083"
+    extends:
+      file: compose.yml
+      service: app
+    command: ["uvicorn", "stac_fastapi.pgstac.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8083", "--proxy-headers", "--forwarded-allow-ips", "*", "--root-path", "/api/v1/pgstac"]
 
   nginx:
     image: nginx
@@ -13,5 +14,5 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
     depends_on:
-      - app
+      - app-nginx
     command: [ "nginx-debug", "-g", "daemon off;" ]
