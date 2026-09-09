@@ -511,7 +511,7 @@ async def test_create_bulk_items_collection_mismatch(
     assert data["skipped"] == 0
     assert len(data["errors"]) == 2
     assert all(
-        "Collection ID from path parameter" in err["error"] for err in data["errors"]
+        "Collection ID from path parameter" in err["msg"] for err in data["errors"]
     )
 
 
@@ -541,7 +541,7 @@ async def test_create_bulk_items_id_mismatch(
     assert data["skipped"] == 0
     assert len(data["errors"]) == 2
     # Errors should contain both collection mismatch and id mismatch errors
-    assert all("error" in err for err in data["errors"])
+    assert all("msg" in err for err in data["errors"])
 
 
 # TODO since right now puts implement upsert

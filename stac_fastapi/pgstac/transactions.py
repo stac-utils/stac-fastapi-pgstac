@@ -373,9 +373,9 @@ class BulkTransactionsClient(AsyncBaseBulkTransactionsClient, ClientValidateMixI
                 item["collection"] = collection_id
                 successful_items[item_id] = item
             except HTTPException as e:
-                failed_items[item_id] = {"item_id": item_id, "error": e.detail}
+                failed_items[item_id] = {"id": item_id, "msg": e.detail}
             except Exception as e:
-                failed_items[item_id] = {"item_id": item_id, "error": str(e)}
+                failed_items[item_id] = {"id": item_id, "msg": str(e)}
 
         async with request.app.state.get_connection(request, "w") as conn:
             if successful_items:
