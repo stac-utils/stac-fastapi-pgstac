@@ -14,8 +14,8 @@ from stac_fastapi.extensions.bulk_transactions import (
     BulkTransaction,
     BulkTransactionMethod,
     Items,
-    TransactionError,
 )
+from stac_fastapi.extensions.bulk_transactions.bulk_transactions import TransactionError
 from stac_fastapi.extensions.transaction import AsyncBaseTransactionsClient
 from stac_fastapi.extensions.transaction.request import (
     PartialCollection,
