@@ -14,6 +14,7 @@ from stac_fastapi.extensions.bulk_transactions import (
     BulkTransaction,
     BulkTransactionMethod,
     Items,
+    TransactionError,
 )
 from stac_fastapi.extensions.transaction import AsyncBaseTransactionsClient
 from stac_fastapi.extensions.transaction.request import (
@@ -357,14 +358,18 @@ class BulkTransactionsClient(AsyncBaseBulkTransactionsClient, ClientValidateMixI
     """Postgres bulk transactions."""
 
     async def bulk_item_insert(
-        self, items: Items, request: Request, **kwargs
+        self, items: Items, **kwargs: Any
     ) -> BulkTransaction | Response:
         """Bulk item insertion using pgstac."""
+        request = kwargs.get("request")
+        if not request:
+            raise ValueError("request is required")
+
         collection_id = request.path_params["collection_id"]
 
         received_count = len(items.items)
         successful_items: dict[str, Any] = {}
-        failed_items: dict[str, dict[str, Any]] = {}
+        failed_items: dict[str, TransactionError] = {}
         skipped_items: dict[str, Any] = {}
 
         for item_id, item in items.items.items():
@@ -373,9 +378,9 @@ class BulkTransactionsClient(AsyncBaseBulkTransactionsClient, ClientValidateMixI
                 item["collection"] = collection_id
                 successful_items[item_id] = item
             except HTTPException as e:
-                failed_items[item_id] = {"id": item_id, "msg": e.detail}
+                failed_items[item_id] = TransactionError(id=item_id, msg=e.detail)
             except Exception as e:
-                failed_items[item_id] = {"id": item_id, "msg": str(e)}
+                failed_items[item_id] = TransactionError(id=item_id, msg=str(e))
 
         async with request.app.state.get_connection(request, "w") as conn:
             if successful_items:
@@ -385,9 +390,9 @@ class BulkTransactionsClient(AsyncBaseBulkTransactionsClient, ClientValidateMixI
                 elif items.method == BulkTransactionMethod.UPSERT:
                     await dbfunc(conn, "upsert_items", items_to_insert)
 
-        return BulkTransaction(
-            received=received_count,
-            success=len(successful_items),
-            skipped=len(skipped_items),
-            errors=list(failed_items.values()) if failed_items else [],
-        )
+        return {
+            "received": received_count,
+            "success": len(successful_items),
+            "skipped": len(skipped_items),
+            "errors": list(failed_items.values()) if failed_items else [],
+        }
