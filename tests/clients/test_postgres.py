@@ -346,7 +346,11 @@ async def test_create_bulk_items(
         json=payload,
     )
     assert resp.status_code == 200
-    assert resp.text == '"Successfully added 2 items."'
+    data = resp.json()
+    assert data["received"] == 2
+    assert data["success"] == 2
+    assert data["skipped"] == 0
+    assert data["errors"] == []
 
     for item_id in items.keys():
         resp = await app_client.get(f"/collections/{coll['id']}/items/{item_id}")
@@ -372,7 +376,11 @@ async def test_create_bulk_items_already_exist_insert(
         json=payload,
     )
     assert resp.status_code == 200
-    assert resp.text == '"Successfully added 2 items."'
+    data = resp.json()
+    assert data["received"] == 2
+    assert data["success"] == 2
+    assert data["skipped"] == 0
+    assert data["errors"] == []
 
     for item_id in items.keys():
         resp = await app_client.get(f"/collections/{coll['id']}/items/{item_id}")
@@ -406,7 +414,11 @@ async def test_create_bulk_items_already_exist_upsert(
         json=payload,
     )
     assert resp.status_code == 200
-    assert resp.text == '"Successfully added 2 items."'
+    data = resp.json()
+    assert data["received"] == 2
+    assert data["success"] == 2
+    assert data["skipped"] == 0
+    assert data["errors"] == []
 
     for item_id in items.keys():
         resp = await app_client.get(f"/collections/{coll['id']}/items/{item_id}")
@@ -420,7 +432,11 @@ async def test_create_bulk_items_already_exist_upsert(
         json=payload,
     )
     assert resp.status_code == 200
-    assert resp.text == '"Successfully upserted 2 items."'
+    data = resp.json()
+    assert data["received"] == 2
+    assert data["success"] == 2
+    assert data["skipped"] == 0
+    assert data["errors"] == []
 
 
 async def test_create_bulk_items_omit_collection(
@@ -444,7 +460,11 @@ async def test_create_bulk_items_omit_collection(
         json=payload,
     )
     assert resp.status_code == 200
-    assert resp.text == '"Successfully added 2 items."'
+    data = resp.json()
+    assert data["received"] == 2
+    assert data["success"] == 2
+    assert data["skipped"] == 0
+    assert data["errors"] == []
 
     for item_id in items.keys():
         resp = await app_client.get(f"/collections/{coll['id']}/items/{item_id}")
@@ -458,7 +478,11 @@ async def test_create_bulk_items_omit_collection(
         json=payload,
     )
     assert resp.status_code == 200
-    assert resp.text == '"Successfully upserted 2 items."'
+    data = resp.json()
+    assert data["received"] == 2
+    assert data["success"] == 2
+    assert data["skipped"] == 0
+    assert data["errors"] == []
 
 
 async def test_create_bulk_items_collection_mismatch(
@@ -480,10 +504,14 @@ async def test_create_bulk_items_collection_mismatch(
         f"/collections/{coll['id']}/bulk_items",
         json=payload,
     )
-    assert resp.status_code == 400
-    assert (
-        resp.json()["detail"]
-        == "Collection ID from path parameter (test-collection) does not match Collection ID from Item (wrong-collection)"
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["received"] == 2
+    assert data["success"] == 0
+    assert data["skipped"] == 0
+    assert len(data["errors"]) == 2
+    assert all(
+        "Collection ID from path parameter" in err["error"] for err in data["errors"]
     )
 
 
@@ -506,11 +534,14 @@ async def test_create_bulk_items_id_mismatch(
         f"/collections/{coll['id']}/bulk_items",
         json=payload,
     )
-    assert resp.status_code == 400
-    assert (
-        resp.json()["detail"]
-        == "Collection ID from path parameter (test-collection) does not match Collection ID from Item (wrong-collection)"
-    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["received"] == 2
+    assert data["success"] == 0
+    assert data["skipped"] == 0
+    assert len(data["errors"]) == 2
+    # Errors should contain both collection mismatch and id mismatch errors
+    assert all("error" in err for err in data["errors"])
 
 
 # TODO since right now puts implement upsert

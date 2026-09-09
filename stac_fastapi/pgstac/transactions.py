@@ -11,6 +11,7 @@ from fastapi import HTTPException, Request
 from json_merge_patch import merge
 from stac_fastapi.extensions.bulk_transactions import (
     AsyncBaseBulkTransactionsClient,
+    BulkTransaction,
     BulkTransactionMethod,
     Items,
 )
@@ -355,23 +356,38 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
 class BulkTransactionsClient(AsyncBaseBulkTransactionsClient, ClientValidateMixIn):
     """Postgres bulk transactions."""
 
-    async def bulk_item_insert(self, items: Items, request: Request, **kwargs) -> str:  # type: ignore [override]
+    async def bulk_item_insert(
+        self, items: Items, request: Request, **kwargs
+    ) -> BulkTransaction | Response:
         """Bulk item insertion using pgstac."""
         collection_id = request.path_params["collection_id"]
 
-        for item_id, item in items.items.items():
-            self._validate_item(request, item, collection_id, item_id)
-            item["collection"] = collection_id
+        received_count = len(items.items)
+        successful_items: dict[str, Any] = {}
+        failed_items: dict[str, dict[str, Any]] = {}
+        skipped_items: dict[str, Any] = {}
 
-        items_to_insert = list(items.items.values())
+        for item_id, item in items.items.items():
+            try:
+                self._validate_item(request, item, collection_id, item_id)
+                item["collection"] = collection_id
+                successful_items[item_id] = item
+            except HTTPException as e:
+                failed_items[item_id] = {"item_id": item_id, "error": e.detail}
+            except Exception as e:
+                failed_items[item_id] = {"item_id": item_id, "error": str(e)}
 
         async with request.app.state.get_connection(request, "w") as conn:
-            if items.method == BulkTransactionMethod.INSERT:
-                method_verb = "added"
-                await dbfunc(conn, "create_items", items_to_insert)
-            elif items.method == BulkTransactionMethod.UPSERT:
-                method_verb = "upserted"
-                await dbfunc(conn, "upsert_items", items_to_insert)
+            if successful_items:
+                items_to_insert = list(successful_items.values())
+                if items.method == BulkTransactionMethod.INSERT:
+                    await dbfunc(conn, "create_items", items_to_insert)
+                elif items.method == BulkTransactionMethod.UPSERT:
+                    await dbfunc(conn, "upsert_items", items_to_insert)
 
-        return_msg = f"Successfully {method_verb} {len(items_to_insert)} items."
-        return return_msg
+        return BulkTransaction(
+            received=received_count,
+            success=len(successful_items),
+            skipped=len(skipped_items),
+            errors=list(failed_items.values()) if failed_items else [],
+        )
