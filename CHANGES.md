@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Update stac-fastapi-* requirements to `>=7.0,<8.0` ([#419](https://github.com/stac-utils/stac-fastapi-pgstac/pull/419))
+
 ## [6.4.0] - 2026-09-04
 
 ### Added
@@ -20,8 +22,13 @@
 - Update sort extension to use new conformance classes in app.py for search, collection search, and item search endpoints ([#404](https://github.com/stac-utils/stac-fastapi-pgstac/pull/404))
 - introduce `app.instantiate_api` function to make API customisation easier ([#381](https://github.com/stac-utils/stac-fastapi-pgstac/pull/381))
 - Updated Dockerfile CMD to use the new `create_app` factory function with `--factory` flag for Uvicorn compatibility ([#406](https://github.com/stac-utils/stac-fastapi-pgstac/pull/406))
+- Changed output from `string` to `dict` object (`BulkTransaction`) for bulk transaction `bulk_item_insert` methods ([#419](https://github.com/stac-utils/stac-fastapi-pgstac/pull/419))
+- Removed `app_host`, `app_port`, and `reload` attributes from `ApiSettings`. Use uvicorn command-line arguments or environment variables to configure these instead ([#419](https://github.com/stac-utils/stac-fastapi-pgstac/pull/419))
+- Removed deprecated `stac_fastapi.extensions.third_party` namespace. Import `BulkTransactionExtension` directly from `stac_fastapi.extensions` instead ([#419](https://github.com/stac-utils/stac-fastapi-pgstac/pull/419))
 
 ### Removed
+
+- Removed deprecated `SortConformanceClasses` enum aliases (`COLLECTIONS`, `ITEMS`, `SEARCH`). Use `COLLECTION_SEARCH_SORT`, `FEATURES_SORT`, and `ITEM_SEARCH_SORT` instead
 
 ## [6.3.1] - 2026-06-24
 
