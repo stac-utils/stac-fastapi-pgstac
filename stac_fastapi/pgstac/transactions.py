@@ -389,9 +389,12 @@ class BulkTransactionsClient(AsyncBaseBulkTransactionsClient, ClientValidateMixI
                 elif items.method == BulkTransactionMethod.UPSERT:
                     await dbfunc(conn, "upsert_items", items_to_insert)
 
-        return {
-            "received": received_count,
-            "success": len(successful_items),
-            "skipped": len(skipped_items),
-            "errors": list(failed_items.values()) if failed_items else [],
-        }
+        return cast(
+            BulkTransaction,
+            {
+                "received": received_count,
+                "success": len(successful_items),
+                "skipped": len(skipped_items),
+                "errors": list(failed_items.values()) if failed_items else [],
+            },
+        )
