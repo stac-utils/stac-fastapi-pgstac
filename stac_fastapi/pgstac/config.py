@@ -1,12 +1,11 @@
 """Postgres API configuration."""
 
 import json
-import warnings
 from collections.abc import Sequence
 from typing import Annotated, Any, Self
 from urllib.parse import quote_plus as quote
 
-from pydantic import BaseModel, BeforeValidator, Field, model_validator
+from pydantic import BaseModel, BeforeValidator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 from stac_fastapi.types.config import ApiSettings
 
@@ -63,47 +62,6 @@ class PostgresSettings(BaseSettings):
 
     """
 
-    postgres_user: Annotated[
-        str | None,
-        Field(
-            deprecated="`postgres_user` is deprecated, please use `pguser`", default=None
-        ),
-    ] = None
-    postgres_pass: Annotated[
-        str | None,
-        Field(
-            deprecated="`postgres_pass` is deprecated, please use `pgpassword`",
-            default=None,
-        ),
-    ] = None
-    postgres_host_reader: Annotated[
-        str | None,
-        Field(
-            deprecated="`postgres_host_reader` is deprecated, please use `pghost`",
-            default=None,
-        ),
-    ] = None
-    postgres_host_writer: Annotated[
-        str | None,
-        Field(
-            deprecated="`postgres_host_writer` is deprecated, please use `pghost`",
-            default=None,
-        ),
-    ] = None
-    postgres_port: Annotated[
-        int | None,
-        Field(
-            deprecated="`postgres_port` is deprecated, please use `pgport`", default=None
-        ),
-    ] = None
-    postgres_dbname: Annotated[
-        str | None,
-        Field(
-            deprecated="`postgres_dbname` is deprecated, please use `pgdatabase`",
-            default=None,
-        ),
-    ] = None
-
     pguser: str
     pgpassword: str
     pghost: str
@@ -118,38 +76,6 @@ class PostgresSettings(BaseSettings):
     server_settings: ServerSettings = ServerSettings()
 
     model_config = {"env_file": ".env", "extra": "ignore"}
-
-    @model_validator(mode="before")
-    @classmethod
-    def _pg_settings_compat(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            compat = {
-                "postgres_user": "pguser",
-                "postgres_pass": "pgpassword",
-                "postgres_host_reader": "pghost",
-                "postgres_host_writer": "pghost",
-                "postgres_port": "pgport",
-                "postgres_dbname": "pgdatabase",
-            }
-            for old_key, new_key in compat.items():
-                if val := data.get(old_key, None):
-                    warnings.warn(
-                        f"`{old_key}` is deprecated, please use `{new_key}`",
-                        DeprecationWarning,
-                        stacklevel=1,
-                    )
-                    data[new_key] = val
-
-            if (pgh_reader := data.get("postgres_host_reader")) and (
-                pgh_writer := data.get("postgres_host_writer")
-            ):
-                if pgh_reader != pgh_writer:
-                    raise ValueError(
-                        "In order to use different host values for reading and writing "
-                        "you must explicitly provide write_postgres_settings to the connect_to_db function"
-                    )
-
-        return data
 
     @property
     def connection_string(self):

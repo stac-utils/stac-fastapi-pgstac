@@ -2,7 +2,11 @@
 
 ## [Unreleased]
 
+### Changed 
+
 - Update stac-fastapi-* requirements to `>=7.0,<8.0` ([#419](https://github.com/stac-utils/stac-fastapi-pgstac/pull/419))
+- Remove deprecated `POSTGRES_*` environment variable support from `PostgresSettings`.
+- Remove deprecated `host_reader` and `host_writer` attributes from `PostgresSettings`.
 
 ## [6.4.0] - 2026-09-04
 
