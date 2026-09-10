@@ -813,12 +813,10 @@ async def test_wrapped_function(load_test_data, pgstac) -> None:
 
     T = TypeVar("T")
 
-    def wrap() -> (
-        Callable[
-            [Callable[..., Coroutine[Any, Any, T]]],
-            Callable[..., Coroutine[Any, Any, T]],
-        ]
-    ):
+    def wrap() -> Callable[
+        [Callable[..., Coroutine[Any, Any, T]]],
+        Callable[..., Coroutine[Any, Any, T]],
+    ]:
         def decorator(
             fn: Callable[..., Coroutine[Any, Any, T]],
         ) -> Callable[..., Coroutine[Any, Any, T]]:
