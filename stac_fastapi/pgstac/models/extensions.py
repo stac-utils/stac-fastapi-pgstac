@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 
 from stac_fastapi.api.models import JSONResponse
 from stac_fastapi.extensions import (
+    BulkTransactionExtension,
     CollectionSearchExtension,
     CollectionSearchFilterExtension,
     FieldsExtension,
@@ -20,7 +21,6 @@ from stac_fastapi.extensions.sort import (
     ItemCollectionSortExtension,
     SearchSortExtension,
 )
-from stac_fastapi.extensions.third_party import BulkTransactionExtension
 from stac_fastapi.types.extension import ApiExtension
 
 from stac_fastapi.pgstac.config import Settings
