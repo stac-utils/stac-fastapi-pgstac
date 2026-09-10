@@ -15,7 +15,6 @@ from stac_fastapi.extensions.bulk_transactions import (
     BulkTransactionMethod,
     Items,
 )
-from stac_fastapi.extensions.bulk_transactions.bulk_transactions import TransactionError
 from stac_fastapi.extensions.transaction import AsyncBaseTransactionsClient
 from stac_fastapi.extensions.transaction.request import (
     PartialCollection,
@@ -369,7 +368,7 @@ class BulkTransactionsClient(AsyncBaseBulkTransactionsClient, ClientValidateMixI
 
         received_count = len(items.items)
         successful_items: dict[str, Any] = {}
-        failed_items: dict[str, TransactionError] = {}
+        failed_items: dict[str, dict[str, Any]] = {}
         skipped_items: dict[str, Any] = {}
 
         for item_id, item in items.items.items():
@@ -378,9 +377,9 @@ class BulkTransactionsClient(AsyncBaseBulkTransactionsClient, ClientValidateMixI
                 item["collection"] = collection_id
                 successful_items[item_id] = item
             except HTTPException as e:
-                failed_items[item_id] = TransactionError(id=item_id, msg=e.detail)
+                failed_items[item_id] = {"id": item_id, "msg": e.detail}
             except Exception as e:
-                failed_items[item_id] = TransactionError(id=item_id, msg=str(e))
+                failed_items[item_id] = {"id": item_id, "msg": str(e)}
 
         async with request.app.state.get_connection(request, "w") as conn:
             if successful_items:
