@@ -38,9 +38,9 @@ async def app_with_root_path(pgstac, monkeypatch):
     app = create_app()
 
     # Ensure the app's root_path is configured as expected
-    assert (
-        app.root_path == ROOT_PATH
-    ), f"app_with_root_path fixture: app.root_path is '{app.root_path}', expected '{ROOT_PATH}'"
+    assert app.root_path == ROOT_PATH, (
+        f"app_with_root_path fixture: app.root_path is '{app.root_path}', expected '{ROOT_PATH}'"
+    )
 
     await connect_to_db(
         app, add_write_connection_pool=settings.enable_transactions_extensions

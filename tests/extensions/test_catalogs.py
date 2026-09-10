@@ -213,9 +213,9 @@ async def test_catalogs_pagination(app_client):
     # Verify the catalogs are different
     first_page_ids = {cat.get("id") for cat in data["catalogs"]}
     second_page_ids = {cat.get("id") for cat in data_next["catalogs"]}
-    assert (
-        len(first_page_ids & second_page_ids) == 0
-    ), "Pages should have different catalogs"
+    assert len(first_page_ids & second_page_ids) == 0, (
+        "Pages should have different catalogs"
+    )
 
 
 @pytest.mark.asyncio
@@ -264,9 +264,9 @@ async def test_sub_catalogs_pagination(app_client):
     # Verify the catalogs are different
     first_page_ids = {cat.get("id") for cat in data["catalogs"]}
     second_page_ids = {cat.get("id") for cat in data_next["catalogs"]}
-    assert (
-        len(first_page_ids & second_page_ids) == 0
-    ), "Pages should have different catalogs"
+    assert len(first_page_ids & second_page_ids) == 0, (
+        "Pages should have different catalogs"
+    )
 
     # Verify dynamic link rewriting for sub-catalogs
     for catalog in data["catalogs"]:
@@ -276,18 +276,18 @@ async def test_sub_catalogs_pagination(app_client):
         # Check that self link is scoped to parent catalog
         self_links = [link for link in links if link.get("rel") == "self"]
         assert len(self_links) == 1, f"Should have exactly one self link for {catalog_id}"
-        assert (
-            f"/catalogs/{parent_id}/catalogs/{catalog_id}" in self_links[0]["href"]
-        ), f"Self link should be scoped to parent catalog {parent_id}"
+        assert f"/catalogs/{parent_id}/catalogs/{catalog_id}" in self_links[0]["href"], (
+            f"Self link should be scoped to parent catalog {parent_id}"
+        )
 
         # Check that parent link points to parent catalog
         parent_links = [link for link in links if link.get("rel") == "parent"]
-        assert (
-            len(parent_links) == 1
-        ), f"Should have exactly one parent link for {catalog_id}"
-        assert (
-            f"/catalogs/{parent_id}" in parent_links[0]["href"]
-        ), f"Parent link should point to {parent_id}"
+        assert len(parent_links) == 1, (
+            f"Should have exactly one parent link for {catalog_id}"
+        )
+        assert f"/catalogs/{parent_id}" in parent_links[0]["href"], (
+            f"Parent link should point to {parent_id}"
+        )
 
         # Check that root link is present
         root_links = [link for link in links if link.get("rel") == "root"]
@@ -409,9 +409,9 @@ async def test_catalog_children_pagination(app_client):
     # Verify the children are different
     first_page_ids = {child.get("id") for child in data["children"]}
     second_page_ids = {child.get("id") for child in data_next["children"]}
-    assert (
-        len(first_page_ids & second_page_ids) == 0
-    ), "Pages should have different children"
+    assert len(first_page_ids & second_page_ids) == 0, (
+        "Pages should have different children"
+    )
 
     # Verify dynamic link rewriting for children (both catalogs and collections)
     for child in data["children"]:
@@ -435,12 +435,12 @@ async def test_catalog_children_pagination(app_client):
 
         # Check that parent link points to parent catalog
         parent_links = [link for link in links if link.get("rel") == "parent"]
-        assert (
-            len(parent_links) == 1
-        ), f"Should have exactly one parent link for {child_id}"
-        assert (
-            f"/catalogs/{parent_id}" in parent_links[0]["href"]
-        ), f"Parent link should point to {parent_id}"
+        assert len(parent_links) == 1, (
+            f"Should have exactly one parent link for {child_id}"
+        )
+        assert f"/catalogs/{parent_id}" in parent_links[0]["href"], (
+            f"Parent link should point to {parent_id}"
+        )
 
         # Check that root link is present
         root_links = [link for link in links if link.get("rel") == "root"]
@@ -1074,21 +1074,21 @@ async def test_poly_hierarchy_collection(app_client):
 
     # Verify related links exist for alternative parents (poly-hierarchy)
     related_links = [link for link in links if link.get("rel") == "related"]
-    assert (
-        len(related_links) >= 1
-    ), "Should have at least one related link for alternative parent"
+    assert len(related_links) >= 1, (
+        "Should have at least one related link for alternative parent"
+    )
 
     # Verify related link points to the other catalog
     related_hrefs = [link.get("href") for link in related_links]
-    assert any(
-        "catalog-1-poly" in href for href in related_hrefs
-    ), "Related link should point to catalog-1-poly"
+    assert any("catalog-1-poly" in href for href in related_hrefs), (
+        "Related link should point to catalog-1-poly"
+    )
 
     # Verify no duplicate related links
     related_hrefs_unique = set(related_hrefs)
-    assert len(related_hrefs_unique) == len(
-        related_hrefs
-    ), "Related links should not be duplicated"
+    assert len(related_hrefs_unique) == len(related_hrefs), (
+        "Related links should not be duplicated"
+    )
 
 
 @pytest.mark.asyncio
@@ -1166,9 +1166,9 @@ async def test_get_catalog_collection_no_parent_ids_leak(app_client):
 
     data = resp.json()
     # Verify parent_ids is NOT in the response
-    assert (
-        "parent_ids" not in data
-    ), "parent_ids should not be exposed in the API response"
+    assert "parent_ids" not in data, (
+        "parent_ids should not be exposed in the API response"
+    )
     # Verify the collection has proper links
     assert "links" in data
     assert any(link.get("rel") == "parent" for link in data["links"])
@@ -1256,12 +1256,12 @@ async def test_catalog_collection_links_self_and_canonical(app_client):
         None,
     )
 
-    assert (
-        canonical_link_from_list is not None
-    ), "Canonical link missing from list response"
-    assert (
-        canonical_link_from_detail is not None
-    ), "Canonical link missing from detail response"
+    assert canonical_link_from_list is not None, (
+        "Canonical link missing from list response"
+    )
+    assert canonical_link_from_detail is not None, (
+        "Canonical link missing from detail response"
+    )
 
     assert canonical_link_from_list["href"].endswith(
         "/collections/collection-for-links-test"
@@ -1284,13 +1284,13 @@ async def test_catalog_collection_links_self_and_canonical(app_client):
     assert parent_link_from_list is not None, "Parent link missing from list response"
     assert parent_link_from_detail is not None, "Parent link missing from detail response"
 
-    assert parent_link_from_list["href"].endswith(
-        "/catalogs/catalog-for-links-test"
-    ), f"Parent link incorrect: {parent_link_from_list['href']}"
+    assert parent_link_from_list["href"].endswith("/catalogs/catalog-for-links-test"), (
+        f"Parent link incorrect: {parent_link_from_list['href']}"
+    )
 
-    assert parent_link_from_detail["href"].endswith(
-        "/catalogs/catalog-for-links-test"
-    ), f"Parent link incorrect: {parent_link_from_detail['href']}"
+    assert parent_link_from_detail["href"].endswith("/catalogs/catalog-for-links-test"), (
+        f"Parent link incorrect: {parent_link_from_detail['href']}"
+    )
 
     # Verify items link is present
     items_link_from_list = next(
@@ -1325,12 +1325,12 @@ async def test_catalog_collection_links_self_and_canonical(app_client):
         if link.get("rel") == "http://www.opengis.net/def/rel/ogc/1.0/queryables"
     ]
 
-    assert (
-        len(queryables_links_from_list) == 1
-    ), f"Expected 1 queryables link in list response, got {len(queryables_links_from_list)}"
-    assert (
-        len(queryables_links_from_detail) == 1
-    ), f"Expected 1 queryables link in detail response, got {len(queryables_links_from_detail)}"
+    assert len(queryables_links_from_list) == 1, (
+        f"Expected 1 queryables link in list response, got {len(queryables_links_from_list)}"
+    )
+    assert len(queryables_links_from_detail) == 1, (
+        f"Expected 1 queryables link in detail response, got {len(queryables_links_from_detail)}"
+    )
 
     assert queryables_links_from_list[0]["href"].endswith(
         "/collections/collection-for-links-test/queryables"
@@ -1853,14 +1853,14 @@ async def test_hide_alternate_parents_suppresses_related_links_on_global_collect
 
     links = resp.json().get("links", [])
     related_links = [link for link in links if link.get("rel") == "related"]
-    assert (
-        len(related_links) == 0
-    ), f"Expected no related links with hide_alternate_parents=True, got: {related_links}"
+    assert len(related_links) == 0, (
+        f"Expected no related links with hide_alternate_parents=True, got: {related_links}"
+    )
 
     duplicate_links = [link for link in links if link.get("rel") == "duplicate"]
-    assert (
-        len(duplicate_links) == 0
-    ), f"Expected no duplicate links with hide_alternate_parents=True, got: {duplicate_links}"
+    assert len(duplicate_links) == 0, (
+        f"Expected no duplicate links with hide_alternate_parents=True, got: {duplicate_links}"
+    )
 
     # Parent link should still point to root
     parent_links = [link for link in links if link.get("rel") == "parent"]
@@ -1898,21 +1898,21 @@ async def test_hide_alternate_parents_suppresses_related_links_on_scoped_collect
 
     links = resp.json().get("links", [])
     related_links = [link for link in links if link.get("rel") == "related"]
-    assert (
-        len(related_links) == 0
-    ), f"Expected no related links with hide_alternate_parents=True, got: {related_links}"
+    assert len(related_links) == 0, (
+        f"Expected no related links with hide_alternate_parents=True, got: {related_links}"
+    )
 
     duplicate_links = [link for link in links if link.get("rel") == "duplicate"]
-    assert (
-        len(duplicate_links) == 0
-    ), f"Expected no duplicate links with hide_alternate_parents=True, got: {duplicate_links}"
+    assert len(duplicate_links) == 0, (
+        f"Expected no duplicate links with hide_alternate_parents=True, got: {duplicate_links}"
+    )
 
     # Parent link should still point to the contextual catalog
     parent_links = [link for link in links if link.get("rel") == "parent"]
     assert len(parent_links) == 1, "Should still have exactly 1 parent link"
-    assert (
-        f"/catalogs/{parent_id_1}" in parent_links[0]["href"]
-    ), "Parent link should point to contextual catalog, not alternate"
+    assert f"/catalogs/{parent_id_1}" in parent_links[0]["href"], (
+        "Parent link should point to contextual catalog, not alternate"
+    )
 
 
 @pytest.mark.asyncio
@@ -1945,14 +1945,14 @@ async def test_hide_alternate_parents_false_shows_related_and_duplicate_links(
 
     links = resp.json().get("links", [])
     related_links = [link for link in links if link.get("rel") == "related"]
-    assert (
-        len(related_links) >= 1
-    ), "Expected related links when hide_alternate_parents=False, got none"
+    assert len(related_links) >= 1, (
+        "Expected related links when hide_alternate_parents=False, got none"
+    )
 
     duplicate_links = [link for link in links if link.get("rel") == "duplicate"]
-    assert (
-        len(duplicate_links) >= 1
-    ), "Expected duplicate links when hide_alternate_parents=False, got none"
+    assert len(duplicate_links) >= 1, (
+        "Expected duplicate links when hide_alternate_parents=False, got none"
+    )
 
 
 @pytest.mark.asyncio
@@ -1985,9 +1985,9 @@ async def test_hide_alternate_parents_suppresses_related_links_on_catalog(
 
     links = resp.json().get("links", [])
     related_links = [link for link in links if link.get("rel") == "related"]
-    assert (
-        len(related_links) == 0
-    ), f"Expected no related links with hide_alternate_parents=True, got: {related_links}"
+    assert len(related_links) == 0, (
+        f"Expected no related links with hide_alternate_parents=True, got: {related_links}"
+    )
 
     # Parent link should still be present
     parent_links = [link for link in links if link.get("rel") == "parent"]

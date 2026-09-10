@@ -9,9 +9,9 @@ from urllib.parse import parse_qs, urljoin, urlparse
 
 import pystac
 import pytest
+from geojson_pydantic import Polygon
 from httpx import AsyncClient
 from pystac.utils import datetime_to_str
-from shapely.geometry import Polygon
 from stac_fastapi.types.rfc3339 import rfc3339_str_to_datetime
 from stac_pydantic import Collection, Item
 from starlette.requests import Request
@@ -1365,7 +1365,7 @@ async def test_field_extension_include_only_non_existant_field(
 async def test_search_intersects_and_bbox(app_client):
     """Test POST search intersects and bbox are mutually exclusive (core)"""
     bbox = [-118, 34, -117, 35]
-    geoj = Polygon.from_bounds(*bbox).__geo_interface__
+    geoj = Polygon.from_bounds(*bbox).model_dump(exclude_none=True)
     params = {"bbox": bbox, "intersects": geoj}
     resp = await app_client.post("/search", json=params)
     assert resp.status_code == 400
