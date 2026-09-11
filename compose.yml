@@ -24,7 +24,7 @@ services:
     depends_on:
       database:
         condition: service_healthy
-    command: ["uvicorn", "stac_fastapi.pgstac.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8082", "--reload"]
+    command: ["uvicorn", "stac_fastapi.pgstac.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8082"]
     develop:
       watch:
         - action: rebuild

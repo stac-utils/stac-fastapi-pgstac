@@ -12,6 +12,7 @@
 - Remove deprecated `POSTGRES_*` environment variable support from `PostgresSettings`.
 - Remove deprecated `host_reader` and `host_writer` attributes from `PostgresSettings`.
 - Removed `shapely` from dev dependencies
+- Update Dockerfile to use `uv.lock` file for dependency management
 
 ## [6.4.0] - 2026-09-04
 

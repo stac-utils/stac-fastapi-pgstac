@@ -8,7 +8,8 @@ on:
       - "*"
     paths:
       - Dockerfile
-      - setup.cfg
+      - pyproject.toml
+      - uv.lock
       - "**/*.py"
       - .github/workflows/packages.yml
   workflow_dispatch:
