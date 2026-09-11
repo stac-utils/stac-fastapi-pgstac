@@ -139,6 +139,15 @@ class Settings(ApiSettings, ExtensionsSettings):
     will exclude those values from the responses.
     """
 
+    enable_metrics: bool = False
+    """
+    When ENABLE_METRICS=TRUE, exposes a Prometheus metrics endpoint at
+    `{prefix_path}/_mgmt/metrics` with low-cardinality STAC operation labels.
+
+    Requires the `metrics` optional extra (`prometheus-fastapi-instrumentator`) to be
+    installed; raises `ImportError` at startup otherwise.
+    """
+
     invalid_id_chars: list[str] = DEFAULT_INVALID_ID_CHARS
     base_item_cache: type[BaseItemCache] = DefaultBaseItemCache
 

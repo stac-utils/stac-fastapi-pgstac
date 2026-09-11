@@ -133,6 +133,7 @@ def instantiate_api(
             ),
         ],
         health_check=health_check,  # type: ignore [arg-type]
+        add_metrics=settings.enable_metrics,
     )
 
     return api

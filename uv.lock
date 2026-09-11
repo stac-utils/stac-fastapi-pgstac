@@ -1934,6 +1934,28 @@ wheels = [
 ]
 
 [[package]]
+name = "prometheus-client"
+version = "0.26.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/52/73/f1334c29c2af4cd9dba6c7817e61b611bd0215e2eb5565c6064a4de18802/prometheus_client-0.26.0.tar.gz", hash = "sha256:04a91bcf94e2cf74a44a1a874d651a2e853ed354b6e822f3b7487751465d5c2b", size = 92910, upload-time = "2026-07-24T19:36:41.893Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/eb/a3/b69efbf4143b5b9859b977770bbbabcc2796b702fa69dc40271e45cd5a56/prometheus_client-0.26.0-py3-none-any.whl", hash = "sha256:fa93d06737aa02bacd05794768508bb97d2fbee28cb3bca04eaae92f0ca953d6", size = 64494, upload-time = "2026-07-24T19:36:40.854Z" },
+]
+
+[[package]]
+name = "prometheus-fastapi-instrumentator"
+version = "8.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "prometheus-client" },
+    { name = "starlette" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/95/f4/cdcebf7094b03b99fba71ac8f56bd6f227973642662f49d272332d8419b3/prometheus_fastapi_instrumentator-8.1.0.tar.gz", hash = "sha256:b77f3043665e8d28e2bbd21017506195a43d9adf1d402d01bf95b494b7e560e1", size = 20492, upload-time = "2026-07-26T11:12:44.202Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/44/b9/91a2246e6cf01b7ccb14479803c8a50f9c258ae5c6a0f16ba3294820632b/prometheus_fastapi_instrumentator-8.1.0-py3-none-any.whl", hash = "sha256:b9f40b2cff3f7891ca0610b3ae4fc6ec723fd326b04bb659819aaeb821a0fc7d", size = 19649, upload-time = "2026-07-26T11:12:45.168Z" },
+]
+
+[[package]]
 name = "prompt-toolkit"
 version = "3.0.53"
 source = { registry = "https://pypi.org/simple" }
@@ -3022,6 +3044,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/47/4b/e0009a9b1bda215588cb218c3af2cdf8c883b71260c32536cbf1925c2599/stac_fastapi_api-7.0.0-py3-none-any.whl", hash = "sha256:bc5243034af6d7bcf8f5129432bbcb2ce8f73be04da3cc2d266ed547058e0405", size = 15208, upload-time = "2026-09-09T09:02:05.796Z" },
 ]
 
+[package.optional-dependencies]
+metrics = [
+    { name = "prometheus-fastapi-instrumentator" },
+]
+
 [[package]]
 name = "stac-fastapi-catalogs-extension"
 version = "0.4.0"
@@ -3078,6 +3105,9 @@ dependencies = [
 catalogs = [
     { name = "stac-fastapi-catalogs-extension" },
 ]
+metrics = [
+    { name = "stac-fastapi-api", extra = ["metrics"] },
+]
 server = [
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -3098,6 +3128,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-postgresql" },
     { name = "requests" },
+    { name = "stac-fastapi-api", extra = ["metrics"] },
     { name = "stac-fastapi-catalogs-extension" },
 ]
 docs = [
@@ -3123,13 +3154,14 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.4,<3.0" },
     { name = "pydantic-settings", specifier = ">=2.7,<3.0" },
     { name = "stac-fastapi-api", specifier = ">=7.0,<8.0" },
+    { name = "stac-fastapi-api", extras = ["metrics"], marker = "extra == 'metrics'" },
     { name = "stac-fastapi-catalogs-extension", marker = "extra == 'catalogs'", specifier = "==0.4.0" },
     { name = "stac-fastapi-extensions", specifier = ">=7.0,<8.0" },
     { name = "stac-fastapi-types", specifier = ">=7.0,<8.0" },
     { name = "stac-pydantic", extras = ["validation"], marker = "extra == 'validation'" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'server'", specifier = "==0.38.0" },
 ]
-provides-extras = ["catalogs", "server", "validation"]
+provides-extras = ["catalogs", "metrics", "server", "validation"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -3144,6 +3176,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-postgresql", specifier = ">=7.0" },
     { name = "requests" },
+    { name = "stac-fastapi-api", extras = ["metrics"] },
     { name = "stac-fastapi-catalogs-extension", specifier = "==0.4.0" },
 ]
 docs = [
