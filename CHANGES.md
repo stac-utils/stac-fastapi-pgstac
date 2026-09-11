@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- `ENABLE_METRICS` setting to expose an optional Prometheus metrics endpoint at `/_mgmt/metrics`, backed by `stac-fastapi-api`'s `add_metrics` support ([#958](https://github.com/stac-utils/stac-fastapi/pull/958)). Requires the new `metrics` optional extra (`pip install "stac-fastapi.pgstac[metrics]"`).
+
 ### Changed 
 
 - Update stac-fastapi-* requirements to `>=7.0,<8.0` ([#419](https://github.com/stac-utils/stac-fastapi-pgstac/pull/419))

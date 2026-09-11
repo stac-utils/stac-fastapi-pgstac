@@ -58,6 +58,9 @@ server  = [
 catalogs = [
     "stac-fastapi-catalogs-extension==0.4.0",
 ]
+metrics = [
+    "stac-fastapi-api[metrics]",
+]
 
 [dependency-groups]
 dev = [
@@ -71,6 +74,7 @@ dev = [
         "pypgstac>=0.9,<0.10",
         "requests",
         "stac-fastapi-catalogs-extension==0.4.0",
+        "stac-fastapi-api[metrics]",
         "httpx",
         "psycopg[pool,binary]==3.2.*",
         "pre-commit",
