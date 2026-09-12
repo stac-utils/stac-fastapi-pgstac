@@ -1,17 +1,9 @@
 """Database connection handling."""
 
 import json
+from collections.abc import AsyncIterator, Callable, Generator
 from contextlib import asynccontextmanager, contextmanager
-from typing import (
-    AsyncIterator,
-    Callable,
-    Dict,
-    Generator,
-    List,
-    Literal,
-    Optional,
-    Union,
-)
+from typing import Literal
 
 import orjson
 from asyncpg import Connection, Pool, exceptions
@@ -61,14 +53,15 @@ async def _create_pool(settings: PostgresSettings) -> Pool:
 
 async def connect_to_db(
     app: FastAPI,
-    get_conn: Optional[ConnectionGetter] = None,
-    postgres_settings: Optional[PostgresSettings] = None,
+    get_conn: ConnectionGetter | None = None,
+    postgres_settings: PostgresSettings | None = None,
     add_write_connection_pool: bool = False,
-    write_postgres_settings: Optional[PostgresSettings] = None,
+    write_postgres_settings: PostgresSettings | None = None,
 ) -> None:
     """Create connection pools & connection retriever on application."""
     if not postgres_settings:
-        postgres_settings = PostgresSettings()
+        # NOTE: for some reason mypy fails to recognize that attributes can be set by Env
+        postgres_settings = PostgresSettings()  # type: ignore
 
     app.state.readpool = await _create_pool(postgres_settings)
 
@@ -83,7 +76,8 @@ async def connect_to_db(
 
 async def close_db_connection(app: FastAPI) -> None:
     """Close connection."""
-    await app.state.readpool.close()
+    if pool := getattr(app.state, "readpool", None):
+        await pool.close()
     if pool := getattr(app.state, "writepool", None):
         await pool.close()
 
@@ -108,7 +102,7 @@ async def get_connection(
             yield conn
 
 
-async def dbfunc(conn: Connection, func: str, arg: Union[str, Dict, List]):
+async def dbfunc(conn: Connection, func: str, arg: str | dict | list):
     """Wrap PLPGSQL Functions.
 
     Keyword arguments:

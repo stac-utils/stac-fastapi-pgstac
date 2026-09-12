@@ -1,14 +1,13 @@
 """Postgres API configuration."""
 
 import json
-import warnings
-from typing import Annotated, Any, List, Optional, Sequence, Type
+from collections.abc import Sequence
+from typing import Annotated, Any, Self
 from urllib.parse import quote_plus as quote
 
-from pydantic import BaseModel, BeforeValidator, Field, model_validator
+from pydantic import BaseModel, BeforeValidator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 from stac_fastapi.types.config import ApiSettings
-from typing_extensions import Self
 
 from stac_fastapi.pgstac.types.base_item_cache import (
     BaseItemCache,
@@ -63,47 +62,6 @@ class PostgresSettings(BaseSettings):
 
     """
 
-    postgres_user: Annotated[
-        Optional[str],
-        Field(
-            deprecated="`postgres_user` is deprecated, please use `pguser`", default=None
-        ),
-    ]
-    postgres_pass: Annotated[
-        Optional[str],
-        Field(
-            deprecated="`postgres_pass` is deprecated, please use `pgpassword`",
-            default=None,
-        ),
-    ]
-    postgres_host_reader: Annotated[
-        Optional[str],
-        Field(
-            deprecated="`postgres_host_reader` is deprecated, please use `pghost`",
-            default=None,
-        ),
-    ]
-    postgres_host_writer: Annotated[
-        Optional[str],
-        Field(
-            deprecated="`postgres_host_writer` is deprecated, please use `pghost`",
-            default=None,
-        ),
-    ]
-    postgres_port: Annotated[
-        Optional[int],
-        Field(
-            deprecated="`postgres_port` is deprecated, please use `pgport`", default=None
-        ),
-    ]
-    postgres_dbname: Annotated[
-        Optional[str],
-        Field(
-            deprecated="`postgres_dbname` is deprecated, please use `pgdatabase`",
-            default=None,
-        ),
-    ]
-
     pguser: str
     pgpassword: str
     pghost: str
@@ -118,38 +76,6 @@ class PostgresSettings(BaseSettings):
     server_settings: ServerSettings = ServerSettings()
 
     model_config = {"env_file": ".env", "extra": "ignore"}
-
-    @model_validator(mode="before")
-    @classmethod
-    def _pg_settings_compat(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            compat = {
-                "postgres_user": "pguser",
-                "postgres_pass": "pgpassword",
-                "postgres_host_reader": "pghost",
-                "postgres_host_writer": "pghost",
-                "postgres_port": "pgport",
-                "postgres_dbname": "pgdatabase",
-            }
-            for old_key, new_key in compat.items():
-                if val := data.get(old_key, None):
-                    warnings.warn(
-                        f"`{old_key}` is deprecated, please use `{new_key}`",
-                        DeprecationWarning,
-                        stacklevel=1,
-                    )
-                    data[new_key] = val
-
-            if (pgh_reader := data.get("postgres_host_reader")) and (
-                pgh_writer := data.get("postgres_host_writer")
-            ):
-                if pgh_reader != pgh_writer:
-                    raise ValueError(
-                        "In order to use different host values for reading and writing "
-                        "you must explicitly provide write_postgres_settings to the connect_to_db function"
-                    )
-
-        return data
 
     @property
     def connection_string(self):
@@ -167,7 +93,24 @@ def str_to_list(value: Any) -> Any:
         return value
 
 
-class Settings(ApiSettings):
+class ExtensionsSettings(BaseModel):
+    """STAC API extensions settings."""
+
+    enabled_extensions: (
+        Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] | None
+    ) = None
+    enable_transactions_extensions: bool = False
+    enable_catalogs_extension: bool = False
+    hide_alternate_parents: bool = False
+    validate_extensions: bool = False
+    """
+    Validate `stac_extensions` schemas against submitted data when creating or updated STAC objects.
+
+    Implies that the `Transactions` extension is enabled.
+    """
+
+
+class Settings(ApiSettings, ExtensionsSettings):
     """API settings.
 
     Attributes:
@@ -196,20 +139,22 @@ class Settings(ApiSettings):
     will exclude those values from the responses.
     """
 
-    invalid_id_chars: List[str] = DEFAULT_INVALID_ID_CHARS
-    base_item_cache: Type[BaseItemCache] = DefaultBaseItemCache
-
-    validate_extensions: bool = False
+    enable_metrics: bool = False
     """
-    Validate `stac_extensions` schemas against submitted data when creating or updated STAC objects.
+    When ENABLE_METRICS=TRUE, exposes a Prometheus metrics endpoint at
+    `{prefix_path}/_mgmt/metrics` with low-cardinality STAC operation labels.
 
-    Implies that the `Transactions` extension is enabled.
+    Requires the `metrics` optional extra (`prometheus-fastapi-instrumentator`) to be
+    installed; raises `ImportError` at startup otherwise.
     """
+
+    invalid_id_chars: list[str] = DEFAULT_INVALID_ID_CHARS
+    base_item_cache: type[BaseItemCache] = DefaultBaseItemCache
 
     cors_origins: Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] = (
         "*",
     )
-    cors_origin_regex: Optional[str] = None
+    cors_origin_regex: str | None = None
     cors_methods: Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] = (
         "GET",
         "POST",
@@ -219,6 +164,8 @@ class Settings(ApiSettings):
     cors_headers: Annotated[Sequence[str], BeforeValidator(str_to_list), NoDecode] = (
         "Content-Type",
     )
+
+    uvicorn_root_path: str = ""
 
     testing: bool = False
 

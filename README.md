@@ -32,7 +32,7 @@ PgSTAC stores all collection and item records as jsonb fields exactly as they co
 ## Usage
 
 PgSTAC is an external project and may be used by multiple front ends.
-For Stac FastAPI development, a Docker image (which is pulled as part of the docker-compose) is available via the [Github container registry](https://github.com/stac-utils/pgstac/pkgs/container/pgstac/81689794?tag=latest).
+For STAC FastAPI development, a Docker image (which is pulled as part of the docker-compose) is available via the [Github container registry](https://github.com/stac-utils/pgstac/pkgs/container/pgstac/81689794?tag=latest).
 The PgSTAC version required by **stac-fastapi-pgstac** is found in the [setup](http://github.com/stac-utils/stac-fastapi-pgstac/blob/main/setup.py) file.
 
 ### Sorting
@@ -50,6 +50,28 @@ To configure **stac-fastapi-pgstac** to [hydrate search result items at the API 
 |                False |              False |    PgSTAC |
 |                 True |               True |       API |
 
+### Multi-Tenant Catalogs Extension
+
+**stac-fastapi-pgstac** supports the optional [Multi-Tenant Catalogs Extension](https://github.com/StacLabs/multi-tenant-catalogs) for managing hierarchical catalog structures with support for Directed Acyclic Graphs (DAG).
+This enables flexible catalog hierarchies where collections and catalogs can have multiple parents.
+
+To enable this extension, install the `stac-fastapi-catalogs-extension` package and set the `ENABLE_CATALOGS_EXTENSION=TRUE` environment variable.
+
+For write operations (creating, updating, and deleting catalogs, and linking/unlinking collections and catalogs), also set `ENABLE_TRANSACTIONS_EXTENSIONS=TRUE`.
+
+#### Poly-Hierarchy Links
+
+When a catalog or collection has multiple parents, the API exposes the catalog hierarchy through STAC link relations:
+
+- `rel="parent"`: Points to the contextual parent (the catalog through which the resource was accessed)
+- `rel="related"`: Links to alternative parents in the poly-hierarchy (for catalogs and scoped collections)
+- `rel="duplicate"`: Links to alternative scoped paths where a collection can be accessed (e.g., `/catalogs/{parentId}/collections/{collectionId}`)
+- `rel="canonical"`: Points to the global collection endpoint for scoped collections
+
+To prevent information leakage about other tenants in multi-tenant deployments, set `HIDE_ALTERNATE_PARENTS=TRUE` to suppress `rel="related"` and `rel="duplicate"` links. When enabled, only the contextual `rel="parent"` link is advertised.
+
+**Note:** The link relation names for poly-hierarchy navigation are subject to change as the OGC and STAC communities continue to standardize on terminology. These names may be updated in future releases to align with emerging standards.
+
 ### Migrations
 
 There is a Python utility as part of PgSTAC ([pypgstac](https://stac-utils.github.io/pgstac/pypgstac/)) that includes a migration utility.
@@ -61,20 +83,72 @@ pypgstac migrate
 
 ## Development
 
+### Quick Start
+
 Install the packages in editable mode:
 
-We recommand using [`uv`](https://docs.astral.sh/uv) as project manager for development.
+We recommend using [`uv`](https://docs.astral.sh/uv) as project manager for development.
 
-See https://docs.astral.sh/uv/getting-started/installation/ for installation 
+See https://docs.astral.sh/uv/getting-started/installation/ for installation
 
 ```shell
 uv sync --dev
 ```
 
-To run the tests:
+### Running the API Locally
+
+Start the API with Docker Compose:
+
+```shell
+make docker-run
+```
+
+The API will be available at `http://localhost:8082`
+
+### Running with Nginx Proxy
+
+To run the API behind an Nginx proxy:
+
+```shell
+make docker-run-nginx-proxy
+```
+
+The API will be available at:
+- Direct: `http://localhost:8082`
+- Via Nginx: `http://localhost:8080/api/v1/pgstac/`
+
+### Loading Demo Data
+
+To load the Joplin demo dataset:
+
+```shell
+make load-joplin
+```
+
+### Running Tests
+
+To run tests locally (requires postgres/postgis system packages):
 
 ```shell
 uv run pytest
+```
+
+**NOTE:** If running tests directly on your machine doesn't work, you can use Docker Compose instead. You need [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed.
+
+To run tests in a container:
+
+```shell
+make test
+```
+
+### Stopping Services
+
+To stop running services:
+
+```shell
+make docker-down          # Stop the default app
+make docker-down-nginx    # Stop the nginx variant
+make docker-down-all      # Stop all services
 ```
 
 ## Contributing

@@ -2,6 +2,124 @@
 
 ## [Unreleased]
 
+### Added
+
+- `ENABLE_METRICS` setting to expose an optional Prometheus metrics endpoint at `/_mgmt/metrics`, backed by `stac-fastapi-api`'s `add_metrics` support ([#958](https://github.com/stac-utils/stac-fastapi/pull/958)). Requires the new `metrics` optional extra (`pip install "stac-fastapi.pgstac[metrics]"`).
+
+### Changed 
+
+- Update stac-fastapi-* requirements to `>=7.0,<8.0` ([#419](https://github.com/stac-utils/stac-fastapi-pgstac/pull/419))
+- Remove deprecated `POSTGRES_*` environment variable support from `PostgresSettings`.
+- Remove deprecated `host_reader` and `host_writer` attributes from `PostgresSettings`.
+- Removed `shapely` from dev dependencies
+
+## [6.4.0] - 2026-09-04
+
+### Added
+
+- add tests for new `app.instantiate_api` function ([#381](https://github.com/stac-utils/stac-fastapi-pgstac/pull/381))
+
+### Fixed
+
+- Fix multi-platform Docker builds by adding QEMU emulation and correcting workflow_dispatch trigger ([#337](https://github.com/stac-utils/stac-fastapi-pgstac/pull/337))
+
+### Changed 
+
+- Refactored application initialization to completely eliminate global state and natively support the Uvicorn `--factory` pattern. Replaced the global `app` variable with a `create_app()` factory wrapper in `app.py`, ensuring pristine memory isolation per worker and preventing unintended import side-effects. Additionally, updated the test suite to use the new factory pattern (eliminating shadow implementations) and fixed `httpx` async client compatibility. ([#405](https://github.com/stac-utils/stac-fastapi-pgstac/pull/405))
+- Update stac-fastapi-* requirements to `>=6.4,<7.0`
+- Sort conformance class version to v1.1.0 instead of v1.0.0
+- Update sort extension to use new conformance classes in app.py for search, collection search, and item search endpoints ([#404](https://github.com/stac-utils/stac-fastapi-pgstac/pull/404))
+- introduce `app.instantiate_api` function to make API customisation easier ([#381](https://github.com/stac-utils/stac-fastapi-pgstac/pull/381))
+- Updated Dockerfile CMD to use the new `create_app` factory function with `--factory` flag for Uvicorn compatibility ([#406](https://github.com/stac-utils/stac-fastapi-pgstac/pull/406))
+- Changed output from `string` to `dict` object (`BulkTransaction`) for bulk transaction `bulk_item_insert` methods ([#419](https://github.com/stac-utils/stac-fastapi-pgstac/pull/419))
+- Removed `app_host`, `app_port`, and `reload` attributes from `ApiSettings`. Use uvicorn command-line arguments or environment variables to configure these instead ([#419](https://github.com/stac-utils/stac-fastapi-pgstac/pull/419))
+- Removed deprecated `stac_fastapi.extensions.third_party` namespace. Import `BulkTransactionExtension` directly from `stac_fastapi.extensions` instead ([#419](https://github.com/stac-utils/stac-fastapi-pgstac/pull/419))
+
+### Removed
+
+- Removed deprecated `SortConformanceClasses` enum aliases (`COLLECTIONS`, `ITEMS`, `SEARCH`). Use `COLLECTION_SEARCH_SORT`, `FEATURES_SORT`, and `ITEM_SEARCH_SORT` instead
+
+## [6.3.1] - 2026-06-24
+
+### Fixed
+
+- Make catalogs extension imports conditional to allow running app without the optional `[catalogs]` extra ([#396](https://github.com/stac-utils/stac-fastapi-pgstac/pull/396))
+
+### Removed
+
+- Removed optional catalogs imports from extensions init ([#396](https://github.com/stac-utils/stac-fastapi-pgstac/pull/396))
+
+## [6.3.0] - 2026-06-23
+
+### Changed
+
+- remove pgstac 0.8.6 in tests and update documentation ([#354](https://github.com/stac-utils/stac-fastapi-pgstac/pull/354))
+- simplify `extensions.query.Operator` class, by removing unused `operator` method and unncessary dependencies ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
+- handle `ENABLE_TRANSACTIONS_EXTENSIONS`, `ENABLED_EXTENSIONS` and `UVICORN_ROOT_PATH` environment configuration variables via the `config.Settings` class ([#368](https://github.com/stac-utils/stac-fastapi-pgstac/pull/368))
+- Refactor Docker Compose files and Makefile for better organization and modularity. ([#379](https://github.com/stac-utils/stac-fastapi-pgstac/pull/379))
+
+### Added
+
+- implement `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
+- add api test for `neq` query operator ([#364](https://github.com/stac-utils/stac-fastapi-pgstac/pull/364))
+- Multi-Tenant Catalogs Extension: Integrated optional `stac-fastapi-catalogs-extension` to support native DAG (Directed Acyclic Graph) traversal of Catalogs and Collections. Enabled via `ENABLE_CATALOGS_EXTENSION` environment variable ([#366](https://github.com/stac-utils/stac-fastapi-pgstac/pull/366))
+- Added `HIDE_ALTERNATE_PARENTS` environment variable (default `False`) to suppress `rel="related"` and `rel="duplicate"` links for alternate parents in poly-hierarchy. Useful for multi-tenant deployments to prevent information leakage about other tenants. When enabled, only the contextual `rel="parent"` link is advertised. Requires `ENABLE_CATALOGS_EXTENSION=true`. ([#387](https://github.com/stac-utils/stac-fastapi-pgstac/pull/387))
+- Added `rel="duplicate"` links for scoped collection endpoints (`/catalogs/{catalogId}/collections/{collectionId}`) to expose alternative scoped paths where collections can be accessed through other parent catalogs in poly-hierarchy. ([#387](https://github.com/stac-utils/stac-fastapi-pgstac/pull/387))
+
+### Fixed
+
+- preprocess `fields` to give the `include` set precendence over the `exclude` set ([#370](https://github.com/stac-utils/stac-fastapi-pgstac/pull/370))
+- Fix route extraction in router tests to handle FastAPI >= 0.137.0 `_IncludedRouter` wrappers with `original_router` and `include_context` attributes ([#389](https://github.com/stac-utils/stac-fastapi-pgstac/pull/389))
+- Fixed extensions import paths changed in stac-fastapi v6.3.0 ([#392](https://github.com/stac-utils/stac-fastapi-pgstac/pull/392))
+
+### Updated
+
+- Update stac-fastapi-catalogs-extension to v0.4.0 ([#387](https://github.com/stac-utils/stac-fastapi-pgstac/pull/387))
+- Transitioned Dockerfile.tests to use uv sync for strict lockfile adherence in local development. ([#390](https://github.com/stac-utils/stac-fastapi-pgstac/pull/390))
+- Updated stac-fastapi dependencies to >= v6.3.0 ([#392](https://github.com/stac-utils/stac-fastapi-pgstac/pull/392))
+
+## [6.2.2] - 2026-01-09
+
+### Fixed
+
+- use `CORSMiddleware` from starlette instead of the one from stac-fastapi to avoid breaking changes
+
+## [6.2.1] - 2026-01-23
+
+### Fixed
+
+- Set default values for deprecated `postgres_*` settings to `None` ([#343](https://github.com/stac-utils/stac-fastapi-pgstac/pull/343))
+
+## [6.2.0] - 2026-01-15
+
+### Fixed
+
+- update type hints for python 3.11
+
+### Removed
+
+- support for python 3.9 and 3.10
+
+## [6.1.5] - 2025-12-12
+
+### Fixed
+
+- Update pydantic and pydantic-settings versions requirements
+- Improve type hints
+
+## [6.1.4] - 2025-12-08
+
+### Fixed
+
+- remove uvicorn from dependencies
+
+## [6.1.3] - 2025-12-06
+
+### Fixed
+
+- avoid pydantic validation for `/collections` response when using `fields` extension ([#326](https://github.com/stac-utils/stac-fastapi-pgstac/pull/326))
+- Close readpool only if it exists ([#331](https://github.com/stac-utils/stac-fastapi-pgstac/pull/331))
+
 ## [6.1.2] - 2025-11-24
 
 ### Changed
@@ -525,7 +643,17 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.1..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.4.0..main>
+[6.4.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.1..6.4.0>
+[6.3.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.0..6.3.1>
+[6.3.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.2..6.3.0>
+[6.2.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.1..6.2.2>
+[6.2.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.0..6.2.1>
+[6.2.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.5..6.2.0>
+[6.1.5]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.4..6.1.5>
+[6.1.4]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.3..6.1.4>
+[6.1.3]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.2..6.1.3>
+[6.1.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.1..6.1.2>
 [6.1.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.1.0..6.1.1>
 [6.1.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.2..6.1.0>
 [6.0.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.0.1..6.0.2>

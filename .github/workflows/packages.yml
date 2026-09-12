@@ -11,7 +11,7 @@ on:
       - setup.cfg
       - "**/*.py"
       - .github/workflows/packages.yml
-    workflow_dispatch:
+  workflow_dispatch:
 
 
 jobs:
@@ -23,13 +23,16 @@ jobs:
       packages: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4
 
       - name: Log in to the Container registry
-        uses: docker/login-action@v3.6.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -37,12 +40,12 @@ jobs:
 
       - name: Extract metadata (name, tag) for Docker
         id: meta
-        uses: docker/metadata-action@v5.9.0
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ghcr.io/stac-utils/stac-fastapi-pgstac
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
           file: Dockerfile

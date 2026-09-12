@@ -2,23 +2,24 @@
 
 import logging
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, cast
 
 import attr
 import jsonpatch
 from buildpg import render
 from fastapi import HTTPException, Request
 from json_merge_patch import merge
-from stac_fastapi.extensions.core.transaction import AsyncBaseTransactionsClient
-from stac_fastapi.extensions.core.transaction.request import (
+from stac_fastapi.extensions.bulk_transactions import (
+    AsyncBaseBulkTransactionsClient,
+    BulkTransaction,
+    BulkTransactionMethod,
+    Items,
+)
+from stac_fastapi.extensions.transaction import AsyncBaseTransactionsClient
+from stac_fastapi.extensions.transaction.request import (
     PartialCollection,
     PartialItem,
     PatchOperation,
-)
-from stac_fastapi.extensions.third_party.bulk_transactions import (
-    AsyncBaseBulkTransactionsClient,
-    BulkTransactionMethod,
-    Items,
 )
 from stac_fastapi.types import stac as stac_types
 from stac_fastapi.types.errors import NotFoundError
@@ -47,9 +48,10 @@ class ClientValidateMixIn:
 
     def _validate_extensions(
         self,
-        stac_object: Union[
-            stac_types.Item, stac_types.Collection, stac_types.Catalog, Dict[str, Any]
-        ],
+        stac_object: stac_types.Item
+        | stac_types.Collection
+        | stac_types.Catalog
+        | dict[str, Any],
         settings: Settings,
     ) -> None:
         """Validate extensions of the STAC object data."""
@@ -64,10 +66,7 @@ class ClientValidateMixIn:
                 return
 
         try:
-            validate_extensions(
-                stac_object,
-                reraise_exception=True,
-            )
+            validate_extensions(dict(stac_object), reraise_exception=True)
         except Exception as err:
             raise HTTPException(
                 status_code=422,
@@ -83,7 +82,7 @@ class ClientValidateMixIn:
         request: Request,
         item: stac_types.Item,
         collection_id: str,
-        expected_item_id: Optional[str] = None,
+        expected_item_id: str | None = None,
     ) -> None:
         """Validate item."""
         body_collection_id = item.get("collection")
@@ -115,121 +114,125 @@ class ClientValidateMixIn:
 class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
     """Transactions extension specific CRUD operations."""
 
-    async def create_item(
+    async def create_item(  # type: ignore [override]
         self,
         collection_id: str,
-        item: Union[Item, ItemCollection],
+        item: Item | ItemCollection,
         request: Request,
         **kwargs,
-    ) -> Optional[Union[stac_types.Item, Response]]:
+    ) -> stac_types.Item | Response | None:
         """Create item."""
-        item = item.model_dump(mode="json")
+        item_dict = cast(
+            stac_types.Item | stac_types.ItemCollection,
+            item.model_dump(mode="json"),
+        )
 
-        if item["type"] == "FeatureCollection":
-            valid_items = []
-            for item in item["features"]:  # noqa: B020
-                self._validate_item(request, item, collection_id)
-                item["collection"] = collection_id
-                valid_items.append(item)
+        # Item Collection
+        if item_dict["type"] == "FeatureCollection":
+            valid_items: list[stac_types.Item] = []
+            for feature in item_dict["features"]:  # noqa: B020
+                self._validate_item(request, feature, collection_id)
+                feature["collection"] = collection_id
+                valid_items.append(feature)
 
             async with request.app.state.get_connection(request, "w") as conn:
                 await dbfunc(conn, "create_items", valid_items)
 
             return Response(status_code=201)
 
-        elif item["type"] == "Feature":
-            self._validate_item(request, item, collection_id)
-            item["collection"] = collection_id
+        # Single Item
+        elif item_dict["type"] == "Feature":
+            self._validate_item(request, item_dict, collection_id)
+            item_dict["collection"] = collection_id
 
             async with request.app.state.get_connection(request, "w") as conn:
-                await dbfunc(conn, "create_item", item)
+                await dbfunc(conn, "create_item", dict(item_dict))
 
-            item["links"] = await ItemLinks(
+            item_dict["links"] = await ItemLinks(
                 collection_id=collection_id,
-                item_id=item["id"],
+                item_id=item_dict["id"],
                 request=request,
-            ).get_links(extra_links=item.get("links"))
+            ).get_links(extra_links=item_dict.get("links"))
 
-            return stac_types.Item(**item)
+            return item_dict
 
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Item body type must be 'Feature' or 'FeatureCollection', not {item['type']}",
-            )
+        raise HTTPException(
+            status_code=400,
+            detail=f"Item body type must be 'Feature' or 'FeatureCollection', not {item['type']}",
+        )
 
-    async def update_item(
+    async def update_item(  # type: ignore [override]
         self,
         request: Request,
         collection_id: str,
         item_id: str,
         item: Item,
         **kwargs,
-    ) -> Optional[Union[stac_types.Item, Response]]:
+    ) -> stac_types.Item:
         """Update item."""
-        item = item.model_dump(mode="json")
+        item_dict = cast(stac_types.Item, item.model_dump(mode="json"))
 
-        self._validate_item(request, item, collection_id, item_id)
-        item["collection"] = collection_id
+        self._validate_item(request, item_dict, collection_id, item_id)
+        item_dict["collection"] = collection_id
 
         async with request.app.state.get_connection(request, "w") as conn:
-            await dbfunc(conn, "update_item", item)
+            await dbfunc(conn, "update_item", dict(item_dict))
 
-        item["links"] = await ItemLinks(
+        item_dict["links"] = await ItemLinks(
             collection_id=collection_id,
-            item_id=item["id"],
+            item_id=item_dict["id"],
             request=request,
-        ).get_links(extra_links=item.get("links"))
+        ).get_links(extra_links=item_dict.get("links"))
 
-        return stac_types.Item(**item)
+        return item_dict
 
-    async def create_collection(
+    async def create_collection(  # type: ignore [override]
         self,
         collection: Collection,
         request: Request,
         **kwargs,
-    ) -> Optional[Union[stac_types.Collection, Response]]:
+    ) -> stac_types.Collection:
         """Create collection."""
-        collection = collection.model_dump(mode="json")
+        collection_dict = cast(stac_types.Collection, collection.model_dump(mode="json"))
 
-        self._validate_collection(request, collection)
+        self._validate_collection(request, collection_dict)
 
         async with request.app.state.get_connection(request, "w") as conn:
-            await dbfunc(conn, "create_collection", collection)
+            await dbfunc(conn, "create_collection", dict(collection_dict))
 
-        collection["links"] = await CollectionLinks(
-            collection_id=collection["id"], request=request
-        ).get_links(extra_links=collection["links"])
+        collection_dict["links"] = await CollectionLinks(
+            collection_id=collection_dict["id"], request=request
+        ).get_links(extra_links=collection_dict["links"])
 
-        return stac_types.Collection(**collection)
+        return collection_dict
 
-    async def update_collection(
+    async def update_collection(  # type: ignore [override]
         self,
         collection: Collection,
         request: Request,
         **kwargs,
-    ) -> Optional[Union[stac_types.Collection, Response]]:
+    ) -> stac_types.Collection:
         """Update collection."""
+        collection_dict = cast(stac_types.Collection, collection.model_dump(mode="json"))
 
-        col = collection.model_dump(mode="json")
-        self._validate_collection(request, col)
+        self._validate_collection(request, collection_dict)
 
         async with request.app.state.get_connection(request, "w") as conn:
-            await dbfunc(conn, "update_collection", col)
+            await dbfunc(conn, "update_collection", dict(collection_dict))
 
-        col["links"] = await CollectionLinks(
-            collection_id=col["id"], request=request
-        ).get_links(extra_links=col.get("links"))
+        collection_dict["links"] = await CollectionLinks(
+            collection_id=collection_dict["id"], request=request
+        ).get_links(extra_links=collection_dict.get("links"))
 
-        return stac_types.Collection(**col)
+        return collection_dict
 
-    async def delete_item(
+    async def delete_item(  # type: ignore [override]
         self,
         item_id: str,
         collection_id: str,
         request: Request,
         **kwargs,
-    ) -> Optional[Union[stac_types.Item, Response]]:
+    ) -> Response:
         """Delete item."""
         q, p = render(
             "SELECT * FROM delete_item(:item::text, :collection::text);",
@@ -241,23 +244,26 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
 
         return JSONResponse({"deleted item": item_id})
 
-    async def delete_collection(
-        self, collection_id: str, request: Request, **kwargs
-    ) -> Optional[Union[stac_types.Collection, Response]]:
+    async def delete_collection(  # type: ignore [override]
+        self,
+        collection_id: str,
+        request: Request,
+        **kwargs,
+    ) -> Response:
         """Delete collection."""
         async with request.app.state.get_connection(request, "w") as conn:
             await dbfunc(conn, "delete_collection", collection_id)
 
         return JSONResponse({"deleted collection": collection_id})
 
-    async def patch_item(
+    async def patch_item(  # type: ignore [override]
         self,
         collection_id: str,
         item_id: str,
-        patch: Union[PartialItem, List[PatchOperation]],
+        patch: PartialItem | list[PatchOperation],
         request: Request,
         **kwargs,
-    ) -> Optional[Union[stac_types.Item, Response]]:
+    ) -> stac_types.Item:
         """Patch Item."""
 
         # Get Existing Item to Patch
@@ -269,7 +275,8 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
                 item_id=item_id,
                 collection_id=collection_id,
             )
-            existing = await conn.fetchval(q, *p)
+            existing: stac_types.Item | None = await conn.fetchval(q, *p)
+
         if existing is None:
             raise NotFoundError(
                 f"Item {item_id} does not exist in collection {collection_id}."
@@ -298,15 +305,15 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
             request=request,
         ).get_links(extra_links=item.get("links"))
 
-        return stac_types.Item(**item)
+        return cast(stac_types.Item, item)
 
-    async def patch_collection(
+    async def patch_collection(  # type: ignore [override]
         self,
         collection_id: str,
-        patch: Union[PartialCollection, List[PatchOperation]],
+        patch: PartialCollection | list[PatchOperation],
         request: Request,
         **kwargs,
-    ) -> Optional[Union[stac_types.Collection, Response]]:
+    ) -> stac_types.Collection:
         """Patch Collection."""
 
         # Get Existing Collection to Patch
@@ -317,7 +324,8 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
                 """,
                 id=collection_id,
             )
-            existing = await conn.fetchval(q, *p)
+            existing: stac_types.Collection | None = await conn.fetchval(q, *p)
+
         if existing is None:
             raise NotFoundError(f"Collection {collection_id} does not exist.")
 
@@ -341,30 +349,52 @@ class TransactionsClient(AsyncBaseTransactionsClient, ClientValidateMixIn):
             collection_id=col["id"], request=request
         ).get_links(extra_links=col.get("links"))
 
-        return stac_types.Collection(**col)
+        return cast(stac_types.Collection, col)
 
 
 @attr.s
 class BulkTransactionsClient(AsyncBaseBulkTransactionsClient, ClientValidateMixIn):
     """Postgres bulk transactions."""
 
-    async def bulk_item_insert(self, items: Items, request: Request, **kwargs) -> str:
+    async def bulk_item_insert(
+        self, items: Items, **kwargs: Any
+    ) -> BulkTransaction | Response:
         """Bulk item insertion using pgstac."""
+        request = kwargs.get("request")
+        if not request:
+            raise ValueError("request is required")
+
         collection_id = request.path_params["collection_id"]
 
-        for item_id, item in items.items.items():
-            self._validate_item(request, item, collection_id, item_id)
-            item["collection"] = collection_id
+        received_count = len(items.items)
+        successful_items: dict[str, Any] = {}
+        failed_items: dict[str, dict[str, Any]] = {}
+        skipped_items: dict[str, Any] = {}
 
-        items_to_insert = list(items.items.values())
+        for item_id, item in items.items.items():
+            try:
+                self._validate_item(request, item, collection_id, item_id)
+                item["collection"] = collection_id
+                successful_items[item_id] = item
+            except HTTPException as e:
+                failed_items[item_id] = {"id": item_id, "msg": e.detail}
+            except Exception as e:
+                failed_items[item_id] = {"id": item_id, "msg": str(e)}
 
         async with request.app.state.get_connection(request, "w") as conn:
-            if items.method == BulkTransactionMethod.INSERT:
-                method_verb = "added"
-                await dbfunc(conn, "create_items", items_to_insert)
-            elif items.method == BulkTransactionMethod.UPSERT:
-                method_verb = "upserted"
-                await dbfunc(conn, "upsert_items", items_to_insert)
+            if successful_items:
+                items_to_insert = list(successful_items.values())
+                if items.method == BulkTransactionMethod.INSERT:
+                    await dbfunc(conn, "create_items", items_to_insert)
+                elif items.method == BulkTransactionMethod.UPSERT:
+                    await dbfunc(conn, "upsert_items", items_to_insert)
 
-        return_msg = f"Successfully {method_verb} {len(items_to_insert)} items."
-        return return_msg
+        return cast(
+            BulkTransaction,
+            {
+                "received": received_count,
+                "success": len(successful_items),
+                "skipped": len(skipped_items),
+                "errors": list(failed_items.values()) if failed_items else [],
+            },
+        )

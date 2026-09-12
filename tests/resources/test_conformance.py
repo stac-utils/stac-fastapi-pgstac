@@ -17,8 +17,9 @@ async def response_json(response) -> Dict:
 def get_link(landing_page, rel_type, method: Optional[str] = None):
     return next(
         filter(
-            lambda link: link["rel"] == rel_type
-            and (not method or link.get("method") == method),
+            lambda link: (
+                link["rel"] == rel_type and (not method or link.get("method") == method)
+            ),
             landing_page["links"],
         ),
         None,
