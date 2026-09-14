@@ -17,10 +17,12 @@ USER newuser
 WORKDIR /app
 
 # 2. Copy files and ensure newuser has permissions to create the virtual environment
-COPY --chown=newuser:newuser . /app
+COPY --chown=newuser:newuser pyproject.toml uv.lock README.md LICENSE ./
+COPY --chown=newuser:newuser stac_fastapi/ ./stac_fastapi/
+COPY --chown=newuser:newuser tests/ ./tests/
 
 # 3. Use uv sync to install dependencies strictly from uv.lock
-RUN uv sync --extra catalogs
+RUN uv sync --extra catalogs --extra metrics
 
 # 4. Put the uv virtual environment on the PATH 
 ENV PATH="/app/.venv/bin:$PATH"

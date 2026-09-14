@@ -46,8 +46,6 @@ ENV PYTHONUNBUFFERED=1 \
 # Install build dependencies
 RUN apt-get update && \
     apt-get -y upgrade && \
-    apt-get install -y build-essential git && \
-    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy virtual environment from builder
