@@ -25,7 +25,7 @@ WORKDIR /tmp
 
 # Copy project metadata and install dependencies
 COPY pyproject.toml uv.lock README.md LICENSE ./
-RUN uv sync --frozen --no-dev --extra server --extra catalogs --no-install-project
+RUN uv sync --frozen --no-dev --extra server --extra catalogs --extra metrics --no-install-project
 
 # Copy project code and install it in the virtual environment
 COPY stac_fastapi/ ./stac_fastapi/
