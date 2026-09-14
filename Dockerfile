@@ -1,6 +1,6 @@
 ARG PYTHON_VERSION=3.14
 
-FROM python:${PYTHON_VERSION}  AS builder
+FROM python:${PYTHON_VERSION}-slim AS builder
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
