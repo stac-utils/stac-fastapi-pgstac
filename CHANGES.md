@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [6.4.1] - 2026-09-15
+
+### Fixed
+
+- Fix `GET /collections` returning a 500 error when the `query` parameter is used: the injected `type = Collection` constraint is now merged into whichever of `query`/`filter` the client supplied, since pgstac rejects a `query` + `filter` payload ([#427](https://github.com/stac-utils/stac-fastapi-pgstac/pull/427))
+- Return `400` instead of a pgstac error when `query` and `filter` are used together in `GET /collections` requests ([#427](https://github.com/stac-utils/stac-fastapi-pgstac/pull/427))
+
 ## [6.4.0] - 2026-09-04
 
 ### Added
@@ -627,7 +634,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.4.0..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.4.1..main>
+[6.4.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.4.0..6.4.1>
 [6.4.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.1..6.4.0>
 [6.3.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.0..6.3.1>
 [6.3.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.2..6.3.0>
