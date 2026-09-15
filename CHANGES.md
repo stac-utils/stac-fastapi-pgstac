@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [7.0.0] - 2026-09-15
+
 ### Added
 
 - `ENABLE_METRICS` setting to expose an optional Prometheus metrics endpoint at `/_mgmt/metrics`, backed by `stac-fastapi-api`'s `add_metrics` support ([#958](https://github.com/stac-utils/stac-fastapi/pull/958)). Requires the new `metrics` optional extra (`pip install "stac-fastapi-pgstac[metrics]"`).  ([#423](https://github.com/stac-utils/stac-fastapi-pgstac/pull/423))
@@ -14,10 +16,12 @@
 - Removed `shapely` from dev dependencies
 - Update Dockerfile to use `uv.lock` file for dependency management
 
+## [6.4.1] - 2026-09-15
+
 ### Fixed
 
-- Fix `GET /collections` returning a 500 error when the `query` parameter is used: the injected `type = Collection` constraint is now merged into whichever of `query`/`filter` the client supplied, since pgstac rejects a `query` + `filter` payload ([#427](https://github.com/stac-utils/stac-fastapi-pgstac/pull/427))
-- Return `400` instead of a pgstac error when `query` and `filter` are used together in `GET /collections` requests ([#427](https://github.com/stac-utils/stac-fastapi-pgstac/pull/427))
+- Fix `GET /collections` returning a 500 error when the `query` parameter is used: the injected `type = Collection` constraint is now merged into whichever of `query`/`filter` the client supplied, since pgstac rejects a `query` + `filter` payload ([#427](https://github.com/stac-utils/stac-fastapi-pgstac/pull/427)) [backport from 7.0]
+- Return `400` instead of a pgstac error when `query` and `filter` are used together in `GET /collections` requests ([#427](https://github.com/stac-utils/stac-fastapi-pgstac/pull/427)) [backport from 7.0]
 
 ## [6.4.0] - 2026-09-04
 
@@ -649,7 +653,9 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.4.0..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.0.0..main>
+[7.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.4.1..7.0.0>
+[6.4.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.4.0..6.4.1>
 [6.4.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.1..6.4.0>
 [6.3.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.0..6.3.1>
 [6.3.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.2..6.3.0>
