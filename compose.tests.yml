@@ -8,9 +8,6 @@ services:
       - DB_MIN_CONN_SIZE=1
       - DB_MAX_CONN_SIZE=1
       - USE_API_HYDRATE=${USE_API_HYDRATE:-false}
-    volumes:
-      - ./stac_fastapi:/app/stac_fastapi
-      - ./tests:/app/tests
     depends_on:
       database:
         condition: service_healthy

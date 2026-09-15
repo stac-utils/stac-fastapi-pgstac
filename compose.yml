@@ -19,12 +19,10 @@ services:
       - STAC_FASTAPI_LANDING_ID=${STAC_FASTAPI_LANDING_ID:-stac-fastapi-pgstac-landing}
     ports:
       - "8082:8082"
-    volumes:
-      - ./stac_fastapi:/app/stac_fastapi
     depends_on:
       database:
         condition: service_healthy
-    command: ["uvicorn", "stac_fastapi.pgstac.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8082", "--reload"]
+    command: ["uvicorn", "stac_fastapi.pgstac.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8082"]
     develop:
       watch:
         - action: rebuild
