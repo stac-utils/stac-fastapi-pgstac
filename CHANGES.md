@@ -14,6 +14,11 @@
 - Removed `shapely` from dev dependencies
 - Update Dockerfile to use `uv.lock` file for dependency management
 
+### Fixed
+
+- Fix `GET /collections` returning a 500 error when the `query` parameter is used: the injected `type = Collection` constraint is now merged into whichever of `query`/`filter` the client supplied, since pgstac rejects a `query` + `filter` payload ([#427](https://github.com/stac-utils/stac-fastapi-pgstac/pull/427))
+- Return `400` instead of a pgstac error when `query` and `filter` are used together in `GET /collections` requests ([#427](https://github.com/stac-utils/stac-fastapi-pgstac/pull/427))
+
 ## [6.4.0] - 2026-09-04
 
 ### Added

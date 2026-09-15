@@ -90,6 +90,11 @@ class CoreCrudClient(AsyncBaseCoreClient):
             Collections which match the search criteria, returns all
             collections by default.
         """
+        if query and filter_expr:
+            raise InvalidQueryParameter(
+                "The 'query' and 'filter' parameters are mutually exclusive."
+            )
+
         base_url = get_base_url(request)
 
         next_link: dict[str, Any] | None = None
@@ -122,7 +127,13 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         # Add filter to ensure only Collections are returned (not Catalogs)
         # This is needed because catalogs are also stored in the collections table
-        if "filter" in clean_args:
+        # pgstac rejects a `query` + `filter` payload, so the type constraint is
+        # injected into whichever parameter the client already used
+        if "query" in clean_args and "filter" not in clean_args:
+            if isinstance(clean_args["query"], str):
+                clean_args["query"] = orjson.loads(clean_args["query"])
+            clean_args["query"]["type"] = {"eq": "Collection"}
+        elif "filter" in clean_args:
             clean_args["filter"] = {
                 "op": "and",
                 "args": [
