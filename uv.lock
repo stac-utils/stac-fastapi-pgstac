@@ -2,7 +2,8 @@ version = 1
 revision = 3
 requires-python = ">=3.11"
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
     "python_full_version < '3.12'",
 ]
 
@@ -2253,7 +2254,7 @@ wheels = [
 
 [[package]]
 name = "pypgstac"
-version = "0.9.12"
+version = "0.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cachetools" },
@@ -2267,9 +2268,9 @@ dependencies = [
     { name = "tenacity" },
     { name = "version-parser" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/09/f8/7fca297f66b63826719c3a0aaabe5574fc907937917a6a5a2b483c7b90f6/pypgstac-0.9.12.tar.gz", hash = "sha256:4fe9a1a0fe4d82942a178e8918d83a77db4d483909a571f81d2425dd9ab70a2f", size = 1644420, upload-time = "2026-07-30T14:37:37.519Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/35/52/8da95ae8e23e296b5747c4072a4e0dbd6ee20c039b159710672b5ec26810/pypgstac-0.10.0.tar.gz", hash = "sha256:ab93c2b3b94830c4056b437e0471f54dcb503f706b83390eb7115208a4705bcb", size = 1744777, upload-time = "2026-10-01T19:13:30.882Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a4/7d/687d3e5d255ca4325d3dd8573ea4b63ddbe1da7a9e76d2ebcd01f17cc904/pypgstac-0.9.12-py3-none-any.whl", hash = "sha256:a708fcedc06f8f75b0e53b933859e01396fbdbed9c79847596bc3ccc2a1303e6", size = 1818946, upload-time = "2026-07-30T14:37:35.676Z" },
+    { url = "https://files.pythonhosted.org/packages/50/4e/efade0816f3693779aae2d86366b341a49a9c693d72355e62febc7c9ec22/pypgstac-0.10.0-py3-none-any.whl", hash = "sha256:b4040194b5e181031d82a2eadba092e910f31648971dc482a9d70dbabec34966", size = 1916314, upload-time = "2026-10-01T19:13:29.264Z" },
 ]
 
 [[package]]
@@ -3169,7 +3170,7 @@ dev = [
     { name = "mirakuru", specifier = ">=2.0,<3.0" },
     { name = "pre-commit" },
     { name = "psycopg", extras = ["pool", "binary"], specifier = "==3.2.*" },
-    { name = "pypgstac", specifier = ">=0.9,<0.10" },
+    { name = "pypgstac", specifier = ">=0.10,<0.11" },
     { name = "pystac", extras = ["validation"] },
     { name = "pytest" },
     { name = "pytest-asyncio", specifier = ">=0.17,<1.3" },

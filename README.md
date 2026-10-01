@@ -27,7 +27,9 @@ PgSTAC stores all collection and item records as jsonb fields exactly as they co
 |                            --|          --|
 |                          2.5 | >=0.7,<0.8 |
 |                          3.0 | >=0.8,<0.9 |
-|                        >=4.0 | >=0.8,<0.10|
+|                   >=4.0,<6.3 | >=0.8,<0.10|
+|                   >=6.3,<7.1 | >=0.9,<0.10|
+|                        >=7.1 | >=0.9.2,<0.11|
 
 ## Usage
 
@@ -49,6 +51,8 @@ To configure **stac-fastapi-pgstac** to [hydrate search result items at the API 
 |                  --- |                --- |       --- |
 |                False |              False |    PgSTAC |
 |                 True |               True |       API |
+
+With pgstac >=0.10, API hydration uses the base item pgstac returns with each item.
 
 ### Multi-Tenant Catalogs Extension
 

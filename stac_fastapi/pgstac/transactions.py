@@ -85,6 +85,9 @@ class ClientValidateMixIn:
         expected_item_id: str | None = None,
     ) -> None:
         """Validate item."""
+        # pgstac owns this key; pgstac<0.10 would store a submitted one
+        cast(dict[str, Any], item).pop("pgstac:base_item", None)
+
         body_collection_id = item.get("collection")
         body_item_id = item.get("id")
 
