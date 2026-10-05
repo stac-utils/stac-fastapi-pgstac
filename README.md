@@ -53,6 +53,7 @@ To configure **stac-fastapi-pgstac** to [hydrate search result items at the API 
 |                 True |               True |       API |
 
 With pgstac >=0.10, API hydration uses the base item pgstac returns with each item.
+`pgstac:base_item` is reserved for pgstac: it is dropped from items submitted through the transaction extensions and never returned in responses.
 
 ### Multi-Tenant Catalogs Extension
 

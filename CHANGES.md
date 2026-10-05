@@ -4,8 +4,8 @@
 
 ### Changed
 
-- Support pgstac 0.10: API hydration uses the per-item base item pgstac returns as `pgstac:base_item`, and a submitted `pgstac:base_item` is dropped on write. Supported pgstac is `>=0.9.2,<0.11`.
-- Test against pgstac 0.9.12 and 0.10.0; dev pypgstac pin is `>=0.10,<0.11`.
+- Support pgstac 0.10: API hydration uses the per-item base item pgstac returns as `pgstac:base_item`. `pgstac:base_item` is now a reserved key, dropped from submitted items. Supported pgstac is `>=0.9.2,<0.11`.
+- Test against pgstac 0.9.12 and 0.10.0 (dev-only pypgstac pin `>=0.10,<0.11`).
 
 ### Fixed
 
