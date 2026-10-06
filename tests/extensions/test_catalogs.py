@@ -2081,6 +2081,17 @@ async def test_catalog_collections_fields(app_client):
         assert "description" not in collection
         assert "title" in collection
         assert "extent" in collection
+        assert "parent_ids" not in collection
+
+    resp = await app_client.get(
+        "/catalogs/search-catalog/collections", params={"fields": "-id"}
+    )
+    assert resp.status_code == 200
+    collections = resp.json()["collections"]
+    assert len(collections) == 3
+    for collection in collections:
+        assert "id" not in collection
+        assert "parent_ids" not in collection
 
 
 @pytest.mark.asyncio

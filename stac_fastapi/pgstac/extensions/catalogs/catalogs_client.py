@@ -380,6 +380,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         """Rewrite collection links for scoped context."""
         collection_id = collection.get("id")
         if not collection_id:
+            collection.pop("parent_ids", None)
             return
 
         parent_ids = collection.get("parent_ids", [])
