@@ -112,7 +112,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 "query": orjson.loads(unquote_plus(query)) if query else query,
             }
 
-            clean_args = clean_collection_search_args(
+            clean_args = self._clean_search_args(
                 base_args=base_args,
                 datetime=datetime,
                 fields=fields,
@@ -146,6 +146,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 "op": "=",
                 "args": [{"property": "type"}, "Collection"],
             }
+
+        join_free_text_query(clean_args)
 
         async with request.app.state.get_connection(request, "r") as conn:
             q, p = render(
@@ -688,18 +690,21 @@ def clean_search_args(  # noqa: C901
     return clean
 
 
+def join_free_text_query(args: dict[str, Any]) -> None:
+    """Join a list `q` into the single string `collection_search()` accepts"""
+    # NOTE: `FreeTextExtension` - pgstac only accepts `str`, so join the list[str] with ` OR `
+    # ref: https://github.com/stac-utils/stac-fastapi-pgstac/pull/263
+    if q := args.pop("q", None):
+        args["q"] = " OR ".join(q) if isinstance(q, list) else q
+
+
 def clean_collection_search_args(
     base_args: dict[str, Any],
     **kwargs: Any,
 ) -> dict[str, Any]:
     """Clean up collection search arguments to match `collection_search()`"""
     clean = clean_search_args(base_args, **kwargs)
-
-    # NOTE: `FreeTextExtension` - pgstac only accepts `str`, so join the list[str] with ` OR `
-    # ref: https://github.com/stac-utils/stac-fastapi-pgstac/pull/263
-    if q := clean.pop("q", None):
-        clean["q"] = " OR ".join(q) if isinstance(q, list) else q
-
+    join_free_text_query(clean)
     return clean
 
 

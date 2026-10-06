@@ -9,6 +9,10 @@ from stac_fastapi_catalogs_extension import (
     CATALOGS_TRANSACTION_CONFORMANCE,
 )
 
+from stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic import (
+    CatalogsDatabaseLogic,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -2259,6 +2263,44 @@ async def test_catalog_children_type_filter(app_client):
 
     resp = await app_client.get(f"/catalogs/{parent_id}/children")
     assert resp.json()["numberMatched"] == 5
+
+
+@pytest.mark.asyncio
+async def test_catalog_database_logic_without_new_parameters(app_client, monkeypatch):
+    """Test that database subclasses written before `search` and `child_type` still work."""
+    original_collections = CatalogsDatabaseLogic.get_catalog_collections
+    original_children = CatalogsDatabaseLogic.get_catalog_children
+
+    async def get_catalog_collections(
+        self, catalog_id, limit=10, token=None, request=None, sort=None
+    ):
+        return await original_collections(
+            self, catalog_id, limit=limit, token=token, request=request, sort=sort
+        )
+
+    async def get_catalog_children(
+        self, catalog_id, limit=10, token=None, request=None, sort=None
+    ):
+        return await original_children(
+            self, catalog_id, limit=limit, token=token, request=request, sort=sort
+        )
+
+    monkeypatch.setattr(
+        CatalogsDatabaseLogic, "get_catalog_collections", get_catalog_collections
+    )
+    monkeypatch.setattr(
+        CatalogsDatabaseLogic, "get_catalog_children", get_catalog_children
+    )
+
+    await setup_collection_search_catalogs(app_client)
+
+    resp = await app_client.get("/catalogs/search-catalog/collections")
+    assert resp.status_code == 200
+    assert resp.json()["numberMatched"] == 3
+
+    resp = await app_client.get("/catalogs/search-catalog/children")
+    assert resp.status_code == 200
+    assert resp.json()["numberMatched"] == 4
 
 
 @pytest.mark.asyncio

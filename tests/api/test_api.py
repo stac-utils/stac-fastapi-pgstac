@@ -677,6 +677,26 @@ async def test_get_collections_search(
 
 
 @pytest.mark.asyncio
+async def test_get_collections_uses_clean_search_args_override(
+    app_client, load_test_collection, monkeypatch
+):
+    """Test that a `_clean_search_args` override still applies to `GET /collections`."""
+    original = CoreCrudClient._clean_search_args
+    calls = []
+
+    def tracking_clean_search_args(self, base_args, **kwargs):
+        calls.append(kwargs)
+        return original(self, base_args, **kwargs)
+
+    monkeypatch.setattr(CoreCrudClient, "_clean_search_args", tracking_clean_search_args)
+
+    resp = await app_client.get("/collections", params={"sortby": "title"})
+    assert resp.status_code == 200
+    assert len(calls) == 1
+    assert calls[0]["sortby"] == ["title"]
+
+
+@pytest.mark.asyncio
 async def test_get_collections_search_query(
     app_client, load_test_collection, load_test2_collection
 ):

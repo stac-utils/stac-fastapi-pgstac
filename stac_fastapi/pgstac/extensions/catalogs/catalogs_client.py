@@ -577,6 +577,8 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             filter_query=filter_expr,
             filter_lang=filter_lang,
         )
+        # Only passed when used, so subclasses without a `search` parameter keep working
+        search_kwargs: dict[str, Any] = {"search": search} if search else {}
 
         (
             collections_list,
@@ -587,7 +589,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             limit=limit,
             token=token,
             request=request,
-            search=search or None,
+            **search_kwargs,
         )
 
         offset: int = _parse_pagination_token(token)
@@ -1073,12 +1075,14 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
         logger.info(f"get_catalog_children called with limit={limit}, token={token}")
         limit = limit or 10
+        # Only passed when used, so subclasses without a `child_type` parameter keep working
+        type_kwargs: dict[str, Any] = {"child_type": type} if type else {}
         children_list, total_hits, _ = await self.database.get_catalog_children(
             catalog_id=catalog_id,
             limit=limit,
             token=token,
             request=request,
-            child_type=type,
+            **type_kwargs,
         )
 
         # Generate links dynamically for each child in scoped context
