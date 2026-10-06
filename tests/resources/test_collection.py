@@ -513,6 +513,7 @@ async def test_get_collections_search_pagination(
     pgstac_version = res.json()["pgstac"]["pgstac_version"]
     if tuple(map(int, pgstac_version.split("."))) < (0, 9, 2):
         pytest.skip("Need PgSTAC > 0.9.2")
+    v10 = tuple(map(int, pgstac_version.split("."))) >= (0, 10, 0)
 
     resp = await app_client.get("/collections")
     assert resp.json()["numberReturned"] == 2
@@ -572,7 +573,7 @@ async def test_get_collections_search_pagination(
     assert {"root", "self"} == {link["rel"] for link in links}
 
     ###################
-    # offset=3, because there are 2 collections, we should not have `next` or `prev` links
+    # offset=3, past the end of the 2 collections, so there is no `next` link
     resp = await app_client.get(
         "/collections",
         params={"offset": 3},
@@ -580,8 +581,10 @@ async def test_get_collections_search_pagination(
     cols = resp.json()["collections"]
     links = resp.json()["links"]
     assert len(cols) == 0
-    assert len(links) == 2
-    assert {"root", "self"} == {link["rel"] for link in links}
+    # pgstac>=0.10 adds a `previous` link whenever offset > 0
+    assert {"root", "self"} | ({"previous"} if v10 else set()) == {
+        link["rel"] for link in links
+    }
 
     ###################
     # offset=3,limit=1
@@ -595,7 +598,8 @@ async def test_get_collections_search_pagination(
     assert len(links) == 3
     assert {"root", "self", "previous"} == {link["rel"] for link in links}
     prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
-    assert prev_link["href"].endswith("?limit=1&offset=2")
+    # pgstac>=0.10 steps prev back to the last page that holds a row
+    assert prev_link["href"].endswith("?limit=1&offset=1" if v10 else "?limit=1&offset=2")
 
     ###################
     # limit=2, offset=3, there should not be a next link
@@ -609,7 +613,7 @@ async def test_get_collections_search_pagination(
     assert len(links) == 3
     assert {"root", "self", "previous"} == {link["rel"] for link in links}
     prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
-    assert prev_link["href"].endswith("?limit=2&offset=1")
+    assert prev_link["href"].endswith("?limit=2" if v10 else "?limit=2&offset=1")
 
     ###################
     # offset=1,limit=1 should have a `previous` link
@@ -624,7 +628,7 @@ async def test_get_collections_search_pagination(
     assert len(links) == 3
     assert {"root", "self", "previous"} == {link["rel"] for link in links}
     prev_link = list(filter(lambda link: link["rel"] == "previous", links))[0]
-    assert "offset" in prev_link["href"]
+    assert "offset" not in prev_link["href"]
 
     ###################
     # offset=0, should not have next/previous link
@@ -639,7 +643,6 @@ async def test_get_collections_search_pagination(
     assert {"root", "self"} == {link["rel"] for link in links}
 
 
-@pytest.mark.xfail(strict=False)
 @pytest.mark.asyncio
 async def test_get_collections_search_offset_1(
     app_client, load_test_collection, load_test2_collection
@@ -648,8 +651,9 @@ async def test_get_collections_search_offset_1(
     pgstac_version = res.json()["pgstac"]["pgstac_version"]
     if tuple(map(int, pgstac_version.split("."))) < (0, 9, 2):
         pytest.skip("Need PgSTAC > 0.9.2")
+    if tuple(map(int, pgstac_version.split("."))) < (0, 10, 0):
+        pytest.xfail("pgstac<0.10 doesn't return a `prev` link when limit is not set")
 
-    # BUG: pgstac doesn't return a `prev` link when limit is not set
     # offset=1, should have a `previous` link
     resp = await app_client.get(
         "/collections",

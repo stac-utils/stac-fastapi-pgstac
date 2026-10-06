@@ -86,6 +86,7 @@ def database(postgresql_proc):
 @pytest.fixture(
     params=[
         "0.9.12",
+        "0.10.0",
     ],
 )
 def pgstac(request, database):

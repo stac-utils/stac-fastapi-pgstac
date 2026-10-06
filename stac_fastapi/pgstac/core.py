@@ -382,7 +382,10 @@ class CoreCrudClient(AsyncBaseCoreClient):
             )
 
             for item in item_collection.get("features", []):
-                base_item = await base_item_cache.get(item.get("collection"))
+                # pgstac>=0.10 returns each item's own base item
+                base_item = cast(dict[str, Any], item).pop("pgstac:base_item", None)
+                if not isinstance(base_item, dict):
+                    base_item = await base_item_cache.get(item.get("collection"))
                 # Exclude None values
                 base_item = {k: v for k, v in base_item.items() if v is not None}
 
