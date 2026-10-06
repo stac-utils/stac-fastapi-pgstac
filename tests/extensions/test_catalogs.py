@@ -4,6 +4,10 @@ import logging
 from unittest.mock import patch
 
 import pytest
+from stac_fastapi_catalogs_extension import (
+    CATALOGS_CORE_CONFORMANCE,
+    CATALOGS_TRANSACTION_CONFORMANCE,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -393,6 +397,12 @@ async def test_catalog_children_pagination(app_client):
     assert "self" in link_rels, "Missing 'self' link"
     assert "next" in link_rels, "Missing 'next' link for pagination"
 
+    # Children v1.0.0 requires root, parent and self on the response
+    assert "root" in link_rels, "Missing 'root' link"
+    assert "parent" in link_rels, "Missing 'parent' link"
+    parent_link = next(link for link in links if link.get("rel") == "parent")
+    assert parent_link["href"].endswith(f"/catalogs/{parent_id}")
+
     # Get the next link
     next_link = next((link for link in links if link.get("rel") == "next"), None)
     assert next_link is not None, "Next link should exist"
@@ -405,6 +415,13 @@ async def test_catalog_children_pagination(app_client):
     data_next = resp_next.json()
     assert len(data_next["children"]) == 3
     assert data_next["numberMatched"] >= 6
+
+    next_rels = [link.get("rel") for link in data_next["links"]]
+    assert {"root", "parent", "self"} <= set(next_rels)
+    for child in data["children"] + data_next["children"]:
+        assert any(link.get("rel") == "self" for link in child["links"]), (
+            f"Child {child['id']} is missing a self link"
+        )
 
     # Verify the children are different
     first_page_ids = {child.get("id") for child in data["children"]}
@@ -1992,3 +2009,255 @@ async def test_hide_alternate_parents_suppresses_related_links_on_catalog(
     # Parent link should still be present
     parent_links = [link for link in links if link.get("rel") == "parent"]
     assert len(parent_links) == 1, "Should still have exactly 1 parent link"
+
+
+async def create_titled_catalog_collection(app_client, catalog_id, collection_id, title):
+    """Helper to create a titled collection in a catalog."""
+    collection_data = {
+        "id": collection_id,
+        "type": "Collection",
+        "title": title,
+        "description": f"{title} collection",
+        "stac_version": "1.0.0",
+        "license": "proprietary",
+        "extent": {
+            "spatial": {"bbox": [[-180, -90, 180, 90]]},
+            "temporal": {"interval": [[None, None]]},
+        },
+        "links": [],
+    }
+    resp = await app_client.post(
+        f"/catalogs/{catalog_id}/collections", json=collection_data
+    )
+    assert resp.status_code == 201
+    return resp.json()
+
+
+async def setup_collection_search_catalogs(app_client):
+    """Create a catalog with three titled collections and a sub-catalog.
+
+    A second catalog's collection should not appear in the first catalog's listing.
+    """
+    await create_catalog(app_client, "search-catalog")
+    for collection_id, title in [
+        ("coll-b", "Bravo"),
+        ("coll-a", "Alpha"),
+        ("coll-c", "Charlie"),
+    ]:
+        await create_titled_catalog_collection(
+            app_client, "search-catalog", collection_id, title
+        )
+    await create_sub_catalog(app_client, "search-catalog", "search-sub")
+
+    await create_catalog(app_client, "other-catalog")
+    await create_titled_catalog_collection(
+        app_client, "other-catalog", "coll-other", "Other"
+    )
+
+
+@pytest.mark.asyncio
+async def test_catalog_collections_fields(app_client):
+    """Test the fields parameter on catalog collections."""
+    await setup_collection_search_catalogs(app_client)
+
+    resp = await app_client.get(
+        "/catalogs/search-catalog/collections", params={"fields": "id,title"}
+    )
+    assert resp.status_code == 200
+    collections = resp.json()["collections"]
+    assert len(collections) == 3
+    for collection in collections:
+        assert "title" in collection
+        assert "description" not in collection
+        assert "extent" not in collection
+
+    resp = await app_client.get(
+        "/catalogs/search-catalog/collections", params={"fields": "-description"}
+    )
+    assert resp.status_code == 200
+    collections = resp.json()["collections"]
+    assert len(collections) == 3
+    for collection in collections:
+        assert "description" not in collection
+        assert "title" in collection
+        assert "extent" in collection
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "sortby,expected",
+    [
+        ("+title", ["Alpha", "Bravo", "Charlie"]),
+        ("-title", ["Charlie", "Bravo", "Alpha"]),
+    ],
+)
+async def test_catalog_collections_sortby(app_client, sortby, expected):
+    """Test that sortby orders catalog collections across pages."""
+    await setup_collection_search_catalogs(app_client)
+
+    resp = await app_client.get(
+        "/catalogs/search-catalog/collections",
+        params={"sortby": sortby, "limit": 2},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert [c["title"] for c in data["collections"]] == expected[:2]
+
+    next_link = next(link for link in data["links"] if link["rel"] == "next")
+    resp = await app_client.get(next_link["href"])
+    assert resp.status_code == 200
+    assert [c["title"] for c in resp.json()["collections"]] == expected[2:]
+
+
+@pytest.mark.asyncio
+async def test_catalog_collections_free_text(app_client):
+    """Test that q matches catalog collections on title."""
+    await setup_collection_search_catalogs(app_client)
+
+    resp = await app_client.get(
+        "/catalogs/search-catalog/collections", params={"q": "Bravo"}
+    )
+    assert resp.status_code == 200
+    assert [c["id"] for c in resp.json()["collections"]] == ["coll-b"]
+
+    resp = await app_client.get(
+        "/catalogs/search-catalog/collections", params={"q": "Bravo,Charlie"}
+    )
+    assert resp.status_code == 200
+    assert {c["id"] for c in resp.json()["collections"]} == {"coll-b", "coll-c"}
+
+
+@pytest.mark.asyncio
+async def test_catalog_collections_filter(app_client):
+    """Test that filter narrows catalog collections and numberMatched."""
+    await setup_collection_search_catalogs(app_client)
+
+    resp = await app_client.get("/catalogs/search-catalog/collections")
+    assert resp.json()["numberMatched"] == 3
+
+    resp = await app_client.get(
+        "/catalogs/search-catalog/collections",
+        params={"filter": "title = 'Alpha'", "filter-lang": "cql2-text"},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert [c["id"] for c in data["collections"]] == ["coll-a"]
+    assert data["numberMatched"] == 1
+
+    cql2_json = '{"op": "<>", "args": [{"property": "title"}, "Alpha"]}'
+    resp = await app_client.get(
+        "/catalogs/search-catalog/collections",
+        params={"filter": cql2_json, "filter-lang": "cql2-json"},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert {c["id"] for c in data["collections"]} == {"coll-b", "coll-c"}
+    assert data["numberMatched"] == 2
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "cql2_filter",
+    [
+        "type = 'Catalog'",
+        "a_contains(parent_ids, 'other-catalog')",
+        "type = 'Catalog' OR a_contains(parent_ids, 'other-catalog')",
+        "id = 'coll-other' OR id <> 'no-such-id'",
+    ],
+)
+async def test_catalog_collections_filter_cannot_widen_scope(app_client, cql2_filter):
+    """Test that a filter cannot return catalogs or other catalogs' collections."""
+    await setup_collection_search_catalogs(app_client)
+
+    resp = await app_client.get(
+        "/catalogs/search-catalog/collections",
+        params={"filter": cql2_filter, "filter-lang": "cql2-text"},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    ids = {c["id"] for c in data["collections"]}
+    assert ids <= {"coll-a", "coll-b", "coll-c"}
+    assert data["numberMatched"] == len(ids)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"filter": "title = ", "filter-lang": "cql2-text"},
+        {"filter": "notapredicate", "filter-lang": "cql2-text"},
+        {"filter": "{not json", "filter-lang": "cql2-json"},
+        {"filter": '{"property": "title"}', "filter-lang": "cql2-json"},
+    ],
+)
+async def test_catalog_collections_invalid_filter(app_client, params):
+    """Test that a malformed or non-boolean filter returns 400."""
+    await setup_collection_search_catalogs(app_client)
+
+    resp = await app_client.get("/catalogs/search-catalog/collections", params=params)
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_catalog_collections_without_search_params(app_client):
+    """Test that a request without search params returns the scoped page as before."""
+    await setup_collection_search_catalogs(app_client)
+
+    resp = await app_client.get("/catalogs/search-catalog/collections")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert {c["id"] for c in data["collections"]} == {"coll-a", "coll-b", "coll-c"}
+    assert data["numberMatched"] == 3
+    assert data["numberReturned"] == 3
+    for collection in data["collections"]:
+        assert "description" in collection
+        assert "extent" in collection
+
+
+@pytest.mark.asyncio
+async def test_catalog_children_type_filter(app_client):
+    """Test that type limits catalog children to Catalogs or Collections."""
+    parent_id = "parent-for-children-type"
+    await create_catalog(app_client, parent_id)
+    for i in range(1, 4):
+        await create_sub_catalog(app_client, parent_id, f"{parent_id}-sub-{i}")
+    for i in range(1, 3):
+        await create_catalog_collection(app_client, parent_id, f"children-type-coll-{i}")
+
+    resp = await app_client.get(
+        f"/catalogs/{parent_id}/children", params={"type": "Catalog", "limit": 2}
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert [c["type"] for c in data["children"]] == ["Catalog", "Catalog"]
+    assert data["numberMatched"] == 3
+
+    next_link = next(link for link in data["links"] if link["rel"] == "next")
+    resp = await app_client.get(next_link["href"])
+    assert resp.status_code == 200
+    data = resp.json()
+    assert [c["type"] for c in data["children"]] == ["Catalog"]
+
+    resp = await app_client.get(
+        f"/catalogs/{parent_id}/children", params={"type": "Collection"}
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert [c["type"] for c in data["children"]] == ["Collection", "Collection"]
+    assert data["numberMatched"] == 2
+
+    resp = await app_client.get(f"/catalogs/{parent_id}/children")
+    assert resp.json()["numberMatched"] == 5
+
+
+@pytest.mark.asyncio
+async def test_catalog_conformance(app_client):
+    """Test that catalog conformance tracks the extension's conformance classes."""
+    await create_catalog(app_client, "conformance-catalog")
+
+    resp = await app_client.get("/catalogs/conformance-catalog/conformance")
+    assert resp.status_code == 200
+    assert resp.json()["conformsTo"] == [
+        *CATALOGS_CORE_CONFORMANCE,
+        *CATALOGS_TRANSACTION_CONFORMANCE,
+    ]

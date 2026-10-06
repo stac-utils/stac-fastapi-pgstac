@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 
-from stac_fastapi.api.models import JSONResponse
+from stac_fastapi.api.models import JSONResponse, create_request_model
 from stac_fastapi.extensions import (
     BulkTransactionExtension,
     CollectionSearchExtension,
@@ -158,6 +158,7 @@ class Extensions:
         if self.settings.enable_catalogs_extension:
             try:
                 from stac_fastapi_catalogs_extension import (
+                    CatalogCollectionsRequest,
                     CatalogsExtension,
                     CatalogsTransactionExtension,
                 )
@@ -177,6 +178,21 @@ class Extensions:
                 CatalogsDatabaseLogic,
             )
 
+            # No Query or pagination, the route pages with token/offset and has no `query`
+            enabled_keys = self.settings.enabled_extensions
+            catalog_collections_extensions = [
+                extension
+                for key, extension in self.collection_search_map.items()
+                if key in ("fields", "sort", "free_text", "filter")
+                and (enabled_keys is None or key in enabled_keys)
+            ]
+            catalog_collections_get_request_model = create_request_model(
+                model_name="CatalogCollectionsRequest",
+                base_model=CatalogCollectionsRequest,
+                extensions=catalog_collections_extensions,
+                request_type="GET",
+            )
+
             try:
                 catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
 
@@ -187,6 +203,7 @@ class Extensions:
                         "enable_response_models": self.settings.enable_response_models
                     },
                     hide_alternate_parents=self.settings.hide_alternate_parents,
+                    catalog_collections_get_request_model=catalog_collections_get_request_model,
                 )
                 logger.info("CatalogsExtension (read-only) enabled successfully.")
 

@@ -112,7 +112,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 "query": orjson.loads(unquote_plus(query)) if query else query,
             }
 
-            clean_args = self._clean_search_args(
+            clean_args = clean_collection_search_args(
                 base_args=base_args,
                 datetime=datetime,
                 fields=fields,
@@ -146,12 +146,6 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 "op": "=",
                 "args": [{"property": "type"}, "Collection"],
             }
-
-        # NOTE: `FreeTextExtension` - pgstac will only accept `str` so we need to
-        # join the list[str] with ` OR `
-        # ref: https://github.com/stac-utils/stac-fastapi-pgstac/pull/263
-        if q := clean_args.pop("q", None):
-            clean_args["q"] = " OR ".join(q) if isinstance(q, list) else q
 
         async with request.app.state.get_connection(request, "r") as conn:
             q, p = render(
@@ -619,71 +613,94 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         return item_collection
 
-    def _clean_search_args(  # noqa: C901
+    def _clean_search_args(
         self,
         base_args: dict[str, Any],
-        intersects: str | None = None,
-        datetime: str | None = None,
-        fields: list[str] | None = None,
-        sortby: str | None = None,
-        filter_query: str | None = None,
-        filter_lang: str | None = None,
-        q: str | list[str] | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Clean up search arguments to match format expected by pgstac"""
-        if filter_query:
-            if filter_lang == "cql2-text":
-                e = Expr(filter_query)
-                base_args["filter"] = e.to_json()
-                base_args["filter_lang"] = "cql2-json"
+        return clean_search_args(base_args, **kwargs)
+
+
+def clean_search_args(  # noqa: C901
+    base_args: dict[str, Any],
+    intersects: str | None = None,
+    datetime: str | None = None,
+    fields: list[str] | None = None,
+    sortby: str | None = None,
+    filter_query: str | None = None,
+    filter_lang: str | None = None,
+    q: str | list[str] | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Clean up search arguments to match format expected by pgstac"""
+    if filter_query:
+        if filter_lang == "cql2-text":
+            e = Expr(filter_query)
+            base_args["filter"] = e.to_json()
+            base_args["filter_lang"] = "cql2-json"
+        else:
+            base_args["filter"] = orjson.loads(filter_query)
+            base_args["filter_lang"] = filter_lang
+
+    if datetime:
+        base_args["datetime"] = datetime
+
+    if intersects:
+        base_args["intersects"] = orjson.loads(unquote_plus(intersects))
+
+    if sortby:
+        # https://github.com/radiantearth/stac-spec/tree/master/api-spec/extensions/sort#http-get-or-post-form
+        sort_param = []
+        for sort in sortby:
+            sortparts = re.match(r"^([+-]?)(.*)$", sort)
+            if sortparts:
+                sort_param.append(
+                    {
+                        "field": sortparts.group(2).strip(),
+                        "direction": "desc" if sortparts.group(1) == "-" else "asc",
+                    }
+                )
+        base_args["sortby"] = sort_param
+
+    if fields:
+        includes = set()
+        excludes = set()
+        for field in fields:
+            if field[0] == "-":
+                excludes.add(field[1:])
+            elif field[0] == "+":
+                includes.add(field[1:])
             else:
-                base_args["filter"] = orjson.loads(filter_query)
-                base_args["filter_lang"] = filter_lang
+                includes.add(field)
 
-        if datetime:
-            base_args["datetime"] = datetime
+        base_args["fields"] = {"include": list(includes), "exclude": list(excludes)}
 
-        if intersects:
-            base_args["intersects"] = orjson.loads(unquote_plus(intersects))
+    if q:
+        base_args["q"] = q
 
-        if sortby:
-            # https://github.com/radiantearth/stac-spec/tree/master/api-spec/extensions/sort#http-get-or-post-form
-            sort_param = []
-            for sort in sortby:
-                sortparts = re.match(r"^([+-]?)(.*)$", sort)
-                if sortparts:
-                    sort_param.append(
-                        {
-                            "field": sortparts.group(2).strip(),
-                            "direction": "desc" if sortparts.group(1) == "-" else "asc",
-                        }
-                    )
-            base_args["sortby"] = sort_param
+    # Remove None values from dict
+    clean = {}
+    for k, v in base_args.items():
+        if v is not None and v != []:
+            clean[k] = v
 
-        if fields:
-            includes = set()
-            excludes = set()
-            for field in fields:
-                if field[0] == "-":
-                    excludes.add(field[1:])
-                elif field[0] == "+":
-                    includes.add(field[1:])
-                else:
-                    includes.add(field)
+    return clean
 
-            base_args["fields"] = {"include": list(includes), "exclude": list(excludes)}
 
-        if q:
-            base_args["q"] = q
+def clean_collection_search_args(
+    base_args: dict[str, Any],
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Clean up collection search arguments to match `collection_search()`"""
+    clean = clean_search_args(base_args, **kwargs)
 
-        # Remove None values from dict
-        clean = {}
-        for k, v in base_args.items():
-            if v is not None and v != []:
-                clean[k] = v
+    # NOTE: `FreeTextExtension` - pgstac only accepts `str`, so join the list[str] with ` OR `
+    # ref: https://github.com/stac-utils/stac-fastapi-pgstac/pull/263
+    if q := clean.pop("q", None):
+        clean["q"] = " OR ".join(q) if isinstance(q, list) else q
 
-        return clean
+    return clean
 
 
 async def health_check(request: Request) -> dict | JSONResponse:

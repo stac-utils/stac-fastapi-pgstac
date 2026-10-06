@@ -319,6 +319,7 @@ class CatalogsDatabaseLogic:
         token: str | None = None,
         request: Any = None,
         sort: list[dict[str, Any]] | None = None,
+        child_type: str | None = None,
     ) -> tuple[list[dict[str, Any]], int | None, dict[str, Any] | None]:
         """Get all children (catalogs and collections) of a catalog.
 
@@ -329,6 +330,8 @@ class CatalogsDatabaseLogic:
             limit: The number of results to return.
             token: The pagination token.
             request: The FastAPI request object.
+            sort: Optional sort parameter.
+            child_type: Only return children of this type, `Catalog` or `Collection`.
 
         Returns:
             A tuple of (children list, total count, next link dict if any).
@@ -348,15 +351,25 @@ class CatalogsDatabaseLogic:
         try:
             async with request.app.state.get_connection(request, "r") as conn:
                 # Use collection_search with CQL2 filter for parent_ids contains catalog_id
-                # No type filter needed - returns both Catalogs and Collections
+                # Without child_type, returns both Catalogs and Collections
                 # PgSTAC uses offset-based pagination for collections
                 offset = _parse_pagination_token(token)
 
-                search_query = {
-                    "filter": {
-                        "op": "a_contains",
-                        "args": [{"property": "parent_ids"}, catalog_id],
-                    },
+                children_filter: dict[str, Any] = {
+                    "op": "a_contains",
+                    "args": [{"property": "parent_ids"}, catalog_id],
+                }
+                if child_type:
+                    children_filter = {
+                        "op": "and",
+                        "args": [
+                            {"op": "=", "args": [{"property": "type"}, child_type]},
+                            children_filter,
+                        ],
+                    }
+
+                search_query: dict[str, Any] = {
+                    "filter": children_filter,
                     "limit": limit,
                     "offset": offset,
                 }
@@ -380,6 +393,7 @@ class CatalogsDatabaseLogic:
         token: str | None = None,
         request: Any = None,
         sort: list[dict[str, Any]] | None = None,
+        search: dict[str, Any] | None = None,
     ) -> tuple[list[dict[str, Any]], int | None, dict[str, Any] | None]:
         """Get collections linked to a catalog.
 
@@ -390,6 +404,10 @@ class CatalogsDatabaseLogic:
             limit: The number of results to return.
             token: The pagination token.
             request: The FastAPI request object.
+            sort: Sort order. Takes precedence over `search["sortby"]`.
+            search: Collection search parameters in `collection_search()` form.
+                Only `filter` (CQL2-JSON), `fields`, `sortby`, `q` and `filter_lang` are used.
+                `filter` is ANDed onto the catalog scoping clauses, so it can only narrow the result.
 
         Returns:
             A tuple of (collections list, total count, next link dict if any).
@@ -413,20 +431,26 @@ class CatalogsDatabaseLogic:
                 # PgSTAC uses offset-based pagination for collections
                 offset = _parse_pagination_token(token)
 
-                search_query = {
-                    "filter": {
-                        "op": "and",
-                        "args": [
-                            {"op": "=", "args": [{"property": "type"}, "Collection"]},
-                            {
-                                "op": "a_contains",
-                                "args": [{"property": "parent_ids"}, catalog_id],
-                            },
-                        ],
+                filter_args: list[dict[str, Any]] = [
+                    {"op": "=", "args": [{"property": "type"}, "Collection"]},
+                    {
+                        "op": "a_contains",
+                        "args": [{"property": "parent_ids"}, catalog_id],
                     },
+                ]
+                search_query: dict[str, Any] = {
+                    "filter": {"op": "and", "args": filter_args},
                     "limit": limit,
                     "offset": offset,
                 }
+
+                if search:
+                    # ANDed onto the scoping so it can't reach other catalogs or catalogs
+                    if search.get("filter") is not None:
+                        filter_args.append(search["filter"])
+                    for key in ("fields", "sortby", "q", "filter_lang"):
+                        if key in search:
+                            search_query[key] = search[key]
 
                 if sort:
                     search_query["sortby"] = sort

@@ -45,6 +45,7 @@ from stac_fastapi.extensions.sort import (
 
 # Catalogs extension (required for tests)
 from stac_fastapi_catalogs_extension import (
+    CatalogCollectionsRequest,
     CatalogsExtension,
     CatalogsTransactionExtension,
 )
@@ -147,10 +148,27 @@ def api_client(request):
     if CatalogsExtension is not None:
         catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
 
+        catalog_collections_get_request_model = create_request_model(
+            model_name="CatalogCollectionsRequest",
+            base_model=CatalogCollectionsRequest,
+            extensions=[
+                CollectionSearchSortExtension(),
+                FieldsExtension(
+                    conformance_classes=[FieldsConformanceClasses.COLLECTIONS]
+                ),
+                CollectionSearchFilterExtension(client=FiltersClient()),
+                FreeTextExtension(
+                    conformance_classes=[FreeTextConformanceClasses.COLLECTIONS],
+                ),
+            ],
+            request_type="GET",
+        )
+
         # Register the read-only catalogs extension
         catalogs_extension = CatalogsExtension(
             client=catalogs_client,
             settings={"enable_response_models": api_settings.enable_response_models},
+            catalog_collections_get_request_model=catalog_collections_get_request_model,
         )
         application_extensions.append(catalogs_extension)
 
