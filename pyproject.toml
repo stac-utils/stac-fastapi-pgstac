@@ -71,7 +71,8 @@ dev = [
         "pytest",
         "pytest-cov",
         "pytest-asyncio>=0.17,<1.3",
-        "pypgstac>=0.9,<0.10",
+        # tests only: ships the migrations to install every pgstac in the test matrix
+        "pypgstac>=0.10,<0.11",
         "requests",
         "stac-fastapi-catalogs-extension>=1.0.0,<2.0",
         "stac-fastapi-api[metrics]",
@@ -147,7 +148,7 @@ ignore = [
 ]
 
 [tool.bumpversion]
-current_version = "7.0.0"
+current_version = "7.1.0"
 parse = """(?x)
     (?P<major>\\d+)\\.
     (?P<minor>\\d+)\\.

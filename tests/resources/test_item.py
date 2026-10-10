@@ -1750,6 +1750,30 @@ async def test_item_search_freetext(app_client, load_test_data, load_test_collec
 
 
 @pytest.mark.asyncio
+async def test_base_item_key_not_stored(app_client, load_test_data, load_test_collection):
+    """A submitted `pgstac:base_item` is not stored through bulk insert or JSON Patch."""
+    collection_id = load_test_collection["id"]
+    item = load_test_data("test_item.json")
+    item["pgstac:base_item"] = 1
+    item_url = f"/collections/{collection_id}/items/{item['id']}"
+
+    resp = await app_client.post(
+        f"/collections/{collection_id}/bulk_items", json={"items": {item["id"]: item}}
+    )
+    assert resp.status_code == 200
+    resp = await app_client.get(item_url)
+    assert resp.status_code == 200
+    assert "pgstac:base_item" not in resp.text
+
+    operations = [{"op": "add", "path": "/pgstac:base_item", "value": 1}]
+    resp = await app_client.patch(item_url, json=operations)
+    assert resp.status_code == 200
+    resp = await app_client.get(item_url)
+    assert resp.status_code == 200
+    assert "pgstac:base_item" not in resp.text
+
+
+@pytest.mark.asyncio
 async def test_item_asset_change(app_client, load_test_data):
     """Check that changing item_assets in collection does
     not affect existing items if hydration should not occur.
@@ -1788,7 +1812,10 @@ async def test_item_asset_change(app_client, load_test_data):
 
     ###########################################################################
     # Remove item_assets in collection
-    operations = [{"op": "remove", "path": "/item_assets"}]
+    operations = [
+        {"op": "remove", "path": "/item_assets"},
+        {"op": "replace", "path": "/stac_version", "value": "1.1.0"},
+    ]
     resp = await app_client.patch(f"/collections/{collection_id}", json=operations)
     assert resp.status_code == 200
 
@@ -1803,6 +1830,24 @@ async def test_item_asset_change(app_client, load_test_data):
     )
     assert len(resp.json()["features"]) == 1
     assert resp.status_code == 200
+
+    res = await app_client.get("/_mgmt/health")
+    if tuple(map(int, res.json()["pgstac"]["pgstac_version"].split("."))) >= (0, 10, 0):
+        # pgstac>=0.10 hydrates each item against its own base item
+        test_item2 = {**test_item, "id": f"{test_item['id']}-2", "stac_version": "1.1.0"}
+        resp = await app_client.post(
+            f"/collections/{collection_id}/items", json=test_item2
+        )
+        assert resp.status_code == 201
+        for item in (test_item, test_item2):
+            resp = await app_client.get(
+                f"/collections/{collection_id}/items/{item['id']}"
+            )
+            assert resp.status_code == 200
+            assert "pgstac:base_item" not in resp.text
+            assert resp.json()["assets"] == item["assets"]
+            assert resp.json()["stac_version"] == item["stac_version"]
+        return
 
     # NOTE: here we should only get `scale`, `offset` and `spatial_resolution`
     # because the other values were stripped on ingestion (dehydration is a default in PgSTAC)

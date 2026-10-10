@@ -7,6 +7,18 @@
 - Support stac-fastapi-catalogs-extension 1.0.0: add the required `parent` link to `/catalogs/{catalog_id}/children`, pass collection-search parameters through `/catalogs/{catalog_id}/collections`, and update catalogs conformance URIs to v1.0.0. **breaking change** for the `catalogs` extra
 - Support the `type` parameter on `/catalogs/{catalog_id}/children` to return only Catalogs or only Collections, as advertised by the Children `type-filter` conformance class.
 
+## [7.1.0] - 2026-10-06
+
+### Changed
+
+- Support pgstac 0.10: API hydration uses the per-item base item pgstac returns as `pgstac:base_item`. `pgstac:base_item` is now a reserved key, dropped from submitted items. Supported pgstac is `>=0.9.2,<0.11`. ([#433](https://github.com/stac-utils/stac-fastapi-pgstac/pull/433))
+- Test against pgstac 0.9.12 and 0.10.0 (dev-only pypgstac pin `>=0.10,<0.11`). ([#433](https://github.com/stac-utils/stac-fastapi-pgstac/pull/433))
+
+### Fixed
+
+- Collection search `previous` links drop `offset=0`, like `next` links. ([#433](https://github.com/stac-utils/stac-fastapi-pgstac/pull/433))
+- Docs badge in the README points at the `deploy_mkdocs.yml` workflow. ([#434](https://github.com/stac-utils/stac-fastapi-pgstac/pull/434))
+
 ## [7.0.0] - 2026-09-15
 
 ### Added
@@ -658,7 +670,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.0.0..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.1.0..main>
+[7.1.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.0.0..7.1.0>
 [7.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.4.1..7.0.0>
 [6.4.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.4.0..6.4.1>
 [6.4.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.1..6.4.0>
