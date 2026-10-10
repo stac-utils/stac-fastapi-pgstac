@@ -1,8 +1,18 @@
+from contextlib import asynccontextmanager
+
+import pytest
 from stac_fastapi.extensions import CollectionSearchExtension
 from stac_fastapi.types.extension import ApiExtension
 
+from stac_fastapi.pgstac.app import instantiate_api
 from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.models.extensions import Extensions, get_default_extensions_map
+
+
+@asynccontextmanager
+async def noop_lifespan(app):
+    """Lifespan that skips connecting to the database."""
+    yield
 
 
 class TestApiExtension(ApiExtension):
@@ -115,3 +125,32 @@ def test_extensions_modify_default():
     assert (
         "custom-sort-feature" not in extensions_b.search_map["query"].conformance_classes
     )
+
+
+@pytest.mark.parametrize(
+    "enabled_extensions,expected",
+    [
+        (None, {"fields", "sortby", "q", "filter", "filter-lang", "filter-crs"}),
+        (["sort", "free_text"], {"sortby", "q"}),
+    ],
+)
+def test_catalog_collections_search_params_in_openapi(enabled_extensions, expected):
+    settings = Settings(
+        testing=True,
+        enable_catalogs_extension=True,
+        enabled_extensions=enabled_extensions,
+    )
+    api = instantiate_api(
+        extensions=Extensions(settings=settings),
+        settings=settings,
+        lifespan=noop_lifespan,
+    )
+
+    operation = api.app.openapi()["paths"]["/catalogs/{catalog_id}/collections"]["get"]
+    params = {p["name"] for p in operation["parameters"]}
+
+    assert {"catalog_id", "limit", "token"} <= params
+    search_params = {"fields", "sortby", "q", "filter", "filter-lang", "filter-crs"}
+    assert params & search_params == expected
+    assert "query" not in params
+    assert "offset" not in params

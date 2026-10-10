@@ -5,16 +5,23 @@ import logging
 from typing import Any, cast
 
 import attr
+import orjson
 from buildpg import render
+from cql2 import Expr
 from fastapi import HTTPException
 from stac_fastapi.types.errors import NotFoundError
 from stac_fastapi.types.requests import get_base_url
 from stac_fastapi.types.stac import ItemCollection
+from stac_fastapi_catalogs_extension import (
+    CATALOGS_CORE_CONFORMANCE,
+    CATALOGS_TRANSACTION_CONFORMANCE,
+)
 from stac_fastapi_catalogs_extension.client import AsyncBaseCatalogsClient
 from stac_fastapi_catalogs_extension.types import Children
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from stac_fastapi.pgstac.core import clean_collection_search_args
 from stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic import (
     CatalogsDatabaseLogic,
     _parse_pagination_token,
@@ -45,6 +52,23 @@ def _remove_null_titles(obj: Any) -> Any:
         return [_remove_null_titles(item) for item in obj]
     else:
         return obj
+
+
+def _validate_cql2_filter(filter_expr: str, filter_lang: str | None) -> None:
+    """Raise a 400 for a filter that is not a valid CQL2 predicate.
+
+    `Expr` parses leniently (a bare word becomes a property reference), so
+    `validate()` is what rejects non-boolean expressions before they reach pgstac.
+    """
+    try:
+        if filter_lang == "cql2-text":
+            expr = Expr(filter_expr)
+        else:
+            expr = Expr(orjson.loads(filter_expr))
+        expr.validate()
+    # cql2 raises a bare Exception on parse errors
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid filter: {e}") from e
 
 
 logger = logging.getLogger(__name__)
@@ -356,6 +380,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         """Rewrite collection links for scoped context."""
         collection_id = collection.get("id")
         if not collection_id:
+            collection.pop("parent_ids", None)
             return
 
         parent_ids = collection.get("parent_ids", [])
@@ -512,21 +537,48 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         limit: int | None = None,
         token: str | None = None,
         request: Request | None = None,
+        fields: list[str] | None = None,
+        sortby: list[str] | None = None,
+        q: list[str] | None = None,
+        filter_expr: str | None = None,
+        filter_lang: str | None = None,
         **kwargs,
     ) -> JSONResponse:
         """Get collections linked to a catalog.
+
+        The collection search parameters are only bound when the extension is
+        given a `catalog_collections_get_request_model` that includes them.
 
         Args:
             catalog_id: The ID of the catalog.
             limit: The maximum number of collections to return.
             token: The pagination token.
             request: The FastAPI request object.
+            fields: Fields extension include/exclude list.
+            sortby: Sort extension fields, prefixed with `+` or `-`.
+            q: Free text search terms.
+            filter_expr: CQL2 filter expression.
+            filter_lang: CQL2 encoding of `filter_expr`.
             **kwargs: Additional keyword arguments.
 
         Returns:
             Collections object containing collections list, total count, and pagination info.
         """
         limit, token = CatalogsClient._extract_limit_and_token(limit, token, request)
+
+        if filter_expr:
+            _validate_cql2_filter(filter_expr, filter_lang)
+
+        search = clean_collection_search_args(
+            base_args={},
+            fields=fields,
+            sortby=sortby,
+            q=q,
+            filter_query=filter_expr,
+            filter_lang=filter_lang,
+        )
+        # Only passed when used, so subclasses without a `search` parameter keep working
+        search_kwargs: dict[str, Any] = {"search": search} if search else {}
 
         (
             collections_list,
@@ -537,6 +589,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             limit=limit,
             token=token,
             request=request,
+            **search_kwargs,
         )
 
         offset: int = _parse_pagination_token(token)
@@ -998,6 +1051,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         limit: int | None = None,
         token: str | None = None,
         request: Request | None = None,
+        type: str | None = None,
         **kwargs,
     ) -> Children:
         """Get all children (catalogs and collections) of a catalog.
@@ -1007,6 +1061,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             limit: The maximum number of children to return.
             token: The pagination token.
             request: The FastAPI request object.
+            type: Only return children of this type, `Catalog` or `Collection`.
             **kwargs: Additional keyword arguments.
 
         Returns:
@@ -1020,11 +1075,14 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
         logger.info(f"get_catalog_children called with limit={limit}, token={token}")
         limit = limit or 10
+        # Only passed when used, so subclasses without a `child_type` parameter keep working
+        type_kwargs: dict[str, Any] = {"child_type": type} if type else {}
         children_list, total_hits, _ = await self.database.get_catalog_children(
             catalog_id=catalog_id,
             limit=limit,
             token=token,
             request=request,
+            **type_kwargs,
         )
 
         # Generate links dynamically for each child in scoped context
@@ -1048,26 +1106,11 @@ class CatalogsClient(AsyncBaseCatalogsClient):
                 # Remove internal metadata
                 child.pop("parent_ids", None)
 
-        # Generate pagination links - always generate from scratch based on offset
-        # Don't rely on database's next_token as it may have empty body
-        links = []
-        if request:
-            offset: int = _parse_pagination_token(token)
-
-            # Check if there are more results
-            next_token_to_use = None
-            if total_hits and offset + len(children_list) < total_hits:
-                # There are more results, generate next link
-                next_offset = offset + len(children_list)
-                next_token_to_use = {
-                    "rel": "next",
-                    "type": "application/json",
-                    "body": {"offset": next_offset},
-                }
-
-            links = await CollectionSearchPagingLinks(
-                request=request, next=next_token_to_use, prev=None
-            ).get_links()
+        # Children v1.0.0 requires root, parent and self links on the response
+        offset: int = _parse_pagination_token(token)
+        links = await CatalogsClient._build_response_links(
+            catalog_id, offset, len(children_list), total_hits, request
+        )
 
         return Children(
             children=children_list or [],
@@ -1099,10 +1142,8 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         return JSONResponse(
             content={
                 "conformsTo": [
-                    "https://api.stacspec.org/v1.0.0/core",
-                    "https://api.stacspec.org/v1.0.0-rc.1/multi-tenant-catalogs",
-                    "https://api.stacspec.org/v1.0.0-rc.1/multi-tenant-catalogs/transaction",
-                    "https://api.stacspec.org/v1.0.0-rc.2/children",
+                    *CATALOGS_CORE_CONFORMANCE,
+                    *CATALOGS_TRANSACTION_CONFORMANCE,
                 ]
             }
         )

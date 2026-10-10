@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Support stac-fastapi-catalogs-extension 1.0.0: add the required `parent` link to `/catalogs/{catalog_id}/children`, pass collection-search parameters through `/catalogs/{catalog_id}/collections`, and update catalogs conformance URIs to v1.0.0. **breaking change** for the `catalogs` extra
+- Support the `type` parameter on `/catalogs/{catalog_id}/children` to return only Catalogs or only Collections, as advertised by the Children `type-filter` conformance class.
+
 ## [7.1.0] - 2026-10-06
 
 ### Changed
