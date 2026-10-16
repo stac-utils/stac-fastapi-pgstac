@@ -5,9 +5,7 @@ import logging
 from typing import Any, cast
 
 import attr
-import orjson
 from buildpg import render
-from cql2 import Expr
 from fastapi import HTTPException
 from stac_fastapi.types.errors import NotFoundError
 from stac_fastapi.types.requests import get_base_url
@@ -52,23 +50,6 @@ def _remove_null_titles(obj: Any) -> Any:
         return [_remove_null_titles(item) for item in obj]
     else:
         return obj
-
-
-def _validate_cql2_filter(filter_expr: str, filter_lang: str | None) -> None:
-    """Raise a 400 for a filter that is not a valid CQL2 predicate.
-
-    `Expr` parses leniently (a bare word becomes a property reference), so
-    `validate()` is what rejects non-boolean expressions before they reach pgstac.
-    """
-    try:
-        if filter_lang == "cql2-text":
-            expr = Expr(filter_expr)
-        else:
-            expr = Expr(orjson.loads(filter_expr))
-        expr.validate()
-    # cql2 raises a bare Exception on parse errors
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid filter: {e}") from e
 
 
 logger = logging.getLogger(__name__)
@@ -565,9 +546,6 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             Collections object containing collections list, total count, and pagination info.
         """
         limit, token = CatalogsClient._extract_limit_and_token(limit, token, request)
-
-        if filter_expr:
-            _validate_cql2_filter(filter_expr, filter_lang)
 
         search = clean_collection_search_args(
             base_args={},

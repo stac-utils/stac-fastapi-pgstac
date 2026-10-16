@@ -621,10 +621,27 @@ class CoreCrudClient(AsyncBaseCoreClient):
     def _clean_search_args(
         self,
         base_args: dict[str, Any],
+        intersects: str | None = None,
+        datetime: str | None = None,
+        fields: list[str] | None = None,
+        sortby: str | None = None,
+        filter_query: str | None = None,
+        filter_lang: str | None = None,
+        q: str | list[str] | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Clean up search arguments to match format expected by pgstac"""
-        return clean_search_args(base_args, **kwargs)
+        return clean_search_args(
+            base_args,
+            intersects=intersects,
+            datetime=datetime,
+            fields=fields,
+            sortby=sortby,
+            filter_query=filter_query,
+            filter_lang=filter_lang,
+            q=q,
+            **kwargs,
+        )
 
 
 def clean_search_args(  # noqa: C901
@@ -640,13 +657,21 @@ def clean_search_args(  # noqa: C901
 ) -> dict[str, Any]:
     """Clean up search arguments to match format expected by pgstac"""
     if filter_query:
-        if filter_lang == "cql2-text":
-            e = Expr(filter_query)
-            base_args["filter"] = e.to_json()
-            base_args["filter_lang"] = "cql2-json"
-        else:
-            base_args["filter"] = orjson.loads(filter_query)
-            base_args["filter_lang"] = filter_lang
+        # `Expr` parses a bare word as a property reference,
+        # `validate()` rejects non-boolean filters before they reach pgstac
+        try:
+            if filter_lang == "cql2-text":
+                expr = Expr(filter_query)
+                expr.validate()
+                base_args["filter"] = expr.to_json()
+                base_args["filter_lang"] = "cql2-json"
+            else:
+                base_args["filter"] = orjson.loads(filter_query)
+                Expr(base_args["filter"]).validate()
+                base_args["filter_lang"] = filter_lang
+        # cql2 raises a bare Exception on parse errors
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid filter: {e}") from e
 
     if datetime:
         base_args["datetime"] = datetime

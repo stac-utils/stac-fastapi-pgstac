@@ -445,7 +445,7 @@ class CatalogsDatabaseLogic:
                 }
 
                 if search:
-                    # ANDed onto the scoping so it can't reach other catalogs or catalogs
+                    # ANDed onto the scoping so it can't return Catalogs or another catalog's collections
                     if search.get("filter") is not None:
                         filter_args.append(search["filter"])
                     for key in ("fields", "sortby", "q", "filter_lang"):

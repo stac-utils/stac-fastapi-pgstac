@@ -696,6 +696,29 @@ async def test_get_collections_uses_clean_search_args_override(
     assert calls[0]["sortby"] == ["title"]
 
 
+def test_clean_search_args_positional_arguments():
+    """Test that subclasses can still pass `_clean_search_args` arguments positionally."""
+    clean = CoreCrudClient()._clean_search_args({}, None, "2020-01-01T00:00:00Z")
+    assert clean == {"datetime": "2020-01-01T00:00:00Z"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("path", ["/search", "/collections"])
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"filter": "title = ", "filter-lang": "cql2-text"},
+        {"filter": "notapredicate", "filter-lang": "cql2-text"},
+        {"filter": "{not json", "filter-lang": "cql2-json"},
+        {"filter": '{"property": "title"}', "filter-lang": "cql2-json"},
+    ],
+)
+async def test_get_invalid_filter(app_client, path, params):
+    """Test that a malformed or non-boolean filter returns 400 on GET routes."""
+    resp = await app_client.get(path, params=params)
+    assert resp.status_code == 400
+
+
 @pytest.mark.asyncio
 async def test_get_collections_search_query(
     app_client, load_test_collection, load_test2_collection
