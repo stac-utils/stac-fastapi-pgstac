@@ -41,6 +41,8 @@ dependencies = [
     "stac-fastapi-types>=7.0,<8.0",
     "asyncpg",
     "buildpg",
+    # Pin transitive brotli dep to avoid Node2Shell CVE-2026-111497
+    "brotli>=1.2.1",
     "brotli_asgi",
     "cql2>=0.3.6",
     "hydraters>=0.1.3",
