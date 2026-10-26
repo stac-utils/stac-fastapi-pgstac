@@ -3123,6 +3123,7 @@ source = { editable = "." }
 dependencies = [
     { name = "asyncpg" },
     { name = "attrs" },
+    { name = "brotli" },
     { name = "brotli-asgi" },
     { name = "buildpg" },
     { name = "cql2" },
@@ -3180,6 +3181,7 @@ docs = [
 requires-dist = [
     { name = "asyncpg" },
     { name = "attrs" },
+    { name = "brotli", specifier = ">=1.2.1" },
     { name = "brotli-asgi" },
     { name = "buildpg" },
     { name = "cql2", specifier = ">=0.3.6" },

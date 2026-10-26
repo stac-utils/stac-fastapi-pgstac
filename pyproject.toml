@@ -41,6 +41,7 @@ dependencies = [
     "stac-fastapi-types>=7.0,<8.0",
     "asyncpg",
     "buildpg",
+    "brotli>=1.2.1",
     "brotli_asgi",
     "cql2>=0.3.6",
     "hydraters>=0.1.3",
