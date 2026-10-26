@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [7.2.0] - 2026-10-26
+
 ### Changed
 
 - Support stac-fastapi-catalogs-extension 1.0.0: add the required `parent` link to `/catalogs/{catalog_id}/children`, pass collection-search parameters through `/catalogs/{catalog_id}/collections`, and update catalogs conformance URIs to v1.0.0. **breaking change** for the `catalogs` extra
@@ -674,7 +676,8 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.1.0..main>
+[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.2.0..main>
+[7.2.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.1.0..7.2.0>
 [7.1.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.0.0..7.1.0>
 [7.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.4.1..7.0.0>
 [6.4.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.4.0..6.4.1>
