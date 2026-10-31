@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Advertise the CQL2 conformance classes supported by pgstac (`advanced-comparison-operators`, `case-insensitive-comparison`, `accent-insensitive-comparison` and `property-property`) in `conformsTo`, so clients such as STAC Browser can discover them. ([#442](https://github.com/stac-utils/stac-fastapi-pgstac/pull/442))
+
 ## [7.2.0] - 2026-10-26
 
 ### Changed
