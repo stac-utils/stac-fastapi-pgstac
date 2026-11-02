@@ -14,6 +14,7 @@ from stac_fastapi.extensions import (
     TransactionExtension,
 )
 from stac_fastapi.extensions.fields import FieldsConformanceClasses
+from stac_fastapi.extensions.filter import FilterConformanceClasses
 from stac_fastapi.extensions.free_text import FreeTextConformanceClasses
 from stac_fastapi.extensions.query import QueryConformanceClasses
 from stac_fastapi.extensions.sort import (
@@ -72,7 +73,17 @@ def get_default_extensions_map(key: str) -> dict[str, ApiExtension]:
             "pagination": TokenPaginationExtension(),
         },
     }
-    return DEFAULT_EXTENSIONS.get(key, {})
+    extensions = DEFAULT_EXTENSIONS.get(key, {})
+    if "filter" in extensions:
+        filter_extension = extensions["filter"]
+        filter_extension.conformance_classes = [
+            *filter_extension.conformance_classes,
+            FilterConformanceClasses.ADVANCED_COMPARISON_OPERATORS,
+            FilterConformanceClasses.CASE_INSENSITIVE_COMPARISON,
+            FilterConformanceClasses.ACCENT_INSENSITIVE_COMPARISON,
+            FilterConformanceClasses.PROPERTY_PROPERTY,
+        ]
+    return extensions
 
 
 logger = logging.getLogger(__name__)

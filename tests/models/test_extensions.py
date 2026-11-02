@@ -1,11 +1,14 @@
 from contextlib import asynccontextmanager
 
 import pytest
+from httpx import ASGITransport, AsyncClient
+from stac_fastapi.api.app import StacApi
 from stac_fastapi.extensions import CollectionSearchExtension
 from stac_fastapi.types.extension import ApiExtension
 
 from stac_fastapi.pgstac.app import instantiate_api
 from stac_fastapi.pgstac.config import Settings
+from stac_fastapi.pgstac.core import CoreCrudClient
 from stac_fastapi.pgstac.models.extensions import Extensions, get_default_extensions_map
 
 
@@ -42,6 +45,52 @@ def test_extensions_default():
     )
     assert extensions.transaction == []
     assert extensions.extra == []
+
+
+@pytest.mark.parametrize(
+    "key,filter_conformance",
+    [
+        (
+            "search_map",
+            "https://api.stacspec.org/v1.0.0-rc.2/item-search#filter",
+        ),
+        (
+            "item_collection_map",
+            "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/features-filter",
+        ),
+        (
+            "collection_search_map",
+            "https://api.stacspec.org/v1.0.0-rc.1/collection-search#filter",
+        ),
+    ],
+)
+async def test_default_filter_conformance(key, filter_conformance):
+    api = StacApi(
+        settings=Settings(testing=True),
+        client=CoreCrudClient(),
+        extensions=[get_default_extensions_map(key)["filter"]],
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=api.app), base_url="http://test"
+    ) as client:
+        response = await client.get("/conformance")
+
+    assert response.status_code == 200
+    conformance = response.json()["conformsTo"]
+    assert filter_conformance in conformance
+    assert "http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/filter" in conformance
+    assert {
+        f"http://www.opengis.net/spec/cql2/1.0/conf/{name}"
+        for name in (
+            "basic-cql2",
+            "cql2-json",
+            "cql2-text",
+            "advanced-comparison-operators",
+            "case-insensitive-comparison",
+            "accent-insensitive-comparison",
+            "property-property",
+        )
+    }.issubset(conformance)
 
 
 def test_extensions_enabled():
