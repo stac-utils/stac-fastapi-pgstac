@@ -12,8 +12,18 @@ updates:
   - package-ecosystem: uv
     directory: "/"
     schedule:
-      interval: weekly
+      interval: monthly
+    cooldown:
+      default-days: 7
+    allow:
+    # Include transitive dependencies (e.g. brotli): the Docker image installs uv.lock as is.
+    - dependency-type: "all"
     groups:
       all:
+        patterns:
+        - "*"
+      # Without this, each vulnerable dependency gets its own security PR.
+      security:
+        applies-to: security-updates
         patterns:
         - "*"
