@@ -41,10 +41,12 @@ LABEL org.opencontainers.image.licenses="MIT"
 ENV PYTHONUNBUFFERED=1 \
     PATH="/opt/venv/bin:$PATH"
 
-# Install build dependencies
+# Upgrade OS packages. The app runs from /opt/venv and never uses pip, so remove
+# it, plus setuptools and wheel on Python bases that still ship them.
 RUN apt-get update && \
     apt-get -y upgrade && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    python -m pip uninstall -y pip setuptools wheel
 
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
