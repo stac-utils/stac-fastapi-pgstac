@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Remove pip from the runtime stage of the Docker image, plus setuptools and wheel on Python bases that still ship them: the app runs from `/opt/venv` and never uses them. In images built on this one, `pip install` now fails: run `python -m ensurepip` as root, then use `python -m pip`.
+
 ## [7.2.1] - 2026-01-02
 
 ### Fixed
