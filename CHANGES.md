@@ -1,11 +1,5 @@
 # Changelog
 
-## [Unreleased]
-
-### Fixed
-
-- Remove pip from the runtime stage of the Docker image, plus setuptools and wheel on Python bases that still ship them: the app runs from `/opt/venv` and never uses them. In images built on this one, `pip install` now fails: run `python -m ensurepip` as root, then use `python -m pip`.
-
 ## [7.2.1] - 2026-01-02
 
 ### Fixed
@@ -686,7 +680,6 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.2.0..main>
 [7.2.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.1.0..7.2.0>
 [7.1.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.0.0..7.1.0>
 [7.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.4.1..7.0.0>
