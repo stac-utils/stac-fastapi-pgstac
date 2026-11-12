@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.2.2](https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.2.1...7.2.2) (2026-11-12)
+
+
+### Bug Fixes
+
+* **docker:** remove pip from the runtime image ([#449](https://github.com/stac-utils/stac-fastapi-pgstac/issues/449)) ([ebd74b6](https://github.com/stac-utils/stac-fastapi-pgstac/commit/ebd74b6656d03849f3364c53501d432dbbdd64c7))
+
 ## [7.2.1] - 2026-01-02
 
 ### Fixed
