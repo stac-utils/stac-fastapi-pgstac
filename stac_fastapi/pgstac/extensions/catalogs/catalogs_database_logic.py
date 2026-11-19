@@ -406,7 +406,8 @@ class CatalogsDatabaseLogic:
             request: The FastAPI request object.
             sort: Sort order. Takes precedence over `search["sortby"]`.
             search: Collection search parameters in `collection_search()` form.
-                Only `filter` (CQL2-JSON), `fields`, `sortby`, `q` and `filter_lang` are used.
+                Only `filter` (CQL2-JSON), `bbox`, `datetime`, `fields`, `sortby`, `q`
+                and `filter_lang` are used.
                 `filter` is ANDed onto the catalog scoping clauses, so it can only narrow the result.
 
         Returns:
@@ -448,7 +449,14 @@ class CatalogsDatabaseLogic:
                     # ANDed onto the scoping so it can't return Catalogs or another catalog's collections
                     if search.get("filter") is not None:
                         filter_args.append(search["filter"])
-                    for key in ("fields", "sortby", "q", "filter_lang"):
+                    for key in (
+                        "bbox",
+                        "datetime",
+                        "fields",
+                        "sortby",
+                        "q",
+                        "filter_lang",
+                    ):
                         if key in search:
                             search_query[key] = search[key]
 

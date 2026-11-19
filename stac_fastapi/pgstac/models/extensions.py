@@ -13,6 +13,7 @@ from stac_fastapi.extensions import (
     TokenPaginationExtension,
     TransactionExtension,
 )
+from stac_fastapi.extensions.collection_search import CollectionSearchConformanceClasses
 from stac_fastapi.extensions.fields import FieldsConformanceClasses
 from stac_fastapi.extensions.filter import FilterConformanceClasses
 from stac_fastapi.extensions.free_text import FreeTextConformanceClasses
@@ -85,6 +86,10 @@ def get_default_extensions_map(key: str) -> dict[str, ApiExtension]:
         ]
     return extensions
 
+
+CATALOGS_COLLECTION_SEARCH_MARKER = (
+    "https://api.stacspec.org/v1.0.0/multi-tenant-catalogs#collection-search"
+)
 
 logger = logging.getLogger(__name__)
 
@@ -169,7 +174,7 @@ class Extensions:
         if self.settings.enable_catalogs_extension:
             try:
                 from stac_fastapi_catalogs_extension import (
-                    CatalogCollectionsRequest,
+                    CATALOGS_CORE_CONFORMANCE,
                     CatalogsExtension,
                     CatalogsTransactionExtension,
                 )
@@ -188,6 +193,10 @@ class Extensions:
             from stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic import (
                 CatalogsDatabaseLogic,
             )
+            from stac_fastapi.pgstac.extensions.catalogs.types import (
+                PgstacCatalogCollectionItemsRequest,
+                PgstacCatalogCollectionsRequest,
+            )
 
             # No Query or pagination, the route pages with token/offset and has no `query`
             enabled_keys = self.settings.enabled_extensions
@@ -199,13 +208,41 @@ class Extensions:
             ]
             catalog_collections_get_request_model = create_request_model(
                 model_name="CatalogCollectionsRequest",
-                base_model=CatalogCollectionsRequest,
+                base_model=PgstacCatalogCollectionsRequest,
                 extensions=catalog_collections_extensions,
                 request_type="GET",
             )
 
+            # The marker binds the scoped listing to the root's Collection Search
+            # class. Only declare it when collection search is on: the
+            # v1.0.0/collection-search base in the library's
+            # CATALOGS_COLLECTION_SEARCH_CONFORMANCE is not used here because the
+            # CollectionSearchExtension already registers the v1.0.0-rc.1 base.
+            collection_search_enabled = (
+                enabled_keys is None or "collection_search" in enabled_keys
+            )
+            scoped_collection_search_classes = (
+                [
+                    CATALOGS_COLLECTION_SEARCH_MARKER,
+                    CollectionSearchConformanceClasses.COLLECTIONSEARCH.value,
+                    CollectionSearchConformanceClasses.BASIS.value,
+                    *(
+                        uri
+                        for ext in catalog_collections_extensions
+                        for uri in ext.conformance_classes
+                    ),
+                ]
+                if collection_search_enabled
+                else []
+            )
+
             try:
-                catalogs_client = CatalogsClient(database=CatalogsDatabaseLogic())
+                catalogs_client = CatalogsClient(
+                    database=CatalogsDatabaseLogic(),
+                    scoped_conformance_classes=list(
+                        dict.fromkeys(scoped_collection_search_classes)
+                    ),
+                )
 
                 # Register the read-only catalogs extension
                 catalogs_extension = CatalogsExtension(
@@ -213,8 +250,17 @@ class Extensions:
                     settings={
                         "enable_response_models": self.settings.enable_response_models
                     },
+                    conformance_classes=[
+                        *CATALOGS_CORE_CONFORMANCE,
+                        *(
+                            [CATALOGS_COLLECTION_SEARCH_MARKER]
+                            if collection_search_enabled
+                            else []
+                        ),
+                    ],
                     hide_alternate_parents=self.settings.hide_alternate_parents,
                     catalog_collections_get_request_model=catalog_collections_get_request_model,
+                    catalog_collection_items_get_request_model=PgstacCatalogCollectionItemsRequest,
                 )
                 logger.info("CatalogsExtension (read-only) enabled successfully.")
 
