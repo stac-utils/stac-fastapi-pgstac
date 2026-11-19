@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.3.0](https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.2.2...7.3.0) (2026-11-19)
+
+
+### Features
+
+* upgrade catalogs extension to 1.1.0 ([#458](https://github.com/stac-utils/stac-fastapi-pgstac/issues/458)) ([b6617c4](https://github.com/stac-utils/stac-fastapi-pgstac/commit/b6617c455cfe4b3a0bceb120857a240b72448592))
+
 ## [7.2.2](https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.2.1...7.2.2) (2026-11-12)
 
 
