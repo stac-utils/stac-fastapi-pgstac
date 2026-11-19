@@ -12,7 +12,6 @@ from stac_fastapi.types.requests import get_base_url
 from stac_fastapi.types.stac import ItemCollection
 from stac_fastapi_catalogs_extension import (
     CATALOGS_CORE_CONFORMANCE,
-    CATALOGS_TRANSACTION_CONFORMANCE,
 )
 from stac_fastapi_catalogs_extension.client import AsyncBaseCatalogsClient
 from stac_fastapi_catalogs_extension.types import Children
@@ -64,6 +63,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
     """
 
     database: CatalogsDatabaseLogic = attr.ib()
+    scoped_conformance_classes: list[str] = attr.ib(factory=list, kw_only=True)
 
     @staticmethod
     async def _add_catalog_links(
@@ -441,12 +441,6 @@ class CatalogsClient(AsyncBaseCatalogsClient):
                 "title": "Queryables",
                 "href": base_url + f"/collections/{collection_id}/queryables",
             },
-            {
-                "rel": "http://www.opengis.net/def/rel/ogc/1.0/sortables",
-                "type": "application/schema+json",
-                "title": "Sortables",
-                "href": base_url + f"/collections/{collection_id}/sortables",
-            },
         ]
 
     @staticmethod
@@ -518,6 +512,8 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         limit: int | None = None,
         token: str | None = None,
         request: Request | None = None,
+        bbox: list[float] | None = None,
+        datetime: str | None = None,
         fields: list[str] | None = None,
         sortby: list[str] | None = None,
         q: list[str] | None = None,
@@ -535,6 +531,8 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             limit: The maximum number of collections to return.
             token: The pagination token.
             request: The FastAPI request object.
+            bbox: Bounding box matching the collection spatial extents.
+            datetime: Datetime matching the collection temporal extents.
             fields: Fields extension include/exclude list.
             sortby: Sort extension fields, prefixed with `+` or `-`.
             q: Free text search terms.
@@ -548,7 +546,8 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         limit, token = CatalogsClient._extract_limit_and_token(limit, token, request)
 
         search = clean_collection_search_args(
-            base_args={},
+            base_args={"bbox": bbox},
+            datetime=datetime,
             fields=fields,
             sortby=sortby,
             q=q,
@@ -902,6 +901,8 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         limit: int | None = None,
         token: str | None = None,
         request: Request | None = None,
+        bbox: list[float] | None = None,
+        datetime: str | None = None,
         **kwargs,
     ) -> ItemCollection:
         """Get items from a collection in a catalog.
@@ -914,6 +915,8 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             limit: The maximum number of items to return.
             token: The pagination token.
             request: The FastAPI request object.
+            bbox: Bounding box to filter items.
+            datetime: Datetime to filter items.
             **kwargs: Additional keyword arguments.
 
         Returns:
@@ -945,8 +948,13 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             "limit": limit,
         }
 
-        if token:
-            search_query["token"] = token
+        for key, value in (
+            ("token", token),
+            ("bbox", bbox),
+            ("datetime", datetime),
+        ):
+            if value:
+                search_query[key] = value
 
         # Execute search and get full item collection with links
         async with request.app.state.get_connection(request, "r") as conn:
@@ -1099,8 +1107,13 @@ class CatalogsClient(AsyncBaseCatalogsClient):
 
     async def get_catalog_conformance(
         self, catalog_id: str, request: Request | None = None, **kwargs
-    ) -> JSONResponse:
+    ) -> dict[str, Any]:
         """Get conformance classes for a catalog.
+
+        Returns a dict rather than a Response so the extension merges in the
+        conformance classes registered on `app.state.catalogs_conformance_classes`
+        (core, marker, and transaction classes when the transaction extension is
+        registered).
 
         Args:
             catalog_id: The ID of the catalog.
@@ -1108,7 +1121,7 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             **kwargs: Additional keyword arguments.
 
         Returns:
-            JSONResponse containing conformance classes.
+            Dictionary containing conformance classes.
 
         Raises:
             NotFoundError: If the catalog does not exist.
@@ -1117,14 +1130,12 @@ class CatalogsClient(AsyncBaseCatalogsClient):
         if request:
             await self.database.find_catalog(catalog_id, request=request)
 
-        return JSONResponse(
-            content={
-                "conformsTo": [
-                    *CATALOGS_CORE_CONFORMANCE,
-                    *CATALOGS_TRANSACTION_CONFORMANCE,
-                ]
-            }
-        )
+        return {
+            "conformsTo": [
+                *CATALOGS_CORE_CONFORMANCE,
+                *self.scoped_conformance_classes,
+            ]
+        }
 
     async def get_catalog_queryables(
         self, catalog_id: str, request: Request | None = None, **kwargs

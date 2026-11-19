@@ -125,6 +125,8 @@ class CoreCrudClient(AsyncBaseCoreClient):
             # When CollectionSearchExtension is disabled, use a high limit to return all collections
             clean_args = {"limit": limit or 10000, "offset": offset or 0}
 
+        reject_collection_parent_ids_sort(clean_args)
+
         # Add filter to ensure only Collections are returned (not Catalogs)
         # This is needed because catalogs are also stored in the collections table
         # pgstac rejects a `query` + `filter` payload, so the type constraint is
@@ -726,6 +728,19 @@ def join_free_text_query(args: dict[str, Any]) -> None:
         args["q"] = " OR ".join(q) if isinstance(q, list) else q
 
 
+def reject_collection_parent_ids_sort(clean_args: dict[str, Any]) -> None:
+    """Reject `parent_ids` as a collection sort field.
+
+    `parent_ids` is pgstac-internal catalog metadata, not a collection
+    sortable, but pgstac accepts it silently.
+    """
+    for sort in clean_args.get("sortby") or []:
+        if sort.get("field") == "parent_ids":
+            raise InvalidQueryParameter(
+                "Sorting collections by 'parent_ids' is not supported."
+            )
+
+
 def clean_collection_search_args(
     base_args: dict[str, Any],
     **kwargs: Any,
@@ -733,6 +748,7 @@ def clean_collection_search_args(
     """Clean up collection search arguments to match `collection_search()`"""
     clean = clean_search_args(base_args, **kwargs)
     join_free_text_query(clean)
+    reject_collection_parent_ids_sort(clean)
     return clean
 
 

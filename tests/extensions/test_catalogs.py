@@ -4,6 +4,11 @@ import logging
 from unittest.mock import patch
 
 import pytest
+from stac_fastapi.extensions.collection_search import CollectionSearchConformanceClasses
+from stac_fastapi.extensions.fields import FieldsConformanceClasses
+from stac_fastapi.extensions.filter import FilterConformanceClasses
+from stac_fastapi.extensions.free_text import FreeTextConformanceClasses
+from stac_fastapi.extensions.sort import SortConformanceClasses
 from stac_fastapi_catalogs_extension import (
     CATALOGS_CORE_CONFORMANCE,
     CATALOGS_TRANSACTION_CONFORMANCE,
@@ -12,6 +17,7 @@ from stac_fastapi_catalogs_extension import (
 from stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic import (
     CatalogsDatabaseLogic,
 )
+from stac_fastapi.pgstac.models.extensions import CATALOGS_COLLECTION_SEARCH_MARKER
 
 logger = logging.getLogger(__name__)
 
@@ -2310,7 +2316,197 @@ async def test_catalog_conformance(app_client):
 
     resp = await app_client.get("/catalogs/conformance-catalog/conformance")
     assert resp.status_code == 200
-    assert resp.json()["conformsTo"] == [
+    conforms = resp.json()["conformsTo"]
+
+    expected = {
         *CATALOGS_CORE_CONFORMANCE,
         *CATALOGS_TRANSACTION_CONFORMANCE,
+        CATALOGS_COLLECTION_SEARCH_MARKER,
+        CollectionSearchConformanceClasses.COLLECTIONSEARCH.value,
+        CollectionSearchConformanceClasses.BASIS.value,
+        SortConformanceClasses.COLLECTION_SEARCH_SORT.value,
+        FieldsConformanceClasses.COLLECTIONS.value,
+        FreeTextConformanceClasses.COLLECTIONS.value,
+        FilterConformanceClasses.FILTER.value,
+        FilterConformanceClasses.COLLECTIONS.value,
+        FilterConformanceClasses.BASIC_CQL2.value,
+        FilterConformanceClasses.CQL2_JSON.value,
+        FilterConformanceClasses.CQL2_TEXT.value,
+    }
+    assert expected.issubset(conforms)
+    # no duplicates and sorted, per the extension's merge
+    assert conforms == sorted(set(conforms))
+    # no scoped sortables route exists
+    assert SortConformanceClasses.COLLECTION_SEARCH_SORTABLES.value not in conforms
+
+
+@pytest.mark.asyncio
+async def test_landing_page_collection_search_marker(app_client):
+    """The landing page declares the multi-tenant collection-search marker."""
+    resp = await app_client.get("/conformance")
+    assert resp.status_code == 200
+    assert CATALOGS_COLLECTION_SEARCH_MARKER in resp.json()["conformsTo"]
+
+
+def test_collection_search_marker_off_when_collection_search_disabled():
+    """No marker when the collection search extension is disabled."""
+    from stac_fastapi.pgstac.config import Settings
+    from stac_fastapi.pgstac.models.extensions import Extensions
+
+    settings = Settings(
+        testing=True,
+        enable_catalogs_extension=True,
+        enabled_extensions=["query"],
+    )
+    catalogs_extension = Extensions(settings=settings).catalog[0]
+
+    assert CATALOGS_COLLECTION_SEARCH_MARKER not in (
+        catalogs_extension.conformance_classes
+    )
+    assert catalogs_extension.client.scoped_conformance_classes == []
+
+
+@pytest.mark.asyncio
+async def test_catalog_collections_bbox_datetime(app_client):
+    """bbox and datetime filter the scoped collections listing."""
+    catalog = await create_catalog(app_client, "bbox-dt-catalog")
+
+    collection_template = {
+        "type": "Collection",
+        "description": "Test collection",
+        "stac_version": "1.0.0",
+        "license": "proprietary",
+        "links": [],
+    }
+    extents = [
+        ("keep", {"bbox": [[10, 10, 20, 20]], "interval": [[None, None]]}),
+        ("drop", {"bbox": [[-50, -50, -40, -40]], "interval": [[None, None]]}),
+        (
+            "dt-keep",
+            {
+                "bbox": [[-50, -50, -40, -40]],
+                "interval": [["2020-01-01T00:00:00Z", None]],
+            },
+        ),
+        (
+            "dt-drop",
+            {
+                "bbox": [[-50, -50, -40, -40]],
+                "interval": [["1972-01-01T00:00:00Z", "2013-01-01T00:00:00Z"]],
+            },
+        ),
     ]
+    for coll_id, extent in extents:
+        resp = await app_client.post(
+            f"/catalogs/{catalog['id']}/collections",
+            json={
+                **collection_template,
+                "id": coll_id,
+                "extent": {
+                    "spatial": {"bbox": extent["bbox"]},
+                    "temporal": {"interval": extent["interval"]},
+                },
+            },
+        )
+        assert resp.status_code == 201, resp.text
+
+    resp = await app_client.get(f"/catalogs/{catalog['id']}/collections?bbox=12,12,14,14")
+    assert resp.status_code == 200, resp.text
+    assert {c["id"] for c in resp.json()["collections"]} == {"keep"}
+
+    resp = await app_client.get(
+        f"/catalogs/{catalog['id']}/collections?datetime=2020-06-01T00:00:00Z"
+    )
+    assert resp.status_code == 200, resp.text
+    assert {c["id"] for c in resp.json()["collections"]} == {
+        "keep",
+        "drop",
+        "dt-keep",
+    }
+
+
+@pytest.mark.asyncio
+async def test_collection_parent_ids_sort_rejected(app_client):
+    """`parent_ids` is internal metadata and must not be a collection sort key."""
+    resp = await app_client.get("/collections", params={"sortby": "parent_ids"})
+    assert resp.status_code == 400, resp.text
+    resp = await app_client.get("/collections", params={"sortby": "-parent_ids"})
+    assert resp.status_code == 400, resp.text
+
+    catalog = await create_catalog(app_client, "sort-parent-catalog")
+    resp = await app_client.get(
+        f"/catalogs/{catalog['id']}/collections", params={"sortby": "parent_ids"}
+    )
+    assert resp.status_code == 400, resp.text
+
+    # ordinary collection sortables still work
+    resp = await app_client.get(
+        f"/catalogs/{catalog['id']}/collections", params={"sortby": "-id"}
+    )
+    assert resp.status_code == 200, resp.text
+
+
+@pytest.mark.asyncio
+async def test_catalog_route_limit_is_cropped(app_client):
+    """catalogs-ext 1.1.0 crops limit above the route maximums instead of 400."""
+    catalog = await create_catalog(app_client, "limit-catalog")
+    collection = await create_catalog_collection(
+        app_client, catalog["id"], "limit-collection"
+    )
+
+    for path, limit in (
+        ("/catalogs", 1001),
+        (f"/catalogs/{catalog['id']}/collections", 1001),
+        (f"/catalogs/{catalog['id']}/catalogs", 1001),
+        (f"/catalogs/{catalog['id']}/children", 1001),
+        (
+            f"/catalogs/{catalog['id']}/collections/{collection['id']}/items",
+            10001,
+        ),
+    ):
+        resp = await app_client.get(path, params={"limit": limit})
+        assert resp.status_code == 200, (path, resp.text)
+
+
+@pytest.mark.asyncio
+async def test_catalog_collection_items_bbox_datetime(
+    app_client, load_test_data, load_test_collection
+):
+    """bbox and datetime filter the scoped items listing."""
+    catalog = await create_catalog(app_client, "items-filter-catalog")
+    collection_id = "test-collection"
+
+    # link the existing collection to the catalog
+    resp = await app_client.post(
+        f"/catalogs/{catalog['id']}/collections",
+        json={"id": collection_id},
+    )
+    assert resp.status_code == 200, resp.text
+
+    item = load_test_data("test2_item.json")
+    item["collection"] = collection_id
+    resp = await app_client.post(f"/collections/{collection_id}/items", json=item)
+    assert resp.status_code == 201, resp.text
+
+    base = f"/catalogs/{catalog['id']}/collections/{collection_id}/items"
+
+    # test2_item sits around lon -84, lat 31, datetime 1990-12-23
+    resp = await app_client.get(base, params={"bbox": "-85,30,-80,33"})
+    assert resp.status_code == 200, resp.text
+    assert len(resp.json()["features"]) == 1
+
+    resp = await app_client.get(base, params={"bbox": "0,0,1,1"})
+    assert resp.status_code == 200, resp.text
+    assert len(resp.json()["features"]) == 0
+
+    resp = await app_client.get(
+        base, params={"datetime": "1990-01-01T00:00:00Z/1991-12-31T00:00:00Z"}
+    )
+    assert resp.status_code == 200, resp.text
+    assert len(resp.json()["features"]) == 1
+
+    resp = await app_client.get(
+        base, params={"datetime": "2020-01-01T00:00:00Z/2021-01-01T00:00:00Z"}
+    )
+    assert resp.status_code == 200, resp.text
+    assert len(resp.json()["features"]) == 0

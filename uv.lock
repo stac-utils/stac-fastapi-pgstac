@@ -3334,7 +3334,7 @@ metrics = [
 
 [[package]]
 name = "stac-fastapi-catalogs-extension"
-version = "1.0.0"
+version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
@@ -3346,9 +3346,9 @@ dependencies = [
     { name = "starlette" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7a/03/cb661eb6531b4c0017c0bb8c4002eb5a3ad0db24136339535f184b492b61/stac_fastapi_catalogs_extension-1.0.0.tar.gz", hash = "sha256:66d38be5cf842a211c97deb4b73641821f4908b54a0d40dd0a75d152eb3b75fc", size = 26617, upload-time = "2026-09-17T06:26:14.304Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/21/17/1b26804ed465f279b493d37b4545f00aecc324f79868420aa07b04b65384/stac_fastapi_catalogs_extension-1.1.0.tar.gz", hash = "sha256:4afb2f55bee78f489abb0d5cd3143a47a2a198f60eb4c9a937d593d3bee8288f", size = 30865, upload-time = "2026-11-18T03:19:29.231Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8c/ac/e743fbb8fbf1c7afefd9c31f3c3e1f5ca0bb5aa66dc880a9999775984f39/stac_fastapi_catalogs_extension-1.0.0-py3-none-any.whl", hash = "sha256:71e5b051c9fc33b45559c263b020628682f6ca95a02ca2a4e40e4b907d4f6eae", size = 18130, upload-time = "2026-09-17T06:26:13.251Z" },
+    { url = "https://files.pythonhosted.org/packages/06/45/54073b2f830260db10912f15f37c9da4de4761405d4b7052af4981bb0567/stac_fastapi_catalogs_extension-1.1.0-py3-none-any.whl", hash = "sha256:f095bcfa71f66f8593e18f55854c160a81eef15884067c09d7e3dc68cc330920", size = 19864, upload-time = "2026-11-18T03:19:27.115Z" },
 ]
 
 [[package]]
@@ -3441,7 +3441,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.7,<3.0" },
     { name = "stac-fastapi-api", specifier = ">=7.0,<8.0" },
     { name = "stac-fastapi-api", extras = ["metrics"], marker = "extra == 'metrics'" },
-    { name = "stac-fastapi-catalogs-extension", marker = "extra == 'catalogs'", specifier = ">=1.0.0,<2.0" },
+    { name = "stac-fastapi-catalogs-extension", marker = "extra == 'catalogs'", specifier = ">=1.1.0,<2.0" },
     { name = "stac-fastapi-extensions", specifier = ">=7.0,<8.0" },
     { name = "stac-fastapi-types", specifier = ">=7.0,<8.0" },
     { name = "stac-pydantic", extras = ["validation"], marker = "extra == 'validation'" },
@@ -3463,7 +3463,7 @@ dev = [
     { name = "pytest-postgresql", specifier = ">=7.0" },
     { name = "requests" },
     { name = "stac-fastapi-api", extras = ["metrics"] },
-    { name = "stac-fastapi-catalogs-extension", specifier = ">=1.0.0,<2.0" },
+    { name = "stac-fastapi-catalogs-extension", specifier = ">=1.1.0,<2.0" },
 ]
 docs = [
     { name = "black", specifier = ">=23.10.1" },
