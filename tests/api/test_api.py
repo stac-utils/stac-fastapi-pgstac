@@ -677,6 +677,106 @@ async def test_get_collections_search(
 
 
 @pytest.mark.asyncio
+async def test_get_collections_uses_clean_search_args_override(
+    app_client, load_test_collection, monkeypatch
+):
+    """Test that a `_clean_search_args` override still applies to `GET /collections`."""
+    original = CoreCrudClient._clean_search_args
+    calls = []
+
+    def tracking_clean_search_args(self, base_args, **kwargs):
+        calls.append(kwargs)
+        return original(self, base_args, **kwargs)
+
+    monkeypatch.setattr(CoreCrudClient, "_clean_search_args", tracking_clean_search_args)
+
+    resp = await app_client.get("/collections", params={"sortby": "title"})
+    assert resp.status_code == 200
+    assert len(calls) == 1
+    assert calls[0]["sortby"] == ["title"]
+
+
+def test_clean_search_args_positional_arguments():
+    """Test that subclasses can still pass `_clean_search_args` arguments positionally."""
+    clean = CoreCrudClient()._clean_search_args({}, None, "2020-01-01T00:00:00Z")
+    assert clean == {"datetime": "2020-01-01T00:00:00Z"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("path", ["/search", "/collections"])
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"filter": "title = ", "filter-lang": "cql2-text"},
+        {"filter": "notapredicate", "filter-lang": "cql2-text"},
+        {"filter": "{not json", "filter-lang": "cql2-json"},
+        {"filter": '{"property": "title"}', "filter-lang": "cql2-json"},
+    ],
+)
+async def test_get_invalid_filter(app_client, path, params):
+    """Test that a malformed or non-boolean filter returns 400 on GET routes."""
+    resp = await app_client.get(path, params=params)
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_get_collections_search_query(
+    app_client, load_test_collection, load_test2_collection
+):
+    # the backend injects a `type = Collection` constraint on /collections; when
+    # the client uses the legacy `query` parameter it must be merged into `query`
+    # since pgstac rejects a `query` + `filter` payload
+    query = quote_plus(orjson.dumps({"id": {"eq": load_test_collection["id"]}}))
+    resp = await app_client.get("/collections", params={"query": query})
+    assert resp.status_code == 200
+    collections = resp.json()["collections"]
+    assert len(collections) == 1
+    assert collections[0]["id"] == load_test_collection["id"]
+    assert collections[0]["type"] == "Collection"
+
+    # catalogs are still excluded even when a `query` would match them
+    resp = await app_client.post(
+        "/catalogs",
+        json={
+            "id": "test-catalog-query",
+            "type": "Catalog",
+            "description": "catalog that should never appear in /collections",
+            "stac_version": "1.0.0",
+            "links": [],
+        },
+    )
+    assert resp.status_code == 201
+    query = quote_plus(orjson.dumps({"id": {"eq": "test-catalog-query"}}))
+    resp = await app_client.get("/collections", params={"query": query})
+    assert resp.status_code == 200
+    assert len(resp.json()["collections"]) == 0
+
+    # the cql2 `filter` parameter still works through the AND-wrapped path
+    cql2_filter = orjson.dumps(
+        {"op": "=", "args": [{"property": "id"}, load_test2_collection.id]}
+    ).decode()
+    resp = await app_client.get(
+        "/collections",
+        params={"filter-lang": "cql2-json", "filter": cql2_filter},
+    )
+    assert resp.status_code == 200
+    collections = resp.json()["collections"]
+    assert len(collections) == 1
+    assert collections[0]["id"] == load_test2_collection.id
+
+    # sending `query` and `filter` together is a client error
+    resp = await app_client.get(
+        "/collections",
+        params={
+            "query": query,
+            "filter-lang": "cql2-json",
+            "filter": cql2_filter,
+        },
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
 async def test_item_collection_filter_bbox(
     load_test_data, app_client, load_test_collection
 ):
@@ -813,12 +913,10 @@ async def test_wrapped_function(load_test_data, pgstac) -> None:
 
     T = TypeVar("T")
 
-    def wrap() -> (
-        Callable[
-            [Callable[..., Coroutine[Any, Any, T]]],
-            Callable[..., Coroutine[Any, Any, T]],
-        ]
-    ):
+    def wrap() -> Callable[
+        [Callable[..., Coroutine[Any, Any, T]]],
+        Callable[..., Coroutine[Any, Any, T]],
+    ]:
         def decorator(
             fn: Callable[..., Coroutine[Any, Any, T]],
         ) -> Callable[..., Coroutine[Any, Any, T]]:
@@ -1082,7 +1180,7 @@ async def test_default_app(default_client, default_app, load_test_data):
     assert "https://api.stacspec.org/v1.0.0-rc.1/collection-search" in conf
     assert "https://api.stacspec.org/v1.0.0/collections" in conf
     assert "https://api.stacspec.org/v1.0.0/ogcapi-features#query" in conf
-    assert "https://api.stacspec.org/v1.0.0/ogcapi-features#sort" in conf
+    assert "https://api.stacspec.org/v1.1.0/ogcapi-features#sort" in conf
 
 
 async def test_app_transactions_validate_extension(

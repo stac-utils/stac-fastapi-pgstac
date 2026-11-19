@@ -36,11 +36,13 @@ dependencies = [
     "orjson",
     "pydantic>=2.4,<3.0",
     "pydantic-settings>=2.7,<3.0",
-    "stac-fastapi-api>=6.3,<7.0",
-    "stac-fastapi-extensions>=6.3,<7.0",
-    "stac-fastapi-types>=6.3,<7.0",
+    "stac-fastapi-api>=7.0,<8.0",
+    "stac-fastapi-extensions>=7.0,<8.0",
+    "stac-fastapi-types>=7.0,<8.0",
     "asyncpg",
     "buildpg",
+    # Pin transitive brotli dep to avoid Node2Shell CVE-2026-111497
+    "brotli>=1.2.1",
     "brotli_asgi",
     "cql2>=0.3.6",
     "hydraters>=0.1.3",
@@ -56,7 +58,10 @@ server  = [
     "uvicorn[standard]==0.38.0"
 ]
 catalogs = [
-    "stac-fastapi-catalogs-extension==0.4.0",
+    "stac-fastapi-catalogs-extension>=1.0.0,<2.0",
+]
+metrics = [
+    "stac-fastapi-api[metrics]",
 ]
 
 [dependency-groups]
@@ -68,10 +73,11 @@ dev = [
         "pytest",
         "pytest-cov",
         "pytest-asyncio>=0.17,<1.3",
-        "pypgstac>=0.9,<0.10",
+        # tests only: ships the migrations to install every pgstac in the test matrix
+        "pypgstac>=0.10,<0.11",
         "requests",
-        "shapely",
-        "stac-fastapi-catalogs-extension==0.4.0",
+        "stac-fastapi-catalogs-extension>=1.0.0,<2.0",
+        "stac-fastapi-api[metrics]",
         "httpx",
         "psycopg[pool,binary]==3.2.*",
         "pre-commit",
@@ -144,7 +150,7 @@ ignore = [
 ]
 
 [tool.bumpversion]
-current_version = "6.3.1"
+current_version = "7.2.2"
 parse = """(?x)
     (?P<major>\\d+)\\.
     (?P<minor>\\d+)\\.
@@ -179,3 +185,8 @@ replace = "{new_version}"
 filename = "stac_fastapi/pgstac/version.py"
 search = '__version__ = "{current_version}"'
 replace = '__version__ = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = ".release-please-manifest.json"
+search = '".": "{current_version}"'
+replace = '".": "{new_version}"'

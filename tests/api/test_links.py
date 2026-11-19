@@ -41,7 +41,7 @@ def tests_app_links(prefix, root_path):  # noqa: C901
         }
         pgstac_prev = {
             "rel": "prev",
-            "body": {"offset": 0},
+            "body": {"offset": 1},
             "href": "./collections",
             "type": "application/json",
             "merge": True,

@@ -53,7 +53,7 @@ class BaseLinks:
     def url(self):
         """Get the current request url."""
         base_url = self.request.base_url
-        path = self.request.url.path
+        path = self.request.scope["path"]
 
         # root path can be set in the request scope in two different ways:
         # - by uvicorn when running with --root-path
@@ -230,7 +230,11 @@ class CollectionSearchPagingLinks(BaseLinks):
         if self.prev is not None:
             method = self.request.method
             if method == "GET":
-                href = merge_params(self.url, self.prev["body"])
+                params = dict(self.prev["body"])
+                # if offset is equal to default value (0), drop it from the url
+                if params.get("offset", -1) == 0:
+                    params["offset"] = []
+                href = merge_params(self.url, params)
 
                 # if prev link is equal to this link, skip it
                 if href == self.url:

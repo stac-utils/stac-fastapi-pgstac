@@ -2,7 +2,7 @@
 
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/stac-utils/stac-fastapi-pgstac/cicd.yaml?style=for-the-badge)](https://github.com/stac-utils/stac-fastapi-pgstac/actions/workflows/cicd.yaml)
 [![PyPI](https://img.shields.io/pypi/v/stac-fastapi.pgstac?style=for-the-badge)](https://pypi.org/project/stac-fastapi.pgstac)
-[![Documentation](https://img.shields.io/github/actions/workflow/status/stac-utils/stac-fastapi-pgstac/pages.yml?label=Docs&style=for-the-badge)](https://stac-utils.github.io/stac-fastapi-pgstac/)
+[![Documentation](https://img.shields.io/github/actions/workflow/status/stac-utils/stac-fastapi-pgstac/deploy_mkdocs.yml?label=Docs&style=for-the-badge)](https://stac-utils.github.io/stac-fastapi-pgstac/)
 [![License](https://img.shields.io/github/license/stac-utils/stac-fastapi-pgstac?style=for-the-badge)](https://github.com/stac-utils/stac-fastapi-pgstac/blob/main/LICENSE)
 
 <p align="center">
@@ -27,7 +27,9 @@ PgSTAC stores all collection and item records as jsonb fields exactly as they co
 |                            --|          --|
 |                          2.5 | >=0.7,<0.8 |
 |                          3.0 | >=0.8,<0.9 |
-|                        >=4.0 | >=0.8,<0.10|
+|                   >=4.0,<6.3 | >=0.8,<0.10|
+|                   >=6.3,<7.1 | >=0.9,<0.10|
+|                        >=7.1 | >=0.9.2,<0.11|
 
 ## Usage
 
@@ -49,6 +51,9 @@ To configure **stac-fastapi-pgstac** to [hydrate search result items at the API 
 |                  --- |                --- |       --- |
 |                False |              False |    PgSTAC |
 |                 True |               True |       API |
+
+With pgstac >=0.10, API hydration uses the base item pgstac returns with each item.
+`pgstac:base_item` is reserved for pgstac: it is dropped from items submitted through the transaction extensions and never returned in responses.
 
 ### Multi-Tenant Catalogs Extension
 

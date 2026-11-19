@@ -1,6 +1,87 @@
 # Changelog
 
-## [Unreleased]
+## [7.2.2](https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.2.1...7.2.2) (2026-11-12)
+
+
+### Bug Fixes
+
+* **docker:** remove pip from the runtime image ([#449](https://github.com/stac-utils/stac-fastapi-pgstac/issues/449)) ([ebd74b6](https://github.com/stac-utils/stac-fastapi-pgstac/commit/ebd74b6656d03849f3364c53501d432dbbdd64c7))
+
+## [7.2.1] - 2026-01-02
+
+### Fixed
+
+- Advertise the CQL2 conformance classes supported by pgstac (`advanced-comparison-operators`, `case-insensitive-comparison`, `accent-insensitive-comparison` and `property-property`) in `conformsTo`, so clients such as STAC Browser can discover them. ([#442](https://github.com/stac-utils/stac-fastapi-pgstac/pull/442))
+
+## [7.2.0] - 2026-10-26
+
+### Changed
+
+- Support stac-fastapi-catalogs-extension 1.0.0: add the required `parent` link to `/catalogs/{catalog_id}/children`, pass collection-search parameters through `/catalogs/{catalog_id}/collections`, and update catalogs conformance URIs to v1.0.0. **breaking change** for the `catalogs` extra
+- Support the `type` parameter on `/catalogs/{catalog_id}/children` to return only Catalogs or only Collections, as advertised by the Children `type-filter` conformance class.
+
+### Fixed
+
+- Return `400` instead of `500` for a malformed or non-boolean CQL2 `filter` on `GET /search`, `GET /collections`, `GET /collections/{collection_id}/items` and `GET /catalogs/{catalog_id}/collections`.
+
+## [7.1.0] - 2026-10-06
+
+### Changed
+
+- Support pgstac 0.10: API hydration uses the per-item base item pgstac returns as `pgstac:base_item`. `pgstac:base_item` is now a reserved key, dropped from submitted items. Supported pgstac is `>=0.9.2,<0.11`. ([#433](https://github.com/stac-utils/stac-fastapi-pgstac/pull/433))
+- Test against pgstac 0.9.12 and 0.10.0 (dev-only pypgstac pin `>=0.10,<0.11`). ([#433](https://github.com/stac-utils/stac-fastapi-pgstac/pull/433))
+
+### Fixed
+
+- Collection search `previous` links drop `offset=0`, like `next` links. ([#433](https://github.com/stac-utils/stac-fastapi-pgstac/pull/433))
+- Docs badge in the README points at the `deploy_mkdocs.yml` workflow. ([#434](https://github.com/stac-utils/stac-fastapi-pgstac/pull/434))
+
+## [7.0.0] - 2026-09-15
+
+### Added
+
+- `ENABLE_METRICS` setting to expose an optional Prometheus metrics endpoint at `/_mgmt/metrics`, backed by `stac-fastapi-api`'s `add_metrics` support ([#958](https://github.com/stac-utils/stac-fastapi/pull/958)). Requires the new `metrics` optional extra (`pip install "stac-fastapi-pgstac[metrics]"`).  ([#423](https://github.com/stac-utils/stac-fastapi-pgstac/pull/423))
+
+### Changed 
+
+- Update stac-fastapi-* requirements to `>=7.0,<8.0` ([#419](https://github.com/stac-utils/stac-fastapi-pgstac/pull/419))
+- Remove deprecated `POSTGRES_*` environment variable support from `PostgresSettings`.
+- Remove deprecated `host_reader` and `host_writer` attributes from `PostgresSettings`.
+- Removed `shapely` from dev dependencies
+- Update Dockerfile to use `uv.lock` file for dependency management
+
+## [6.4.1] - 2026-09-15
+
+### Fixed
+
+- Fix `GET /collections` returning a 500 error when the `query` parameter is used: the injected `type = Collection` constraint is now merged into whichever of `query`/`filter` the client supplied, since pgstac rejects a `query` + `filter` payload ([#427](https://github.com/stac-utils/stac-fastapi-pgstac/pull/427)) [backport from 7.0]
+- Return `400` instead of a pgstac error when `query` and `filter` are used together in `GET /collections` requests ([#427](https://github.com/stac-utils/stac-fastapi-pgstac/pull/427)) [backport from 7.0]
+
+## [6.4.0] - 2026-09-04
+
+### Added
+
+- add tests for new `app.instantiate_api` function ([#381](https://github.com/stac-utils/stac-fastapi-pgstac/pull/381))
+
+### Fixed
+
+- Fix multi-platform Docker builds by adding QEMU emulation and correcting workflow_dispatch trigger ([#337](https://github.com/stac-utils/stac-fastapi-pgstac/pull/337))
+
+### Changed 
+
+- Refactored application initialization to completely eliminate global state and natively support the Uvicorn `--factory` pattern. Replaced the global `app` variable with a `create_app()` factory wrapper in `app.py`, ensuring pristine memory isolation per worker and preventing unintended import side-effects. Additionally, updated the test suite to use the new factory pattern (eliminating shadow implementations) and fixed `httpx` async client compatibility. ([#405](https://github.com/stac-utils/stac-fastapi-pgstac/pull/405))
+- Update stac-fastapi-* requirements to `>=6.4,<7.0`
+- Sort conformance class version to v1.1.0 instead of v1.0.0
+- Update sort extension to use new conformance classes in app.py for search, collection search, and item search endpoints ([#404](https://github.com/stac-utils/stac-fastapi-pgstac/pull/404))
+- introduce `app.instantiate_api` function to make API customisation easier ([#381](https://github.com/stac-utils/stac-fastapi-pgstac/pull/381))
+- Updated Dockerfile CMD to use the new `create_app` factory function with `--factory` flag for Uvicorn compatibility ([#406](https://github.com/stac-utils/stac-fastapi-pgstac/pull/406))
+- Changed output from `string` to `dict` object (`BulkTransaction`) for bulk transaction `bulk_item_insert` methods ([#419](https://github.com/stac-utils/stac-fastapi-pgstac/pull/419))
+- Removed `app_host`, `app_port`, and `reload` attributes from `ApiSettings`. Use uvicorn command-line arguments or environment variables to configure these instead ([#419](https://github.com/stac-utils/stac-fastapi-pgstac/pull/419))
+- Removed deprecated `stac_fastapi.extensions.third_party` namespace. Import `BulkTransactionExtension` directly from `stac_fastapi.extensions` instead ([#419](https://github.com/stac-utils/stac-fastapi-pgstac/pull/419))
+
+### Removed
+
+- Removed deprecated `SortConformanceClasses` enum aliases (`COLLECTIONS`, `ITEMS`, `SEARCH`). Use `COLLECTION_SEARCH_SORT`, `FEATURES_SORT`, and `ITEM_SEARCH_SORT` instead
 
 ## [6.3.1] - 2026-06-24
 
@@ -28,7 +109,6 @@
 - Multi-Tenant Catalogs Extension: Integrated optional `stac-fastapi-catalogs-extension` to support native DAG (Directed Acyclic Graph) traversal of Catalogs and Collections. Enabled via `ENABLE_CATALOGS_EXTENSION` environment variable ([#366](https://github.com/stac-utils/stac-fastapi-pgstac/pull/366))
 - Added `HIDE_ALTERNATE_PARENTS` environment variable (default `False`) to suppress `rel="related"` and `rel="duplicate"` links for alternate parents in poly-hierarchy. Useful for multi-tenant deployments to prevent information leakage about other tenants. When enabled, only the contextual `rel="parent"` link is advertised. Requires `ENABLE_CATALOGS_EXTENSION=true`. ([#387](https://github.com/stac-utils/stac-fastapi-pgstac/pull/387))
 - Added `rel="duplicate"` links for scoped collection endpoints (`/catalogs/{catalogId}/collections/{collectionId}`) to expose alternative scoped paths where collections can be accessed through other parent catalogs in poly-hierarchy. ([#387](https://github.com/stac-utils/stac-fastapi-pgstac/pull/387))
-
 
 ### Fixed
 
@@ -607,7 +687,11 @@ As a part of this release, this repository was extracted from the main
 
 - First PyPi release!
 
-[Unreleased]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.1..main>
+[7.2.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.1.0..7.2.0>
+[7.1.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.0.0..7.1.0>
+[7.0.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.4.1..7.0.0>
+[6.4.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.4.0..6.4.1>
+[6.4.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.1..6.4.0>
 [6.3.1]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.3.0..6.3.1>
 [6.3.0]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.2..6.3.0>
 [6.2.2]: <https://github.com/stac-utils/stac-fastapi-pgstac/compare/6.2.1..6.2.2>

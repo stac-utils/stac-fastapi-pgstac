@@ -90,6 +90,11 @@ class CoreCrudClient(AsyncBaseCoreClient):
             Collections which match the search criteria, returns all
             collections by default.
         """
+        if query and filter_expr:
+            raise InvalidQueryParameter(
+                "The 'query' and 'filter' parameters are mutually exclusive."
+            )
+
         base_url = get_base_url(request)
 
         next_link: dict[str, Any] | None = None
@@ -122,7 +127,13 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         # Add filter to ensure only Collections are returned (not Catalogs)
         # This is needed because catalogs are also stored in the collections table
-        if "filter" in clean_args:
+        # pgstac rejects a `query` + `filter` payload, so the type constraint is
+        # injected into whichever parameter the client already used
+        if "query" in clean_args and "filter" not in clean_args:
+            if isinstance(clean_args["query"], str):
+                clean_args["query"] = orjson.loads(clean_args["query"])
+            clean_args["query"]["type"] = {"eq": "Collection"}
+        elif "filter" in clean_args:
             clean_args["filter"] = {
                 "op": "and",
                 "args": [
@@ -136,11 +147,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
                 "args": [{"property": "type"}, "Collection"],
             }
 
-        # NOTE: `FreeTextExtension` - pgstac will only accept `str` so we need to
-        # join the list[str] with ` OR `
-        # ref: https://github.com/stac-utils/stac-fastapi-pgstac/pull/263
-        if q := clean_args.pop("q", None):
-            clean_args["q"] = " OR ".join(q) if isinstance(q, list) else q
+        join_free_text_query(clean_args)
 
         async with request.app.state.get_connection(request, "r") as conn:
             q, p = render(
@@ -371,7 +378,10 @@ class CoreCrudClient(AsyncBaseCoreClient):
             )
 
             for item in item_collection.get("features", []):
-                base_item = await base_item_cache.get(item.get("collection"))
+                # pgstac>=0.10 returns each item's own base item
+                base_item = cast(dict[str, Any], item).pop("pgstac:base_item", None)
+                if not isinstance(base_item, dict):
+                    base_item = await base_item_cache.get(item.get("collection"))
                 # Exclude None values
                 base_item = {k: v for k, v in base_item.items() if v is not None}
 
@@ -608,7 +618,7 @@ class CoreCrudClient(AsyncBaseCoreClient):
 
         return item_collection
 
-    def _clean_search_args(  # noqa: C901
+    def _clean_search_args(
         self,
         base_args: dict[str, Any],
         intersects: str | None = None,
@@ -621,58 +631,109 @@ class CoreCrudClient(AsyncBaseCoreClient):
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Clean up search arguments to match format expected by pgstac"""
-        if filter_query:
+        return clean_search_args(
+            base_args,
+            intersects=intersects,
+            datetime=datetime,
+            fields=fields,
+            sortby=sortby,
+            filter_query=filter_query,
+            filter_lang=filter_lang,
+            q=q,
+            **kwargs,
+        )
+
+
+def clean_search_args(  # noqa: C901
+    base_args: dict[str, Any],
+    intersects: str | None = None,
+    datetime: str | None = None,
+    fields: list[str] | None = None,
+    sortby: str | None = None,
+    filter_query: str | None = None,
+    filter_lang: str | None = None,
+    q: str | list[str] | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Clean up search arguments to match format expected by pgstac"""
+    if filter_query:
+        # `Expr` parses a bare word as a property reference,
+        # `validate()` rejects non-boolean filters before they reach pgstac
+        try:
             if filter_lang == "cql2-text":
-                e = Expr(filter_query)
-                base_args["filter"] = e.to_json()
+                expr = Expr(filter_query)
+                expr.validate()
+                base_args["filter"] = expr.to_json()
                 base_args["filter_lang"] = "cql2-json"
             else:
                 base_args["filter"] = orjson.loads(filter_query)
+                Expr(base_args["filter"]).validate()
                 base_args["filter_lang"] = filter_lang
+        # cql2 raises a bare Exception on parse errors
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid filter: {e}") from e
 
-        if datetime:
-            base_args["datetime"] = datetime
+    if datetime:
+        base_args["datetime"] = datetime
 
-        if intersects:
-            base_args["intersects"] = orjson.loads(unquote_plus(intersects))
+    if intersects:
+        base_args["intersects"] = orjson.loads(unquote_plus(intersects))
 
-        if sortby:
-            # https://github.com/radiantearth/stac-spec/tree/master/api-spec/extensions/sort#http-get-or-post-form
-            sort_param = []
-            for sort in sortby:
-                sortparts = re.match(r"^([+-]?)(.*)$", sort)
-                if sortparts:
-                    sort_param.append(
-                        {
-                            "field": sortparts.group(2).strip(),
-                            "direction": "desc" if sortparts.group(1) == "-" else "asc",
-                        }
-                    )
-            base_args["sortby"] = sort_param
+    if sortby:
+        # https://github.com/radiantearth/stac-spec/tree/master/api-spec/extensions/sort#http-get-or-post-form
+        sort_param = []
+        for sort in sortby:
+            sortparts = re.match(r"^([+-]?)(.*)$", sort)
+            if sortparts:
+                sort_param.append(
+                    {
+                        "field": sortparts.group(2).strip(),
+                        "direction": "desc" if sortparts.group(1) == "-" else "asc",
+                    }
+                )
+        base_args["sortby"] = sort_param
 
-        if fields:
-            includes = set()
-            excludes = set()
-            for field in fields:
-                if field[0] == "-":
-                    excludes.add(field[1:])
-                elif field[0] == "+":
-                    includes.add(field[1:])
-                else:
-                    includes.add(field)
+    if fields:
+        includes = set()
+        excludes = set()
+        for field in fields:
+            if field[0] == "-":
+                excludes.add(field[1:])
+            elif field[0] == "+":
+                includes.add(field[1:])
+            else:
+                includes.add(field)
 
-            base_args["fields"] = {"include": list(includes), "exclude": list(excludes)}
+        base_args["fields"] = {"include": list(includes), "exclude": list(excludes)}
 
-        if q:
-            base_args["q"] = q
+    if q:
+        base_args["q"] = q
 
-        # Remove None values from dict
-        clean = {}
-        for k, v in base_args.items():
-            if v is not None and v != []:
-                clean[k] = v
+    # Remove None values from dict
+    clean = {}
+    for k, v in base_args.items():
+        if v is not None and v != []:
+            clean[k] = v
 
-        return clean
+    return clean
+
+
+def join_free_text_query(args: dict[str, Any]) -> None:
+    """Join a list `q` into the single string `collection_search()` accepts"""
+    # NOTE: `FreeTextExtension` - pgstac only accepts `str`, so join the list[str] with ` OR `
+    # ref: https://github.com/stac-utils/stac-fastapi-pgstac/pull/263
+    if q := args.pop("q", None):
+        args["q"] = " OR ".join(q) if isinstance(q, list) else q
+
+
+def clean_collection_search_args(
+    base_args: dict[str, Any],
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Clean up collection search arguments to match `collection_search()`"""
+    clean = clean_search_args(base_args, **kwargs)
+    join_free_text_query(clean)
+    return clean
 
 
 async def health_check(request: Request) -> dict | JSONResponse:

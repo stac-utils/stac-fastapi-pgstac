@@ -27,6 +27,12 @@ To enable the catalogs extension, set `ENABLE_CATALOGS_EXTENSION=TRUE/YES/1`.
 
 When `ENABLE_TRANSACTIONS_EXTENSIONS=TRUE`, additional write endpoints are available for creating, updating, and deleting catalogs and managing relationships (linking/unlinking catalogs and collections).
 
+### Metrics
+
+The optional Prometheus metrics endpoint exposes low-cardinality STAC operation metrics (`http_requests_total`, `http_request_duration_seconds`) at `{PREFIX_PATH}/_mgmt/metrics`. It requires the `stac-fastapi-pgstac[metrics]` extra (which installs `prometheus-fastapi-instrumentator`) to be installed.
+
+To enable it, set `ENABLE_METRICS=TRUE/YES/1`. If enabled without the extra installed, the application will raise an `ImportError` at startup.
+
 ### Database config
 
 - `PGUSER`: postgres username
