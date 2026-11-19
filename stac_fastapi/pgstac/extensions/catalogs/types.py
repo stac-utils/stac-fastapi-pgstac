@@ -4,8 +4,15 @@ from typing import Annotated
 
 import attr
 from fastapi import Query
-from stac_fastapi.types.search import _bbox_converter
-from stac_fastapi_catalogs_extension.types import CatalogCollectionsRequest
+from stac_fastapi.types.search import (
+    DateTimeQueryType,
+    _bbox_converter,
+    _validate_datetime,
+)
+from stac_fastapi_catalogs_extension.types import (
+    CatalogCollectionItemsRequest,
+    CatalogCollectionsRequest,
+)
 from stac_pydantic.shared import BBox
 
 
@@ -26,6 +33,16 @@ class PgstacCatalogCollectionsRequest(CatalogCollectionsRequest):
         default=None,
         converter=lambda x: _bbox_converter(x) if x is not None else None,
     )
-    datetime: Annotated[
-        str | None, Query(description="Datetime to filter collections")
-    ] = attr.ib(default=None)
+    datetime: DateTimeQueryType = attr.ib(default=None, validator=_validate_datetime)
+
+
+@attr.s
+class PgstacCatalogCollectionItemsRequest(CatalogCollectionItemsRequest):
+    """Request model for `GET /catalogs/{catalog_id}/collections/{collection_id}/items`.
+
+    Re-declares the library's `datetime` parameter with the same RFC 3339
+    validator `GET /collections/{collection_id}/items` uses, so invalid values
+    are rejected with a 400 instead of reaching pgstac and erroring with a 500.
+    """
+
+    datetime: DateTimeQueryType = attr.ib(default=None, validator=_validate_datetime)

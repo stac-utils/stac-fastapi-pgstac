@@ -194,6 +194,7 @@ class Extensions:
                 CatalogsDatabaseLogic,
             )
             from stac_fastapi.pgstac.extensions.catalogs.types import (
+                PgstacCatalogCollectionItemsRequest,
                 PgstacCatalogCollectionsRequest,
             )
 
@@ -259,6 +260,7 @@ class Extensions:
                     ],
                     hide_alternate_parents=self.settings.hide_alternate_parents,
                     catalog_collections_get_request_model=catalog_collections_get_request_model,
+                    catalog_collection_items_get_request_model=PgstacCatalogCollectionItemsRequest,
                 )
                 logger.info("CatalogsExtension (read-only) enabled successfully.")
 

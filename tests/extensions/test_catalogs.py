@@ -2510,3 +2510,19 @@ async def test_catalog_collection_items_bbox_datetime(
     )
     assert resp.status_code == 200, resp.text
     assert len(resp.json()["features"]) == 0
+
+
+@pytest.mark.asyncio
+async def test_catalog_routes_reject_invalid_datetime(app_client):
+    """Scoped routes validate `datetime` like the unscoped ones do."""
+    catalog = await create_catalog(app_client, "dt-validation-catalog")
+    collection = await create_catalog_collection(
+        app_client, catalog["id"], "dt-validation-collection"
+    )
+
+    for path in (
+        f"/catalogs/{catalog['id']}/collections",
+        f"/catalogs/{catalog['id']}/collections/{collection['id']}/items",
+    ):
+        resp = await app_client.get(path, params={"datetime": "garbage"})
+        assert resp.status_code == 400, (path, resp.text)
