@@ -81,6 +81,7 @@ dev = [
         "httpx",
         "psycopg[pool,binary]==3.2.*",
         "pre-commit",
+        "pytest-xdist>=3.6",
 ]
 docs = [
     "black>=23.10.1",
@@ -114,7 +115,7 @@ publish-url = "https://test.pypi.org/legacy/"
 explicit = true
 
 [tool.pytest.ini_options]
-addopts = "-sv"
+addopts = "-sv -n auto"
 testpaths = [
     "tests"
 ]
