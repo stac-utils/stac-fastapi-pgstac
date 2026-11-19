@@ -60,3 +60,12 @@ Actions deploys automatically for new commits.):
 # deploy
 uv run --group docs mkdocs gh-deploy -f docs/mkdocs.yml
 ```
+
+## Commit messages and releases
+
+Releases are automated with [release-please](https://github.com/googleapis/release-please), which reads the [Conventional Commit](https://www.conventionalcommits.org/) messages merged to `main`. Use them for your commits and your PR title, e.g. `fix: handle empty collections` or `feat: add a filter option`:
+
+- `fix:`, `perf:`, `deps:`, `revert:` and `docs:` lead to a patch release, `feat:` to a minor one, and a breaking change (`feat!:` or a `BREAKING CHANGE:` footer) to a major one.
+- `chore:`, `ci:`, `test:`, `build:`, `refactor:` and `style:` don't trigger a release on their own.
+- release-please keeps a release PR open with the next version; merging it tags the release and publishes it.
+- release-please also writes CHANGES.md from these messages, so don't edit it in your PR. Maintainers can adjust the wording in the release PR just before merging it.
