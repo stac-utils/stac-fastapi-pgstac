@@ -40,7 +40,11 @@ jobs:
           uv run --with mypy --with types-attrs mypy -p stac_fastapi
 
       - name: install lib postgres
-        uses: nyurik/action-setup-postgis@228cfe4dd41aad01801a0bdc767040e5024fff1d # v2
+        uses: nyurik/action-setup-postgis@e54fc643200ee809b4711c3f537c433dfbeba056 # v2.3
+        with:
+          # v2.3 installs the server from PGDG too, keeping the postgis build
+          # and server minor in sync (required since the CVE-2026-6460 rebuilds)
+          postgres-version: "16"
 
       - name: Run test suite
         run: uv run pytest --cov stac_fastapi.pgstac --cov-report xml --cov-report term-missing
