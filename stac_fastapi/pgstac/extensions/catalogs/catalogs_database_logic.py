@@ -564,9 +564,9 @@ class CatalogsDatabaseLogic:
         Raises:
             NotFoundError: If the catalog is not found.
         """
-        if request is None:
-            return []
-
+        # find_catalog raises NotFoundError for a missing catalog (and for a
+        # missing request), so an unreachable catalog can never be mistaken
+        # for an empty scope.
         await self.find_catalog(catalog_id, request=request)
 
         async with request.app.state.get_connection(request, "r") as conn:

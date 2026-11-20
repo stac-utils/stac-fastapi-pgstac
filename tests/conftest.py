@@ -141,12 +141,12 @@ def api_client(request):
     ]
 
     # Add catalogs extensions through the same path instantiate_api uses
+    extensions = Extensions(settings=api_settings)
     if CatalogsExtension is not None:
         api_settings.enable_catalogs_extension = True
         api_settings.enable_transactions_extensions = (
             CatalogsTransactionExtension is not None
         )
-        application_extensions.extend(Extensions(settings=api_settings).catalog)
 
     search_extensions = [
         QueryExtension(),
@@ -198,14 +198,16 @@ def api_client(request):
 
     core_client = CoreCrudClient(pgstac_search_model=search_post_request_model)
 
-    # Add the catalog-scoped search extension through the same path
-    # instantiate_api uses (needs the search request models + core client).
+    # Add the catalogs extensions through the same path instantiate_api uses:
+    # catalog_search runs first and constructs the shared CatalogsClient with
+    # the core client, `catalog` then reuses it for the catalog routes.
     if CatalogsExtension is not None:
         application_extensions.extend(
-            Extensions(settings=api_settings).catalog_search(
+            extensions.catalog_search(
                 core_client, search_get_request_model, search_post_request_model
             )
         )
+        application_extensions.extend(extensions.catalog)
 
     api = StacApi(
         settings=api_settings,

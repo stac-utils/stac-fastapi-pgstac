@@ -83,12 +83,18 @@ def instantiate_api(
     # delegates item searches to it.
     core_client = client(pgstac_search_model=post_request_model)  # type: ignore [arg-type]
 
+    # Evaluated before `extensions.catalog` so the shared catalogs client is
+    # constructed with `core_client` injected.
+    catalog_search_extensions = extensions.catalog_search(
+        core_client, get_request_model, post_request_model
+    )
+
     application_extensions = [
         *extensions.search,
         *extensions.item_collection,
         *transaction_extensions,
         *extensions.catalog,
-        *extensions.catalog_search(core_client, get_request_model, post_request_model),
+        *catalog_search_extensions,
         *extensions.extra,
     ]
     if collection_search_extension is not None:

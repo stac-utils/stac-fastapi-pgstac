@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from stac_fastapi.api.models import JSONResponse, create_request_model
 from stac_fastapi.extensions import (
@@ -30,6 +30,11 @@ from stac_fastapi.pgstac.config import Settings
 from stac_fastapi.pgstac.extensions import FreeTextExtension, QueryExtension
 from stac_fastapi.pgstac.extensions.filter import FiltersClient
 from stac_fastapi.pgstac.transactions import BulkTransactionsClient, TransactionsClient
+
+if TYPE_CHECKING:
+    from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import (
+        CatalogsClient,
+    )
 
 
 def get_default_extensions_map(key: str) -> dict[str, ApiExtension]:
@@ -104,6 +109,11 @@ class Extensions:
     item_collection_map: dict[str, ApiExtension] = field(default_factory=dict)
     extra_map: dict[str, ApiExtension] = field(default_factory=dict)
     settings: Settings = field(default_factory=Settings)
+    # Shared by the catalogs routes and the scoped-search extension so both
+    # serve through a single CatalogsClient, like other stac-fastapi backends.
+    _catalogs_client: "CatalogsClient | None" = field(
+        default=None, init=False, repr=False
+    )
 
     def __post_init__(self):
         for key in [
@@ -162,6 +172,39 @@ class Extensions:
             )
         return extensions_enabled
 
+    def _catalogs_scoped_conformance(self) -> list[str]:
+        """Return the conformance classes advertised by scoped catalog endpoints.
+
+        The marker binds the scoped listing to the root's Collection Search
+        class. Only declare it when collection search is on: the
+        v1.0.0/collection-search base in the library's
+        CATALOGS_COLLECTION_SEARCH_CONFORMANCE is not used here because the
+        CollectionSearchExtension already registers the v1.0.0-rc.1 base.
+        """
+        enabled_keys = self.settings.enabled_extensions
+        if enabled_keys is not None and "collection_search" not in enabled_keys:
+            return []
+        catalog_collections_extensions = [
+            extension
+            for key, extension in self.collection_search_map.items()
+            if key in ("fields", "sort", "free_text", "filter")
+            and (enabled_keys is None or key in enabled_keys)
+        ]
+        return list(
+            dict.fromkeys(
+                [
+                    CATALOGS_COLLECTION_SEARCH_MARKER,
+                    CollectionSearchConformanceClasses.COLLECTIONSEARCH.value,
+                    CollectionSearchConformanceClasses.BASIS.value,
+                    *(
+                        uri
+                        for ext in catalog_collections_extensions
+                        for uri in ext.conformance_classes
+                    ),
+                ]
+            )
+        )
+
     @property
     def catalog(self) -> list[ApiExtension]:
         logger.info(
@@ -214,36 +257,20 @@ class Extensions:
                 request_type="GET",
             )
 
-            # The marker binds the scoped listing to the root's Collection Search
-            # class. Only declare it when collection search is on: the
-            # v1.0.0/collection-search base in the library's
-            # CATALOGS_COLLECTION_SEARCH_CONFORMANCE is not used here because the
-            # CollectionSearchExtension already registers the v1.0.0-rc.1 base.
             collection_search_enabled = (
                 enabled_keys is None or "collection_search" in enabled_keys
             )
-            scoped_collection_search_classes = (
-                [
-                    CATALOGS_COLLECTION_SEARCH_MARKER,
-                    CollectionSearchConformanceClasses.COLLECTIONSEARCH.value,
-                    CollectionSearchConformanceClasses.BASIS.value,
-                    *(
-                        uri
-                        for ext in catalog_collections_extensions
-                        for uri in ext.conformance_classes
-                    ),
-                ]
-                if collection_search_enabled
-                else []
-            )
 
             try:
-                catalogs_client = CatalogsClient(
-                    database=CatalogsDatabaseLogic(),
-                    scoped_conformance_classes=list(
-                        dict.fromkeys(scoped_collection_search_classes)
-                    ),
-                )
+                # Reuse the client built by `catalog_search` when it ran first,
+                # so scoped search and the catalog routes share one client.
+                catalogs_client = self._catalogs_client
+                if catalogs_client is None:
+                    catalogs_client = CatalogsClient(
+                        database=CatalogsDatabaseLogic(),
+                        scoped_conformance_classes=self._catalogs_scoped_conformance(),
+                    )
+                    self._catalogs_client = catalogs_client
 
                 # Register the read-only catalogs extension
                 catalogs_extension = CatalogsExtension(
@@ -298,6 +325,11 @@ class Extensions:
         routes so every enabled search extension (filter, sort, fields, ...)
         applies to scoped searches too.
 
+        This method must be evaluated before `catalog` for the shared client
+        to be constructed here (it is the only site that knows `core_client`).
+        If `catalog` ran first, the catalogs extension keeps its client and a
+        second, search-dedicated client is constructed.
+
         Args:
             core_client: The core client used for item searches.
             search_get_request_model: The search GET request model.
@@ -327,10 +359,16 @@ class Extensions:
             CatalogsDatabaseLogic,
         )
 
-        search_client = CatalogsClient(
-            database=CatalogsDatabaseLogic(),
-            core_client=core_client,
-        )
+        # Share the client with the catalogs routes: this runs first (it owns
+        # the core_client), so `catalog` picks the instance back up.
+        search_client = self._catalogs_client
+        if search_client is None or search_client.core_client is None:
+            search_client = CatalogsClient(
+                database=CatalogsDatabaseLogic(),
+                scoped_conformance_classes=self._catalogs_scoped_conformance(),
+                core_client=core_client,
+            )
+            self._catalogs_client = search_client
 
         return [
             CatalogsSearchExtension(

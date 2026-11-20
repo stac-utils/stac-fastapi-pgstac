@@ -41,8 +41,10 @@ from stac_fastapi.pgstac.models.links import (
     CollectionSearchPagingLinks,
     ItemCollectionLinks,
     PagingLinks,
+    SearchLinks,
     filter_links,
 )
+from stac_fastapi.pgstac.types.search import PgstacSearch
 
 
 def _remove_null_titles(obj: Any) -> Any:
@@ -1224,25 +1226,56 @@ class CatalogsClient(AsyncBaseCatalogsClient, AsyncCatalogsSearchClient):
 
         Args:
             catalog_id: The ID of the catalog bounding the search.
-            requested: Collection IDs the caller asked for, or None.
+            requested: Collection IDs the caller asked for, or None/empty to
+                mean the catalog's full scope (matching /search semantics).
             request: The FastAPI request object.
 
         Returns:
-            The collection IDs to search within the catalog's scope.
+            The collection IDs to search within the catalog's scope. An empty
+            list means the request can match nothing inside this catalog.
 
         Raises:
-            HTTPException: 403 if requested collections are all out of scope.
+            NotFoundError: If the catalog does not exist.
         """
         allowed = await self.get_all_descendant_collections(catalog_id, request=request)
-        if requested is None:
+        if not requested:
             return allowed
-        intersected = list(set(requested) & set(allowed))
-        if not intersected:
-            raise HTTPException(
-                status_code=403,
-                detail="Requested collections are outside the scope of this catalog.",
-            )
-        return intersected
+        return list(set(requested) & set(allowed))
+
+    async def _empty_scoped_result(self, request: Request | None) -> ItemCollection:
+        """Return an empty ItemCollection for a search scoped to nothing."""
+        links: list[dict[str, Any]] = []
+        if request is not None:
+            search_links = SearchLinks(request=request)
+            links = await search_links.get_links()
+            for link in links:
+                if link.get("rel") == "self":
+                    link["href"] = search_links.url
+        return ItemCollection(type="FeatureCollection", features=[], links=links)
+
+    @staticmethod
+    def _scoped_self_link(
+        result: ItemCollection | JSONResponse, request: Request | None
+    ) -> ItemCollection | JSONResponse:
+        """Rewrite the `self` link to the scoped search URL.
+
+        The delegated core search builds its self link against the global
+        `/search` route; scoped results should point at the route that
+        produced them.
+        """
+        if request is None:
+            return result
+        self_url = SearchLinks(request=request).url
+        if isinstance(result, JSONResponse):
+            payload = json.loads(bytes(result.body))
+            for link in payload.get("links", []):
+                if link.get("rel") == "self":
+                    link["href"] = self_url
+            return JSONResponse(payload)
+        for link in result.get("links", []):
+            if link.get("rel") == "self":
+                link["href"] = self_url
+        return result
 
     async def catalog_search_get(
         self,
@@ -1272,28 +1305,37 @@ class CatalogsClient(AsyncBaseCatalogsClient, AsyncCatalogsSearchClient):
             **kwargs: Search extension parameters (filter, sortby, fields, ...).
 
         Returns:
-            ItemCollection with matching items.
+            ItemCollection with matching items. When the `collections` filter
+            resolves to nothing inside the catalog's scope, the result is an
+            empty ItemCollection rather than an error.
 
         Raises:
-            HTTPException: 403 if requested collections are outside catalog scope.
+            NotFoundError: If the catalog does not exist.
             HTTPException: 500 if the client has no core_client configured.
         """
-        collections = await self._bounded_collections(catalog_id, collections, request)
         if self.core_client is None:
             raise HTTPException(
                 status_code=500,
                 detail="Catalog search is not configured (missing core_client).",
             )
-        return await self.core_client.get_search(
-            collections=collections,
-            ids=ids,
-            bbox=bbox,
-            intersects=intersects,
-            datetime=datetime,
-            limit=limit,
-            token=token,
-            request=request,
-            **kwargs,
+        collections = await self._bounded_collections(catalog_id, collections, request)
+        if not collections:
+            # An empty scope must not reach the core client: get_search strips
+            # empty lists, which would turn this into an unbounded /search.
+            return await self._empty_scoped_result(request)
+        return self._scoped_self_link(
+            await self.core_client.get_search(
+                collections=collections,
+                ids=ids,
+                bbox=bbox,
+                intersects=intersects,
+                datetime=datetime,
+                limit=limit,
+                token=token,
+                request=cast(Request, request),
+                **kwargs,
+            ),
+            request,
         )
 
     async def catalog_search_post(
@@ -1312,20 +1354,29 @@ class CatalogsClient(AsyncBaseCatalogsClient, AsyncCatalogsSearchClient):
             **kwargs: Additional keyword arguments.
 
         Returns:
-            ItemCollection with matching items.
+            ItemCollection with matching items. When the `collections` filter
+            resolves to nothing inside the catalog's scope, the result is an
+            empty ItemCollection rather than an error.
 
         Raises:
-            HTTPException: 403 if requested collections are outside catalog scope.
+            NotFoundError: If the catalog does not exist.
             HTTPException: 500 if the client has no core_client configured.
         """
-        search_request.collections = await self._bounded_collections(
-            catalog_id, search_request.collections, request
-        )
         if self.core_client is None:
             raise HTTPException(
                 status_code=500,
                 detail="Catalog search is not configured (missing core_client).",
             )
-        return await self.core_client.post_search(
-            search_request=search_request, request=request, **kwargs
+        search_request.collections = await self._bounded_collections(
+            catalog_id, search_request.collections, request
+        )
+        if not search_request.collections:
+            return await self._empty_scoped_result(request)
+        return self._scoped_self_link(
+            await self.core_client.post_search(
+                search_request=cast(PgstacSearch, search_request),
+                request=cast(Request, request),
+                **kwargs,
+            ),
+            request,
         )

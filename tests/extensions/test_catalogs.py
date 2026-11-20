@@ -2576,10 +2576,14 @@ async def test_catalog_search_covers_subtree(app_client, load_test_data):
         assert {"item-search-outer", "item-search-inner"} <= ids
         assert "item-search-outside" not in ids
 
+        # the self link must reference the scoped route, not global /search
+        self_link = next(link for link in resp.json()["links"] if link["rel"] == "self")
+        assert f"/catalogs/{catalog['id']}/search" in self_link["href"]
+
 
 @pytest.mark.asyncio
 async def test_catalog_search_explicit_collections(app_client, load_test_data):
-    """`collections` narrows within the scope; fully out-of-scope is 403."""
+    """`collections` narrows within the scope; fully out-of-scope is empty."""
     catalog = await create_scoped_search_tree(app_client, load_test_data)
     base = f"/catalogs/{catalog['id']}/search"
 
@@ -2598,11 +2602,21 @@ async def test_catalog_search_explicit_collections(app_client, load_test_data):
     assert resp.status_code == 200, resp.text
     assert {f["id"] for f in resp.json()["features"]} == {"item-search-outer"}
 
-    # entirely out-of-scope collections are forbidden
-    resp = await app_client.post(base, json={"collections": ["search-outside"]})
-    assert resp.status_code == 403, resp.text
-    resp = await app_client.get(base, params={"collections": "search-outside"})
-    assert resp.status_code == 403, resp.text
+    # an explicit empty list means "no constraint" -> the catalog's full scope
+    resp = await app_client.post(base, json={"collections": []})
+    assert resp.status_code == 200, resp.text
+    assert {f["id"] for f in resp.json()["features"]} == {
+        "item-search-outer",
+        "item-search-inner",
+    }
+
+    # entirely out-of-scope collections match nothing, like any other filter
+    for resp in (
+        await app_client.post(base, json={"collections": ["search-outside"]}),
+        await app_client.get(base, params={"collections": "search-outside"}),
+    ):
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["features"] == []
 
 
 @pytest.mark.asyncio
@@ -2622,17 +2636,28 @@ async def test_catalog_search_poly_hierarchy(app_client, load_test_data):
 
 
 @pytest.mark.asyncio
-async def test_catalog_search_unknown_and_empty_catalog(app_client):
+async def test_catalog_search_unknown_and_empty_catalog(app_client, load_test_data):
     """Unknown catalog is 404; a valid empty catalog returns no features."""
     resp = await app_client.get("/catalogs/does-not-exist/search")
     assert resp.status_code == 404, resp.text
     resp = await app_client.post("/catalogs/does-not-exist/search", json={})
     assert resp.status_code == 404, resp.text
 
+    # Seed an item the empty catalog must never leak: an empty scope used to
+    # degrade into an unbounded /search on GET.
+    await create_collection(app_client, "search-outside")
+    item = load_test_data("test2_item.json")
+    item["collection"] = "search-outside"
+    resp = await app_client.post("/collections/search-outside/items", json=item)
+    assert resp.status_code == 201, resp.text
+
     empty = await create_catalog(app_client, "search-empty")
-    resp = await app_client.get(f"/catalogs/{empty['id']}/search")
-    assert resp.status_code == 200, resp.text
-    assert resp.json()["features"] == []
+    for resp in (
+        await app_client.get(f"/catalogs/{empty['id']}/search"),
+        await app_client.post(f"/catalogs/{empty['id']}/search", json={}),
+    ):
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["features"] == []
 
 
 @pytest.mark.asyncio
