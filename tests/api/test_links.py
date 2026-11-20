@@ -140,3 +140,17 @@ def tests_app_links(prefix, root_path):  # noqa: C901
                 assert params["intersects"][0] == json.dumps(polygon)
                 r = client.get(link["href"])
                 assert r.status_code == 200
+
+
+@pytest.mark.parametrize("path", ["/search", "/collections/{collection_id}/items"])
+async def test_no_null_links(app_client, path, load_test_item):
+    """Item collection response should not include links with null href (#8)"""
+    url = path.format(collection_id=load_test_item["collection"])
+
+    resp = await app_client.get(url)
+    assert resp.status_code == 200
+
+    links = resp.json()["links"]
+    null_links = [link for link in links if link["href"] is None]
+
+    assert not null_links
