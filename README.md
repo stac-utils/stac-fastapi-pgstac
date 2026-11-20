@@ -77,6 +77,10 @@ To prevent information leakage about other tenants in multi-tenant deployments, 
 
 **Note:** The link relation names for poly-hierarchy navigation are subject to change as the OGC and STAC communities continue to standardize on terminology. These names may be updated in future releases to align with emerging standards.
 
+#### Catalog-Scoped Item Search
+
+When the catalogs extension is enabled, `GET` and `POST /catalogs/{catalog_id}/search` perform a STAC item search bounded to the catalog's descendant tree (sub-catalogs included recursively, across poly-hierarchies). The endpoints accept the same parameters as `/search`, so enabled search extensions (filter, sort, fields, free text, pagination) apply to scoped searches as well. A `collections` filter is intersected with the catalog's scope: results never include items outside the catalog, and a request that resolves to no in-scope collections returns an empty `ItemCollection`.
+
 ### Migrations
 
 There is a Python utility as part of PgSTAC ([pypgstac](https://stac-utils.github.io/pgstac/pypgstac/)) that includes a migration utility.
