@@ -196,10 +196,21 @@ def api_client(request):
         search_extensions, base_model=PgstacSearch
     )
 
+    core_client = CoreCrudClient(pgstac_search_model=search_post_request_model)
+
+    # Add the catalog-scoped search extension through the same path
+    # instantiate_api uses (needs the search request models + core client).
+    if CatalogsExtension is not None:
+        application_extensions.extend(
+            Extensions(settings=api_settings).catalog_search(
+                core_client, search_get_request_model, search_post_request_model
+            )
+        )
+
     api = StacApi(
         settings=api_settings,
         extensions=application_extensions,
-        client=CoreCrudClient(pgstac_search_model=search_post_request_model),
+        client=core_client,
         items_get_request_model=items_get_request_model,
         search_get_request_model=search_get_request_model,
         search_post_request_model=search_post_request_model,

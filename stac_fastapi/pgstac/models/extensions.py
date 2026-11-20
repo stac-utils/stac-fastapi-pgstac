@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass, field
+from typing import Any
 
 from stac_fastapi.api.models import JSONResponse, create_request_model
 from stac_fastapi.extensions import (
@@ -284,6 +285,61 @@ class Extensions:
                 raise
         else:
             return []
+
+    def catalog_search(
+        self,
+        core_client: Any,
+        search_get_request_model: Any,
+        search_post_request_model: Any,
+    ) -> list[ApiExtension]:
+        """Return the catalog-scoped item search extension, if enabled.
+
+        Reuses the dynamic search request models built for the global /search
+        routes so every enabled search extension (filter, sort, fields, ...)
+        applies to scoped searches too.
+
+        Args:
+            core_client: The core client used for item searches.
+            search_get_request_model: The search GET request model.
+            search_post_request_model: The search POST request model.
+
+        Returns:
+            A list containing CatalogsSearchExtension, or empty when the
+            catalogs extension is disabled.
+        """
+        if not self.settings.enable_catalogs_extension:
+            return []
+
+        try:
+            from stac_fastapi_catalogs_extension import (
+                CatalogsSearchExtension,
+            )
+        except ImportError as e:
+            raise ImportError(
+                "`stac-fastapi-catalogs-extension` must be installed to enable the catalog extension. "
+                "Please install it with: pip install stac-fastapi-pgstac[catalogs]."
+            ) from e
+
+        from stac_fastapi.pgstac.extensions.catalogs.catalogs_client import (
+            CatalogsClient,
+        )
+        from stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic import (
+            CatalogsDatabaseLogic,
+        )
+
+        search_client = CatalogsClient(
+            database=CatalogsDatabaseLogic(),
+            core_client=core_client,
+        )
+
+        return [
+            CatalogsSearchExtension(
+                client=search_client,
+                search_get_request_model=search_get_request_model,
+                search_post_request_model=search_post_request_model,
+                settings={"enable_response_models": self.settings.enable_response_models},
+            ),
+        ]
 
     @property
     def extra(self) -> list[ApiExtension]:

@@ -79,11 +79,16 @@ def instantiate_api(
 
     transaction_extensions = extensions.transaction
 
+    # Build the core client up front: the catalog-scoped search extension
+    # delegates item searches to it.
+    core_client = client(pgstac_search_model=post_request_model)  # type: ignore [arg-type]
+
     application_extensions = [
         *extensions.search,
         *extensions.item_collection,
         *transaction_extensions,
         *extensions.catalog,
+        *extensions.catalog_search(core_client, get_request_model, post_request_model),
         *extensions.extra,
     ]
     if collection_search_extension is not None:
@@ -113,7 +118,7 @@ def instantiate_api(
         router=APIRouter(prefix=settings.prefix_path),
         settings=settings,
         extensions=application_extensions,
-        client=client(pgstac_search_model=post_request_model),  # type: ignore [arg-type]
+        client=core_client,
         response_class=JSONResponse,
         items_get_request_model=items_get_request_model,
         search_get_request_model=get_request_model,

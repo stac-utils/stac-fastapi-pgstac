@@ -2526,3 +2526,195 @@ async def test_catalog_routes_reject_invalid_datetime(app_client):
     ):
         resp = await app_client.get(path, params={"datetime": "garbage"})
         assert resp.status_code == 400, (path, resp.text)
+
+
+# ---------------------------------------------------------------------------
+# Catalog-scoped item search (CatalogsSearchExtension)
+# ---------------------------------------------------------------------------
+
+CATALOGS_SEARCH_CONFORMANCE = [
+    "https://api.stacspec.org/v1.0.0/item-search",
+    "https://api.stacspec.org/v1.0.0/multi-tenant-catalogs/search",
+]
+
+
+async def create_scoped_search_tree(app_client, load_test_data):
+    """Build root catalog -> sub-catalog -> collections + items, plus an
+    unlinked 'outside' collection that must never appear in scoped results.
+
+    Returns the root catalog dict.
+    """
+    catalog = await create_catalog(app_client, "search-root")
+    await create_sub_catalog(app_client, catalog["id"], "search-sub")
+    await create_catalog_collection(app_client, catalog["id"], "search-outer")
+    await create_catalog_collection(app_client, "search-sub", "search-inner")
+    await create_collection(app_client, "search-outside")
+
+    # test2_item sits around lon -84, lat 31, datetime 1990-12-23
+    item = load_test_data("test2_item.json")
+    for collection_id in ("search-outer", "search-inner", "search-outside"):
+        it = dict(item)
+        it["collection"] = collection_id
+        it["id"] = f"item-{collection_id}"
+        resp = await app_client.post(f"/collections/{collection_id}/items", json=it)
+        assert resp.status_code == 201, resp.text
+
+    return catalog
+
+
+@pytest.mark.asyncio
+async def test_catalog_search_covers_subtree(app_client, load_test_data):
+    """GET and POST scoped search find items across the whole descendant tree."""
+    catalog = await create_scoped_search_tree(app_client, load_test_data)
+
+    for resp in (
+        await app_client.get(f"/catalogs/{catalog['id']}/search"),
+        await app_client.post(f"/catalogs/{catalog['id']}/search", json={}),
+    ):
+        assert resp.status_code == 200, resp.text
+        ids = {f["id"] for f in resp.json()["features"]}
+        assert {"item-search-outer", "item-search-inner"} <= ids
+        assert "item-search-outside" not in ids
+
+
+@pytest.mark.asyncio
+async def test_catalog_search_explicit_collections(app_client, load_test_data):
+    """`collections` narrows within the scope; fully out-of-scope is 403."""
+    catalog = await create_scoped_search_tree(app_client, load_test_data)
+    base = f"/catalogs/{catalog['id']}/search"
+
+    resp = await app_client.post(base, json={"collections": ["search-outer"]})
+    assert resp.status_code == 200, resp.text
+    assert {f["id"] for f in resp.json()["features"]} == {"item-search-outer"}
+
+    resp = await app_client.get(base, params={"collections": "search-inner"})
+    assert resp.status_code == 200, resp.text
+    assert {f["id"] for f in resp.json()["features"]} == {"item-search-inner"}
+
+    # mixed in-scope + out-of-scope narrows to the allowed subset
+    resp = await app_client.post(
+        base, json={"collections": ["search-outer", "search-outside"]}
+    )
+    assert resp.status_code == 200, resp.text
+    assert {f["id"] for f in resp.json()["features"]} == {"item-search-outer"}
+
+    # entirely out-of-scope collections are forbidden
+    resp = await app_client.post(base, json={"collections": ["search-outside"]})
+    assert resp.status_code == 403, resp.text
+    resp = await app_client.get(base, params={"collections": "search-outside"})
+    assert resp.status_code == 403, resp.text
+
+
+@pytest.mark.asyncio
+async def test_catalog_search_poly_hierarchy(app_client, load_test_data):
+    """A collection reachable through a second parent is in that catalog's scope."""
+    await create_scoped_search_tree(app_client, load_test_data)
+    other = await create_catalog(app_client, "search-root-2")
+
+    resp = await app_client.post(
+        f"/catalogs/{other['id']}/collections", json={"id": "search-inner"}
+    )
+    assert resp.status_code == 200, resp.text
+
+    resp = await app_client.get(f"/catalogs/{other['id']}/search")
+    assert resp.status_code == 200, resp.text
+    assert {f["id"] for f in resp.json()["features"]} == {"item-search-inner"}
+
+
+@pytest.mark.asyncio
+async def test_catalog_search_unknown_and_empty_catalog(app_client):
+    """Unknown catalog is 404; a valid empty catalog returns no features."""
+    resp = await app_client.get("/catalogs/does-not-exist/search")
+    assert resp.status_code == 404, resp.text
+    resp = await app_client.post("/catalogs/does-not-exist/search", json={})
+    assert resp.status_code == 404, resp.text
+
+    empty = await create_catalog(app_client, "search-empty")
+    resp = await app_client.get(f"/catalogs/{empty['id']}/search")
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["features"] == []
+
+
+@pytest.mark.asyncio
+async def test_catalog_search_params_passthrough(app_client, load_test_data):
+    """Ordinary search parameters keep working inside the scoped route."""
+    catalog = await create_scoped_search_tree(app_client, load_test_data)
+    base = f"/catalogs/{catalog['id']}/search"
+
+    # test2_item sits around lon -84, lat 31, datetime 1990-12-23
+    resp = await app_client.get(base, params={"bbox": "0,0,1,1"})
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["features"] == []
+
+    resp = await app_client.get(base, params={"bbox": "-85,30,-80,33"})
+    assert resp.status_code == 200, resp.text
+    assert {f["id"] for f in resp.json()["features"]} == {
+        "item-search-outer",
+        "item-search-inner",
+    }
+
+    resp = await app_client.get(
+        base, params={"datetime": "2020-01-01T00:00:00Z/2021-01-01T00:00:00Z"}
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["features"] == []
+
+    resp = await app_client.get(
+        base, params={"datetime": "1990-01-01T00:00:00Z/1991-12-31T00:00:00Z"}
+    )
+    assert resp.status_code == 200, resp.text
+    assert len(resp.json()["features"]) == 2
+
+    resp = await app_client.get(base, params={"ids": "item-search-outer"})
+    assert resp.status_code == 200, resp.text
+    assert {f["id"] for f in resp.json()["features"]} == {"item-search-outer"}
+
+    resp = await app_client.get(base, params={"limit": 1})
+    assert resp.status_code == 200, resp.text
+    assert len(resp.json()["features"]) == 1
+
+    resp = await app_client.get(base, params={"sortby": "-id"})
+    assert resp.status_code == 200, resp.text
+    ids = [f["id"] for f in resp.json()["features"]]
+    assert ids == sorted(ids, reverse=True)
+
+    resp = await app_client.post(
+        base,
+        json={
+            "filter": {
+                "op": "=",
+                "args": [{"property": "collection"}, "search-outer"],
+            },
+            "filter-lang": "cql2-json",
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    assert {f["id"] for f in resp.json()["features"]} == {"item-search-outer"}
+
+
+@pytest.mark.asyncio
+async def test_catalog_search_invalid_datetime(app_client):
+    """Scoped search validates `datetime` like the global /search does."""
+    catalog = await create_catalog(app_client, "search-datetime")
+    resp = await app_client.get(
+        f"/catalogs/{catalog['id']}/search", params={"datetime": "garbage"}
+    )
+    assert resp.status_code == 400, resp.text
+
+
+@pytest.mark.asyncio
+async def test_catalog_search_conformance(app_client):
+    """Scoped search conformance classes are advertised at both levels."""
+    catalog = await create_catalog(app_client, "search-conformance")
+
+    resp = await app_client.get(f"/catalogs/{catalog['id']}/conformance")
+    assert resp.status_code == 200, resp.text
+    conforms = set(resp.json()["conformsTo"])
+    for uri in CATALOGS_SEARCH_CONFORMANCE:
+        assert uri in conforms
+
+    resp = await app_client.get("/conformance")
+    assert resp.status_code == 200, resp.text
+    conforms = set(resp.json()["conformsTo"])
+    for uri in CATALOGS_SEARCH_CONFORMANCE:
+        assert uri in conforms

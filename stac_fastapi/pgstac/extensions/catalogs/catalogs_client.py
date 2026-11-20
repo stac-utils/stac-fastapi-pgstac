@@ -9,16 +9,24 @@ from buildpg import render
 from fastapi import HTTPException
 from stac_fastapi.types.errors import NotFoundError
 from stac_fastapi.types.requests import get_base_url
+from stac_fastapi.types.search import BaseSearchPostRequest
 from stac_fastapi.types.stac import ItemCollection
 from stac_fastapi_catalogs_extension import (
     CATALOGS_CORE_CONFORMANCE,
 )
-from stac_fastapi_catalogs_extension.client import AsyncBaseCatalogsClient
+from stac_fastapi_catalogs_extension.client import (
+    AsyncBaseCatalogsClient,
+    AsyncCatalogsSearchClient,
+)
 from stac_fastapi_catalogs_extension.types import Children
+from stac_pydantic.shared import BBox
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from stac_fastapi.pgstac.core import clean_collection_search_args
+from stac_fastapi.pgstac.core import (
+    CoreCrudClient,
+    clean_collection_search_args,
+)
 from stac_fastapi.pgstac.extensions.catalogs.catalogs_database_logic import (
     CatalogsDatabaseLogic,
     _parse_pagination_token,
@@ -55,15 +63,18 @@ logger = logging.getLogger(__name__)
 
 
 @attr.s
-class CatalogsClient(AsyncBaseCatalogsClient):
+class CatalogsClient(AsyncBaseCatalogsClient, AsyncCatalogsSearchClient):
     """Catalogs client implementation for pgstac.
 
     This client implements the AsyncBaseCatalogsClient interface and delegates
-    to the database layer for all catalog operations.
+    to the database layer for all catalog operations. It also implements
+    AsyncCatalogsSearchClient when a `core_client` is supplied, enabling the
+    catalog-scoped item search routes.
     """
 
     database: CatalogsDatabaseLogic = attr.ib()
     scoped_conformance_classes: list[str] = attr.ib(factory=list, kw_only=True)
+    core_client: CoreCrudClient | None = attr.ib(default=None, kw_only=True)
 
     @staticmethod
     async def _add_catalog_links(
@@ -1181,4 +1192,140 @@ class CatalogsClient(AsyncBaseCatalogsClient):
             catalog_id=catalog_id,
             sub_catalog_id=sub_catalog_id,
             request=request,
+        )
+
+    async def get_all_descendant_collections(
+        self, catalog_id: str, request: Request | None = None, **kwargs
+    ) -> list[str]:
+        """Return all collection ids in a catalog's descendant tree.
+
+        Args:
+            catalog_id: The ID of the catalog to traverse.
+            request: The FastAPI request object.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            List of all descendant collection IDs.
+
+        Raises:
+            NotFoundError: If the catalog does not exist.
+        """
+        return await self.database.get_all_descendant_collection_ids(
+            catalog_id, request=request
+        )
+
+    async def _bounded_collections(
+        self,
+        catalog_id: str,
+        requested: list[str] | None,
+        request: Request | None,
+    ) -> list[str]:
+        """Intersect requested collections with the catalog's descendants.
+
+        Args:
+            catalog_id: The ID of the catalog bounding the search.
+            requested: Collection IDs the caller asked for, or None.
+            request: The FastAPI request object.
+
+        Returns:
+            The collection IDs to search within the catalog's scope.
+
+        Raises:
+            HTTPException: 403 if requested collections are all out of scope.
+        """
+        allowed = await self.get_all_descendant_collections(catalog_id, request=request)
+        if requested is None:
+            return allowed
+        intersected = list(set(requested) & set(allowed))
+        if not intersected:
+            raise HTTPException(
+                status_code=403,
+                detail="Requested collections are outside the scope of this catalog.",
+            )
+        return intersected
+
+    async def catalog_search_get(
+        self,
+        catalog_id: str,
+        collections: list[str] | None = None,
+        ids: list[str] | None = None,
+        bbox: BBox | None = None,
+        intersects: str | None = None,
+        datetime: str | None = None,
+        limit: int | None = None,
+        token: str | None = None,
+        request: Request | None = None,
+        **kwargs,
+    ) -> ItemCollection | JSONResponse:
+        """Search items within a catalog and its descendants (GET).
+
+        Args:
+            catalog_id: The ID of the catalog to search within.
+            collections: List of collection IDs to search within.
+            ids: List of item IDs to search for.
+            bbox: Bounding box to search within.
+            intersects: GeoJSON geometry to search within.
+            datetime: Datetime range to search within.
+            limit: Maximum number of results to return.
+            token: Pagination token.
+            request: The FastAPI request object.
+            **kwargs: Search extension parameters (filter, sortby, fields, ...).
+
+        Returns:
+            ItemCollection with matching items.
+
+        Raises:
+            HTTPException: 403 if requested collections are outside catalog scope.
+            HTTPException: 500 if the client has no core_client configured.
+        """
+        collections = await self._bounded_collections(catalog_id, collections, request)
+        if self.core_client is None:
+            raise HTTPException(
+                status_code=500,
+                detail="Catalog search is not configured (missing core_client).",
+            )
+        return await self.core_client.get_search(
+            collections=collections,
+            ids=ids,
+            bbox=bbox,
+            intersects=intersects,
+            datetime=datetime,
+            limit=limit,
+            token=token,
+            request=request,
+            **kwargs,
+        )
+
+    async def catalog_search_post(
+        self,
+        catalog_id: str,
+        search_request: BaseSearchPostRequest,
+        request: Request | None = None,
+        **kwargs,
+    ) -> ItemCollection | JSONResponse:
+        """Search items within a catalog and its descendants (POST).
+
+        Args:
+            catalog_id: The ID of the catalog to search within.
+            search_request: The search request parameters.
+            request: The FastAPI request object.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            ItemCollection with matching items.
+
+        Raises:
+            HTTPException: 403 if requested collections are outside catalog scope.
+            HTTPException: 500 if the client has no core_client configured.
+        """
+        search_request.collections = await self._bounded_collections(
+            catalog_id, search_request.collections, request
+        )
+        if self.core_client is None:
+            raise HTTPException(
+                status_code=500,
+                detail="Catalog search is not configured (missing core_client).",
+            )
+        return await self.core_client.post_search(
+            search_request=search_request, request=request, **kwargs
         )
