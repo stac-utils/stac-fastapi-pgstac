@@ -541,6 +541,54 @@ class CatalogsDatabaseLogic:
 
         return catalogs, total_count, next_link
 
+    async def get_all_descendant_collection_ids(
+        self,
+        catalog_id: str,
+        request: Any = None,
+    ) -> list[str]:
+        """Return the ids of every collection in a catalog's descendant tree.
+
+        Walks the catalog DAG in a single recursive query: catalogs and
+        collections both live in the ``collections`` table and link to their
+        parents via ``content->'parent_ids'``. ``UNION`` deduplicates visited
+        nodes, which keeps poly-hierarchies out of the result and guarantees
+        termination even on cyclic graphs (writes already reject cycles).
+
+        Args:
+            catalog_id: The catalog ID to traverse.
+            request: The FastAPI request object.
+
+        Returns:
+            All descendant collection IDs.
+
+        Raises:
+            NotFoundError: If the catalog is not found.
+        """
+        # find_catalog raises NotFoundError for a missing catalog (and for a
+        # missing request), so an unreachable catalog can never be mistaken
+        # for an empty scope.
+        await self.find_catalog(catalog_id, request=request)
+
+        async with request.app.state.get_connection(request, "r") as conn:
+            q, p = render(
+                """
+                WITH RECURSIVE walk AS (
+                    SELECT id, content->>'type' AS rtype
+                    FROM collections
+                    WHERE content->'parent_ids' ? :root
+                    UNION
+                    SELECT c.id, c.content->>'type' AS rtype
+                    FROM collections c
+                    JOIN walk w ON c.content->'parent_ids' ? w.id
+                )
+                SELECT id FROM walk WHERE rtype = 'Collection';
+                """,
+                root=catalog_id,
+            )
+            rows = await conn.fetch(q, *p)
+
+        return [row["id"] for row in rows]
+
     async def find_collection(
         self, collection_id: str, request: Any = None
     ) -> dict[str, Any]:
