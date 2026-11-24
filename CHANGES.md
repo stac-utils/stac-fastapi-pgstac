@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.4.0](https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.3.0...7.4.0) (2026-11-24)
+
+
+### Features
+
+* catalogs scoped search ([#463](https://github.com/stac-utils/stac-fastapi-pgstac/issues/463)) ([6d7ce5c](https://github.com/stac-utils/stac-fastapi-pgstac/commit/6d7ce5c2fe806f82ac9874b48a6f2103601492ea))
+
 ## [7.3.0](https://github.com/stac-utils/stac-fastapi-pgstac/compare/7.2.2...7.3.0) (2026-11-19)
 
 
