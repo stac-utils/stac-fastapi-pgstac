@@ -22,8 +22,4 @@ updates:
       all:
         patterns:
         - "*"
-      # Without this, each vulnerable dependency gets its own security PR.
-      security:
-        applies-to: security-updates
-        patterns:
-        - "*"
+      # No security-updates group: while a grouped security PR is open, Dependabot defers fixes for packages not already in it.
