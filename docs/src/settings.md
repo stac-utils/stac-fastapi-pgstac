@@ -36,7 +36,7 @@ To enable it, set `ENABLE_METRICS=TRUE/YES/1`. If enabled without the extra inst
 ### Database config
 
 - `PGUSER`: postgres username
-- `PGPASSWORD`: postgres password
+- `PGPASSWORD`: postgres password. Optional, see [Password callable](#password-callable-eg-aws-rds-iam-auth)
 - `PGHOST`: hostname for the connection
 - `PGPORT`: database port
 - `PGDATABASE`: database name
@@ -46,6 +46,53 @@ To enable it, set `ENABLE_METRICS=TRUE/YES/1`. If enabled without the extra inst
 - `DB_MAX_INACTIVE_CONN_LIFETIME`: Number of seconds after which inactive connections in the pool will be closed. Defaults to `300`
 - `SEARCH_PATH`: Postgres search path. Defaults to `"pgstac,public"`
 - `APPLICATION_NAME`: PgSTAC Application name. Defaults to `"pgstac"`
+
+#### Password callable (e.g. AWS RDS IAM auth)
+
+`connect_to_db` accepts `pool_kwargs` (and `write_pool_kwargs` for the write pool, defaulting to `pool_kwargs`), extra keyword arguments passed to [`asyncpg.create_pool`](https://magicstack.github.io/asyncpg/current/api/index.html#asyncpg.pool.create_pool) that override the defaults derived from the settings. asyncpg accepts a (sync or async) callable as `password` and calls it for each new connection, which suits short-lived credentials such as [AWS RDS IAM auth tokens](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.html) (valid for 15 minutes).
+
+Leave `PGPASSWORD` unset and pass the callable from a custom `lifespan`:
+
+```python
+from contextlib import asynccontextmanager
+
+import boto3
+from fastapi import FastAPI
+
+from stac_fastapi.pgstac.app import instantiate_api
+from stac_fastapi.pgstac.config import PostgresSettings, Settings
+from stac_fastapi.pgstac.db import close_db_connection, connect_to_db
+
+settings = Settings()
+postgres_settings = PostgresSettings()
+rds = boto3.client("rds")
+
+
+def get_iam_token() -> str:
+    # Signed locally, no network call
+    return rds.generate_db_auth_token(
+        DBHostname=postgres_settings.pghost,
+        Port=postgres_settings.pgport,
+        DBUsername=postgres_settings.pguser,
+    )
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await connect_to_db(
+        app,
+        postgres_settings=postgres_settings,
+        add_write_connection_pool=settings.enable_transactions_extensions,
+        pool_kwargs={"password": get_iam_token, "ssl": "require"},
+    )
+    yield
+    await close_db_connection(app)
+
+
+app = instantiate_api(settings=settings, lifespan=lifespan).app
+```
+
+If the write pool connects with different settings (`write_postgres_settings`), pass it a token for that user and host with `write_pool_kwargs`.
 
 ##### Deprecated
 

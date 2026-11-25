@@ -34,6 +34,28 @@ async def test_pg_settings_attributes(monkeypatch):
 
 
 @pytest.mark.parametrize(
+    "password, expected",
+    [
+        (None, "postgresql://user@0.0.0.0:1111/pgstac"),
+        ("", "postgresql://user@0.0.0.0:1111/pgstac"),
+        ("p@ss:w/rd", "postgresql://user:p%40ss%3Aw%2Frd@0.0.0.0:1111/pgstac"),
+    ],
+)
+def test_pg_settings_connection_string(monkeypatch, password, expected):
+    """Test that the connection string only includes the password when set"""
+    monkeypatch.delenv("PGPASSWORD", raising=False)
+    settings = PostgresSettings(
+        pguser="user",
+        pgpassword=password,
+        pghost="0.0.0.0",
+        pgport=1111,
+        pgdatabase="pgstac",
+        _env_file=None,
+    )
+    assert settings.connection_string == expected
+
+
+@pytest.mark.parametrize(
     "env_var, expected",
     [
         ("TRUE", True),

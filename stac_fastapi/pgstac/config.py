@@ -55,7 +55,10 @@ class PostgresSettings(BaseSettings):
 
     Attributes:
         pguser: postgres username.
-        pgpassword: postgres password.
+        pgpassword: postgres password. Optional: when unset, the connection
+            string has no password and one can be passed with
+            `connect_to_db(pool_kwargs={"password": ...})`, e.g. a callable
+            returning an AWS RDS IAM auth token.
         pghost: hostname for the connection.
         pgport: database port.
         pgdatabase: database name.
@@ -63,7 +66,7 @@ class PostgresSettings(BaseSettings):
     """
 
     pguser: str
-    pgpassword: str
+    pgpassword: str | None = None
     pghost: str
     pgport: int
     pgdatabase: str
@@ -80,7 +83,10 @@ class PostgresSettings(BaseSettings):
     @property
     def connection_string(self):
         """Create reader psql connection string."""
-        return f"postgresql://{self.pguser}:{quote(self.pgpassword)}@{self.pghost}:{self.pgport}/{self.pgdatabase}"
+        auth = self.pguser
+        if self.pgpassword:
+            auth += f":{quote(self.pgpassword)}"
+        return f"postgresql://{auth}@{self.pghost}:{self.pgport}/{self.pgdatabase}"
 
 
 def str_to_list(value: Any) -> Any:
