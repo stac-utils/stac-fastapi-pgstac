@@ -5,7 +5,7 @@ from copy import deepcopy
 from typing import Callable, Literal
 
 import pytest
-from fastapi import Request
+from fastapi import FastAPI, Request
 from pydantic import ValidationError
 from stac_pydantic import Collection, Item
 
@@ -589,6 +589,78 @@ async def test_db_setup_fails_without_env_vars(api_client):
     except ValidationError:
         await close_db_connection(api_client.app)
         pytest.raises(ValidationError)
+
+
+def _settings_without_password(database, monkeypatch) -> PostgresSettings:
+    monkeypatch.delenv("PGPASSWORD", raising=False)
+    settings = PostgresSettings(
+        pguser=database.user,
+        pghost=database.host,
+        pgport=database.port,
+        pgdatabase=database.dbname,
+        _env_file=None,
+    )
+    assert settings.pgpassword is None
+    assert database.password not in settings.connection_string
+    return settings
+
+
+async def test_db_setup_with_password_callable(database, monkeypatch):
+    """Test that a `password` callable in `pool_kwargs` is used for each new
+    connection of both pools (e.g. AWS RDS IAM auth tokens)."""
+    settings = _settings_without_password(database, monkeypatch)
+    calls = 0
+
+    async def get_password() -> str:
+        nonlocal calls
+        calls += 1
+        return database.password
+
+    app = FastAPI()
+    await connect_to_db(
+        app,
+        postgres_settings=settings,
+        add_write_connection_pool=True,
+        pool_kwargs={"password": get_password, "min_size": 2, "max_size": 2},
+    )
+    try:
+        # 2 connections opened per pool, each asking for a password
+        assert calls == 4
+        for pool in (app.state.readpool, app.state.writepool):
+            async with pool.acquire() as conn:
+                assert await conn.fetchval("SELECT 1") == 1
+    finally:
+        await close_db_connection(app)
+
+
+async def test_db_setup_with_write_pool_kwargs(database, monkeypatch):
+    """Test that `write_pool_kwargs` overrides `pool_kwargs` for the write pool."""
+    settings = _settings_without_password(database, monkeypatch)
+    calls = {"r": 0, "w": 0}
+
+    def password_for(pool: Literal["r", "w"]) -> Callable[[], str]:
+        def get_password() -> str:
+            calls[pool] += 1
+            return database.password
+
+        return get_password
+
+    app = FastAPI()
+    await connect_to_db(
+        app,
+        postgres_settings=settings,
+        add_write_connection_pool=True,
+        pool_kwargs={"password": password_for("r"), "min_size": 1, "max_size": 1},
+        write_pool_kwargs={
+            "password": password_for("w"),
+            "min_size": 3,
+            "max_size": 3,
+        },
+    )
+    try:
+        assert calls == {"r": 1, "w": 3}
+    finally:
+        await close_db_connection(app)
 
 
 @asynccontextmanager
