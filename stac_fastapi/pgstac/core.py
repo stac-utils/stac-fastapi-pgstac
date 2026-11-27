@@ -646,6 +646,33 @@ class CoreCrudClient(AsyncBaseCoreClient):
         )
 
 
+_LOGICAL_OPS = frozenset({"and", "or", "not"})
+# operators that evaluate to a value, not a boolean
+_NON_BOOLEAN_OPS = frozenset(
+    {"casei", "accenti", "+", "-", "*", "/", "^", "%", "div"},
+)
+
+
+def _is_boolean_expression(node: Any) -> bool:
+    """Check that a cql2-json node is a boolean expression.
+
+    Like the CQL2 schema, any operator that is not arithmetic or a string
+    function, including a function call, counts as boolean.
+    """
+    if isinstance(node, bool):
+        return True
+    if not isinstance(node, dict) or "op" not in node:
+        return False
+    if node["op"] in _LOGICAL_OPS:
+        args = node.get("args")
+        return (
+            isinstance(args, list)
+            and bool(args)
+            and all(_is_boolean_expression(arg) for arg in args)
+        )
+    return node["op"] not in _NON_BOOLEAN_OPS
+
+
 def clean_search_args(  # noqa: C901
     base_args: dict[str, Any],
     intersects: str | None = None,
@@ -659,21 +686,27 @@ def clean_search_args(  # noqa: C901
 ) -> dict[str, Any]:
     """Clean up search arguments to match format expected by pgstac"""
     if filter_query:
-        # `Expr` parses a bare word as a property reference,
-        # `validate()` rejects non-boolean filters before they reach pgstac
+        # `Expr` parses a bare word as a property reference, so require a boolean filter
+        # not `validate()`: it recompiles the CQL2 schema per call, using too much memory
         try:
             if filter_lang == "cql2-text":
                 expr = Expr(filter_query)
-                expr.validate()
                 base_args["filter"] = expr.to_json()
                 base_args["filter_lang"] = "cql2-json"
+                is_boolean = _is_boolean_expression(base_args["filter"])
             else:
                 base_args["filter"] = orjson.loads(filter_query)
-                Expr(base_args["filter"]).validate()
+                is_boolean = _is_boolean_expression(Expr(base_args["filter"]).to_json())
                 base_args["filter_lang"] = filter_lang
         # cql2 raises a bare Exception on parse errors
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Invalid filter: {e}") from e
+
+        if not is_boolean:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid filter: filter must be a boolean expression",
+            )
 
     if datetime:
         base_args["datetime"] = datetime
