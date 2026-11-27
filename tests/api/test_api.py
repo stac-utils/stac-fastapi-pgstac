@@ -711,6 +711,7 @@ def test_clean_search_args_positional_arguments():
         {"filter": "notapredicate", "filter-lang": "cql2-text"},
         {"filter": "{not json", "filter-lang": "cql2-json"},
         {"filter": '{"property": "title"}', "filter-lang": "cql2-json"},
+        {"filter": "(collection IN ('a','b')) AND (this)", "filter-lang": "cql2-text"},
     ],
 )
 async def test_get_invalid_filter(app_client, path, params):
